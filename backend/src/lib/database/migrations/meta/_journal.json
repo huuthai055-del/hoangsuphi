@@ -1,0 +1,62 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1783426253606,
+      "tag": "0000_icy_living_lightning",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1783508686795,
+      "tag": "0001_freezing_young_avengers",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783520586494,
+      "tag": "0002_breezy_roland_deschain",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1783525419583,
+      "tag": "0003_simple_princess_powerful",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1783529281905,
+      "tag": "0004_little_azazel",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1783679257579,
+      "tag": "0005_zippy_doomsday",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1783682516208,
+      "tag": "0006_empty_the_professor",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1783683025522,
+      "tag": "0007_woozy_patch",
+      "breakpoints": true
+    }
+  ]
+}
