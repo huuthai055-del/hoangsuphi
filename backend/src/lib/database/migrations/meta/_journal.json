@@ -57,6 +57,13 @@
       "when": 1783683025522,
       "tag": "0007_woozy_patch",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1783874013905,
+      "tag": "0008_shiny_grim_reaper",
+      "breakpoints": true
     }
   ]
 }

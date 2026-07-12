@@ -6,3 +6,5 @@ export * from './businesses';
 export * from './attractions';
 export * from './articles';
 export * from './tags';
+export * from './media';
+
