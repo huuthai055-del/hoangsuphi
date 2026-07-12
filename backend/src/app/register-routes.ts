@@ -10,6 +10,7 @@ import { identityRouter } from '@/modules/identity/route/identity.route';
 import { categoriesRouter } from '@/modules/articles/route/categories.route';
 import { tagsRouter } from '@/modules/articles/route/tags.route';
 import { articlesRouter } from '@/modules/articles/route/articles.route';
+import { mediaRouter } from '@/modules/media/route/media.route';
 
 export function registerRoutes(app: Hono) {
   // Liveness Check
@@ -41,6 +42,8 @@ export function registerRoutes(app: Hono) {
   v1Router.route('/categories', categoriesRouter);
   v1Router.route('/tags', tagsRouter);
   v1Router.route('/articles', articlesRouter);
+  v1Router.route('/media', mediaRouter);
 
   app.route(AppConfig.server.apiPrefix, v1Router);
 }
+

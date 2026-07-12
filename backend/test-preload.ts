@@ -157,7 +157,56 @@ mock.module('@/modules/attractions/repository/attractions.repository', () => {
   };
 });
 
+// Mock Media repository globally
+mock.module('@/modules/media/repository/media.repository', () => {
+  return {
+    DrizzleMediaRepository: class {
+      findById(id: string) {
+        return (globalThis as any).mockMediaFindById
+          ? (globalThis as any).mockMediaFindById(id)
+          : Promise.resolve(null);
+      }
+      findByHash(hash: string) {
+        return (globalThis as any).mockMediaFindByHash
+          ? (globalThis as any).mockMediaFindByHash(hash)
+          : Promise.resolve(null);
+      }
+      save(media: any) {
+        return (globalThis as any).mockMediaSave ? (globalThis as any).mockMediaSave(media) : Promise.resolve();
+      }
+      update(media: any) {
+        return (globalThis as any).mockMediaUpdate ? (globalThis as any).mockMediaUpdate(media) : Promise.resolve();
+      }
+      delete(id: string) {
+        return (globalThis as any).mockMediaDelete ? (globalThis as any).mockMediaDelete(id) : Promise.resolve();
+      }
+      saveMetadata(mediaId: string, metadata: any) {
+        return (globalThis as any).mockMediaSaveMetadata
+          ? (globalThis as any).mockMediaSaveMetadata(mediaId, metadata)
+          : Promise.resolve();
+      }
+      saveVariant(props: any) {
+        return (globalThis as any).mockMediaSaveVariant
+          ? (globalThis as any).mockMediaSaveVariant(props)
+          : Promise.resolve();
+      }
+      getMetadata(mediaId: string) {
+        return (globalThis as any).mockMediaGetMetadata
+          ? (globalThis as any).mockMediaGetMetadata(mediaId)
+          : Promise.resolve(null);
+      }
+      getVariants(mediaId: string) {
+        return (globalThis as any).mockMediaGetVariants
+          ? (globalThis as any).mockMediaGetVariants(mediaId)
+          : Promise.resolve([]);
+      }
+    },
+  };
+});
+
+
 // Expose globally to support re-creating authorization spies on beforeEach in routing tests (preventing mock.restore() issues)
+
 (globalThis as any).setupAuthSpy = () => {
   const { spyOn } = require('bun:test');
   const { DrizzleUserRepository } = require('@/modules/identity/repository/users.repository');
