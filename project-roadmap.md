@@ -491,7 +491,7 @@ Launch      →    Maintenance & Expansion
 ## Next Session
 
 ### Objective
-Triển khai sub-phase tiếp theo: **Sub-phase 3.8: Reviews & Favorites**.
+Triển khai sub-phase tiếp theo: **Sub-phase 3.8: Reviews & Favorites** trong Phase 3 Core Modules.
 
 ### Current Position
 - **Current Phase**: Phase 3 (Core Modules)
@@ -499,14 +499,27 @@ Triển khai sub-phase tiếp theo: **Sub-phase 3.8: Reviews & Favorites**.
 - **Current Step**: Sub-phase 3.8 Reviews & Favorites - Step 1 Database Schema
 
 ### Priority Tasks
-1. **Polymorphic Reviews:** Thiết kế schema và migration bảng `reviews` có quan hệ polymorphic đến Homestays, Restaurants, Attractions, Places.
-2. **Favorites registry:** Thiết kế schema lưu trữ các địa điểm và bài viết được người dùng đánh dấu yêu thích.
+1. **Polymorphic Reviews Schema:** Thiết kế schema và migration bảng `reviews` có quan hệ polymorphic đến Homestays, Restaurants, Attractions, Places, và Articles.
+2. **Favorites Registry Schema:** Thiết kế schema lưu trữ các địa điểm và bài viết được người dùng đánh dấu yêu thích, hỗ trợ indexes tối ưu hóa tìm kiếm.
 
 ### Remaining Work
-- Module Reviews & Favorites (Sub-phase 3.8)
+- Module Reviews & Favorites (Sub-phase 3.8 - Step 1 to 4)
 - Module Operational Utilities (Sub-phase 3.9)
+
+### Important Notes
+- Rà soát các logic polymorphic `ownerType` và `ownerId` đã triển khai thành công ở Media Manager để áp dụng cho Reviews & Favorites.
+- Đảm bảo tính toàn vẹn khoá ngoại logic (vì Postgres không hỗ trợ Foreign Key cứng polymorphic).
+
+### Risks
+- Xung đột Bun parallel module cache khi test routes Reviews có thể xảy ra nếu không áp dụng Mock Proxy / Prototype spies tập trung từ đầu.
+
+### Completion Criteria
+- Bảng `reviews` và `favorites` được định nghĩa đầy đủ, sinh SQL migration pass.
+- Logic Reviews & Favorites được triển khai tách biệt (Domain, Repository, Service, Route Controllers).
+- Toàn bộ unit/integration tests viết mới đạt coverage >= 90% và toàn hệ thống test pass 100%.
 
 ---
 
 *Tài liệu được tạo và bảo trì bởi AI Agent Antigravity (Google DeepMind)*
-*Cập nhật lần cuối: 2026-07-13T00:20:00+07:00*
+*Cập nhật lần cuối: 2026-07-13T06:45:00+07:00*
+
