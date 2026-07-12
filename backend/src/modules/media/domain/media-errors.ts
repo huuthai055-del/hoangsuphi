@@ -26,6 +26,22 @@ export class DuplicateMediaError extends MediaDomainError {
   override readonly statusCode = 409;
 }
 
+export class ExifExtractionError extends MediaDomainError {
+  override readonly errorCode = 'MED_VAL_004';
+}
+
+export class ImageProcessingError extends MediaDomainError {
+  override readonly errorCode = 'MED_SYS_002';
+}
+
+export class VariantGenerationError extends MediaDomainError {
+  override readonly errorCode = 'MED_SYS_003';
+}
+
+export class StorageProcessingError extends MediaDomainError {
+  override readonly errorCode = 'MED_SYS_004';
+}
+
 export class StorageUploadError extends AppError {
   readonly statusCode = 500;
   readonly errorCode = 'MED_SYS_001';

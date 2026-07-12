@@ -1,0 +1,124 @@
+import type { IMediaRepository } from '../repository/media-repository.interface';
+import type { IMediaStorage } from '../domain/storage.interface';
+import type { IImageProcessor } from '../domain/image-processor.interface';
+import {
+  ImageProcessingError,
+  StorageProcessingError,
+  VariantGenerationError,
+} from '../domain/media-errors';
+
+export class MediaProcessingService {
+  constructor(
+    private readonly mediaRepo: IMediaRepository,
+    private readonly storage: IMediaStorage,
+    private readonly imageProcessor: IImageProcessor
+  ) {}
+
+  public async process(mediaId: string): Promise<void> {
+    const media = await this.mediaRepo.findById(mediaId);
+    if (!media) {
+      throw new ImageProcessingError(`Media not found with ID: ${mediaId}`);
+    }
+
+    // Guard transition rules: UPLOADING/PROCESSING to PROCESSING, block READY to PROCESSING
+    media.markProcessing();
+    await this.mediaRepo.update(media);
+
+
+    // Verify storage source file existence
+    const exists = await this.storage.exists(media.storageKey);
+    if (!exists) {
+      media.markFailed();
+      await this.mediaRepo.update(media);
+      throw new StorageProcessingError(`Source storage key file not found: ${media.storageKey}`);
+    }
+
+    const uploadedVariantKeys: string[] = [];
+
+    try {
+      // 1. Download original file buffer
+      const originalBuffer = await this.storage.download(media.storageKey);
+
+      // 2. Extract EXIF / GPS / Dimensions metadata
+      const metadata = await this.imageProcessor.extractMetadata(originalBuffer);
+
+      // Save structured metadata to database
+      const dbMetadata: Record<string, unknown> = {
+        width: metadata.width ?? null,
+        height: metadata.height ?? null,
+        cameraMake: metadata.cameraMake ?? null,
+        cameraModel: metadata.cameraModel ?? null,
+        orientation: metadata.orientation ?? null,
+        gps: metadata.gps
+          ? {
+              latitude: metadata.gps.latitude,
+              longitude: metadata.gps.longitude,
+            }
+          : null,
+        processedAt: new Date().toISOString(),
+      };
+
+      await this.mediaRepo.saveMetadata(media.id, dbMetadata);
+
+      // 3. Generate image variants (only for images)
+      if (media.mediaType === 'IMAGE') {
+        const variantsConfig = [
+          { type: 'thumbnail', width: 150, height: 150 },
+          { type: 'medium', width: 600, height: 400 },
+          { type: 'large', width: 1200, height: 800 },
+        ];
+
+        // Parse date path from original storageKey to keep organization path structure
+        const storageParts = media.storageKey.split('/');
+        const year = storageParts[1] || new Date().getFullYear();
+        const month = storageParts[2] || '01';
+
+        for (const config of variantsConfig) {
+          const { buffer: resizedBuffer, fileSize } = await this.imageProcessor.resize(
+            originalBuffer,
+            config.width,
+            config.height,
+            80 // WebP compression quality
+          );
+
+          const variantKey = `uploads/${year}/${month}/${media.id}-${config.type}.webp`;
+
+          // Upload variant file to storage
+          await this.storage.upload(variantKey, resizedBuffer, 'image/webp');
+          uploadedVariantKeys.push(variantKey);
+
+          // Save variant registry in DB
+          await this.mediaRepo.saveVariant({
+            mediaId: media.id,
+            variantType: config.type,
+            storageKey: variantKey,
+            width: config.width,
+            height: config.height,
+            fileSize,
+          });
+        }
+      }
+
+      // 4. Mark status completed READY
+      media.markReady();
+      await this.mediaRepo.update(media);
+    } catch (err) {
+      // Transition lifecycle status to FAILED on processing crash
+      try {
+        media.markFailed();
+        await this.mediaRepo.update(media);
+      } catch {
+        // Suppress nested DB status update failures
+      }
+
+      // Cleanup generated variant files from storage to prevent leaks
+      for (const variantKey of uploadedVariantKeys) {
+        await this.storage.delete(variantKey);
+      }
+
+      throw new VariantGenerationError(
+        `Failed to execute processing pipeline: ${err instanceof Error ? err.message : String(err)}`
+      );
+    }
+  }
+}

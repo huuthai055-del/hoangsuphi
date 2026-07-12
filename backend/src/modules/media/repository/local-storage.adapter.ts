@@ -29,6 +29,15 @@ export class LocalStorageAdapter implements IMediaStorage {
     }
   }
 
+  public async download(key: string): Promise<Buffer> {
+    try {
+      const filePath = this.getAbsolutePath(key);
+      return await fs.readFile(filePath);
+    } catch (err) {
+      throw new StorageUploadError(`Failed to download file from local storage: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
   public async delete(key: string): Promise<void> {
     try {
       const filePath = this.getAbsolutePath(key);

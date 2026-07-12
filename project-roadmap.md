@@ -1,6 +1,6 @@
 # 🗺️ PROJECT ROADMAP — CỔNG THÔNG TIN DU LỊCH HOÀNG SU PHÌ
 
-> **Cập nhật lần cuối:** 2026-07-12T23:55:00+07:00 | **Phiên:** #020
+> **Cập nhật lần cuối:** 2026-07-12T23:59:00+07:00 | **Phiên:** #020
 > **Mục đích:** Theo dõi tiến độ toàn bộ vòng đời dự án từ ý tưởng đến vận hành.
 
 ---
@@ -149,7 +149,7 @@ Launch      →    Maintenance & Expansion
 | **3.4** | **Businesses & Amenities** | 🔒 **Locked** | Schema, Repository, Service, DTO, Controller, Routes, Integration/Unit Tests. |
 | **3.5** | **Attractions & Utilities** | 🔒 **Locked** | Domain, Repository, Service, DTO, Controller, Routes, Tests. |
 | **3.6** | **Articles & Tags** | 🔒 **Locked** | CMS workflow. Step 1-7 Hoàn thành và 🔒 LOCKED (Session #019). |
-| **3.7** | **Media Manager** | 🟡 **In Progress** | Media Schema, Domain Entities, Storage Abstractions, Upload pipeline & Unit Tests. Step 1-2 LOCKED. |
+| **3.7** | **Media Manager** | 🟡 **In Progress** | Media Schema, Domain Entities, Storage Abstractions, Upload pipeline, EXIF & Variant Processing & Unit Tests. Step 1-3 LOCKED. |
 | **3.8** | **Reviews & Favorites** | ⬜ **Chưa bắt đầu** | Polymorphic reviews & favorites. |
 | **3.9** | **Operational Utilities** | ⬜ **Chưa bắt đầu** | Itineraries, Weather, FAQs, Notifications, Top Lists. |
 
@@ -289,7 +289,7 @@ Launch      →    Maintenance & Expansion
 | File upload validation (MIME, size, malware) | ⬜ |
 | Secret Manager (không hardcode secret) | ⬜ |
 | Database Backup strategy | ⬜ |
-| Backup Restore drill | ⬜ |
+| Database Restore drill | ⬜ |
 | Security Audit / Penetration Test | ⬜ |
 | Monitoring & Alerting (Sentry) | ⬜ |
 
@@ -442,13 +442,14 @@ Launch      →    Maintenance & Expansion
 | 2026-07-09 | Hoàn thành và khóa (LOCKED) Session #013 (Step 7/7: Integration Tests & Security Audit). | Phiên #013 — Hoàn tất middleware optimization (In-memory authz), clean up roles repositories, full integration tests pass 100% (354/354), và 🔒 LOCKED toàn bộ module Identity. |
 | 2026-07-10 | Hoàn thành và khóa (LOCKED) Session #013 (Step 6/7: Identity Routes (API) & DTOs & Unit Tests). | Phiên #013 — Thực hiện code review toàn diện Step 6, loại bỏ header x-session-id dư thừa khỏi OpenAPI spec và tests, toàn bộ 353/353 tests pass 100% và LOCK Step 6. |
 | 2026-07-10 | Hoàn thành và khóa (LOCKED) Session #013 (Step 7/7: Integration Tests & Security Audit). | Phiên #013 — Bổ sung integration tests kiểm tra bảo mật (expired tokens, revoked sessions, user status, RTR replay attack), pass 362/362 tests, coverage lines đạt 100%, và LOCK Step 7/7. |
-| 2026-07-10 | Hoàn thành và khóa (LOCKED) Session #014 (Step 3/7: Repository Layer). | Phiên #014 — Viết xong Drizzle repositories cho Articles & Tags, tối ưu hóa các hàm builder chống đếm trùng (COUNT DISTINCT) và dòng trùng (DISTINCT ON), hoàn tất mapping DB errors mở rộng (23502, 23514, 40001/40P01), an toàn SQL ILIKE ESCAPE, unit tests đạt 440/440 tests pass 100% và LOCK Step 3/7. |
+| 2026-07-10 | Hoàn thành và khóa (LOCKED) Session #014 (Step 3/7: Repository Layer). | Phiên #014 — Viết xong Drizzle repositories cho Articles & Tags, tối ưu hóa các hàm builder chống đếm trùng (COUNT DISTINCT) và dòng trùng (DISTINCT ON), hoàn tất mapping DB errors mở rộng (23502, 23514, 40001/40P01), an sau SQL ILIKE ESCAPE, unit tests đạt 440/440 tests pass 100% và LOCK Step 3/7. |
 | 2026-07-11 | Khắc phục hoàn toàn lỗi tương thích Step 4 | Phiên #015 — Hoàn tác (revert) 100% các sửa đổi chéo của Step 1, 2, 3 đã LOCKED. Refactor duy nhất Service Layer (articles.service.ts và tests) thích nghi hoàn hảo với Domain & Repository gốc. Toàn bộ 467 tests pass 100%, linter & build sạch, LOCK Step 4. |
 | 2026-07-12 | Triển khai Step 5/7: Presentation Layer (API) | Phiên #018 — Viết xong Hono Routers, Controllers, DTO validation schemas (Zod), và các Response Mappers riêng biệt. Đánh giá DTO hoàn tất. |
 | 2026-07-12 | Hoàn thành và khóa (LOCKED) Step 6: Architecture Review | Phiên #018 — Toàn bộ 10 checklist Clean Architecture, SOLID, Domain, Repo, Service, Presentation, Security, Transaction, Performance và Code Quality đều PASS đạt chuẩn Production Ready. |
 | 2026-07-12 | Hoàn thành và khóa (LOCKED) Step 7: Integration Tests & Final Audit | Phiên #019 — Hoàn tất chạy full 161 tests của module, linter & build ✅, test coverage lines đạt >94% (Entities/Services 100%), và chính thức LOCK toàn bộ Sub-phase 3.6 Articles & Tags. |
 | 2026-07-12 | Hoàn thành và khóa (LOCKED) Step 1: Media Foundation của module Media Manager | Phiên #020 — Thiết kế 3 bảng CSDL polymorphic, Domain Entity quản lý lifecycle, Storage Contract và pass 17 unit tests với coverage >98%, build & lint ✅ |
 | 2026-07-12 | Hoàn thành và khóa (LOCKED) Step 2: Upload Pipeline của module Media Manager | Phiên #020 — Triển khai MediaUploadService, LocalStorageAdapter, config size/MIME, SHA-256 duplicate checks, transaction safety storage cleanups, và pass 27 tests với coverage >98%, build & lint ✅ |
+| 2026-07-12 | Hoàn thành và khóa (LOCKED) Step 3: EXIF & Processing Pipeline của module Media Manager | Phiên #020 — Triển khai MediaProcessingService, NativeImageProcessor đọc binary headers (PNG/JPEG/GIF/EXIF), sinh variants (thumbnail, medium, large), bọc safe errors, và pass 32 tests với coverage >98%, build & lint ✅ |
 
 ---
 
@@ -459,11 +460,11 @@ Launch      →    Maintenance & Expansion
 | Layer | Regions | Tourist Places | Businesses & Amenities | Attractions & Utilities | Identity & Auth | Articles & Tags | Media Manager |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | Domain (Entity/VO) | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED |
-| Repository | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED (Step 2) |
-| Service | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED (Step 2) |
+| Repository | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED (Step 3) |
+| Service | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED (Step 3) |
 | DTO & Validation | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | ⬜ |
 | Controller & Routes | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | ⬜ |
-| Unit / Integration Tests | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED (Step 2) |
+| Unit / Integration Tests | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED (Step 3) |
 
 - ✅ Phase 0 (Planning) — HOÀN THÀNH
 - ✅ Phase 1 (Database Design) — HOÀN THÀNH
@@ -475,7 +476,7 @@ Launch      →    Maintenance & Expansion
   - Sub-phase 3.4 Businesses & Amenities: 🔒 **LOCKED (Tích hợp & Khóa)**
   - Sub-phase 3.5 Attractions & Utilities: 🔒 **LOCKED (Tích hợp & Khóa)**
   - Sub-phase 3.6 Articles & Tags: 🔒 **LOCKED (Step 7/7 Hoàn thành)**
-  - Sub-phase 3.7 Media Manager: 🟡 **In Progress (Step 2/4 LOCKED)**
+  - Sub-phase 3.7 Media Manager: 🟡 **In Progress (Step 3/4 LOCKED)**
 
 ### Lộ trình chi tiết Media Manager Module (Sub-phase 3.7)
 
@@ -483,29 +484,29 @@ Launch      →    Maintenance & Expansion
 | :--- | :--- | :--- |
 | **#020** | **Step 1: Media Foundation** | 🔒 **LOCKED** |
 | **#020** | **Step 2: Upload Pipeline** | 🔒 **LOCKED** |
-| **Step 3** | **EXIF & Processing** | ⬜ **Chưa bắt đầu** |
+| **#020** | **Step 3: EXIF & Processing Pipeline** | 🔒 **LOCKED** |
 | **Step 4** | **API + Final Audit** | ⬜ **Chưa bắt đầu** |
 
 ## Next Session
 
 ### Objective
-Triển khai step tiếp theo trong lộ trình Media Manager: **Step 3: EXIF & Processing**.
+Triển khai step tiếp theo trong lộ trình Media Manager: **Step 4: API & Final Audit**.
 
 ### Current Position
 - **Current Phase**: Phase 3 (Core Modules)
 - **Current Session**: SESSION #020
-- **Current Step**: Sub-phase 3.7 Media Manager - Step 3 EXIF & Processing
+- **Current Step**: Sub-phase 3.7 Media Manager - Step 4 API & Final Audit
 
 ### Priority Tasks
-1. **EXIF metadata extraction:** Viết service trích xuất vị trí GPS và thông tin camera từ metadata của ảnh.
-2. **Image processing pipeline:** Tích hợp sharp để resize và chuyển đổi ảnh sang thumbnail/medium/large WebP.
+1. **API endpoints:** Viết DTOs, Controllers, Routes của Media.
+2. **Integration testing:** Chạy test route Hono, xác minh bảo mật (permission, auth) và khoá module.
 
 ### Remaining Work
-- Module Media Manager (Sub-phase 3.7 - Step 3, 4)
+- Module Media Manager (Sub-phase 3.7 - Step 4)
 - Module Reviews & Favorites (Sub-phase 3.8)
 - Module Operational Utilities (Sub-phase 3.9)
 
 ---
 
 *Tài liệu được tạo và bảo trì bởi AI Agent Antigravity (Google DeepMind)*
-*Cập nhật lần cuối: 2026-07-12T23:55:00+07:00*
+*Cập nhật lần cuối: 2026-07-12T23:59:00+07:00*
