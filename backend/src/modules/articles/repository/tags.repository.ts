@@ -3,8 +3,9 @@ import type { Tag } from '../domain/tag.entity';
 import { TagMapper } from './tags.mapper';
 import { db, type TransactionClient } from '@/lib/database/client';
 import { tags } from '@/lib/database/schema';
-import { eq, inArray, and, sql } from 'drizzle-orm';
+import { eq, inArray, and, sql, asc } from 'drizzle-orm';
 import {
+  RepositoryError,
   DuplicateKeyRepositoryError,
   EntityNotFoundRepositoryError,
   DatabaseOperationRepositoryError,
@@ -15,6 +16,9 @@ import {
 } from './repository-errors';
 
 function mapDbError(err: unknown, operation: string, details?: Record<string, unknown>): never {
+  if (err instanceof RepositoryError) {
+    throw err;
+  }
   const pgErr = err as { code?: string; constraint?: string; column?: string };
   switch (pgErr.code) {
     case '23505':
@@ -49,76 +53,109 @@ export class DrizzleTagsRepository implements ITagsRepository {
   }
 
   public async findById(id: string): Promise<Tag | null> {
-    const [raw] = await this.getClient()
-      .select(tagSelection)
-      .from(tags)
-      .where(eq(tags.id, id))
-      .limit(1);
+    try {
+      const [raw] = await this.getClient()
+        .select(tagSelection)
+        .from(tags)
+        .where(eq(tags.id, id))
+        .limit(1);
 
-    return raw ? TagMapper.toDomain(raw) : null;
+      return raw ? TagMapper.toDomain(raw) : null;
+    } catch (err: unknown) {
+      mapDbError(err, 'find tag by id', { id });
+    }
   }
 
   public async findBySlug(slug: string): Promise<Tag | null> {
-    const [raw] = await this.getClient()
-      .select(tagSelection)
-      .from(tags)
-      .where(eq(tags.slug, slug))
-      .limit(1);
+    try {
+      const [raw] = await this.getClient()
+        .select(tagSelection)
+        .from(tags)
+        .where(eq(tags.slug, slug))
+        .limit(1);
 
-    return raw ? TagMapper.toDomain(raw) : null;
+      return raw ? TagMapper.toDomain(raw) : null;
+    } catch (err: unknown) {
+      mapDbError(err, 'find tag by slug', { slug });
+    }
   }
 
   public async findAll(options?: ListTagsOptions): Promise<Tag[]> {
-    const page = options?.page ?? 1;
-    const limit = options?.limit ?? 100;
-    const offset = (page - 1) * limit;
+    try {
+      let page = options?.page ?? 1;
+      if (page < 1) page = 1;
+      let limit = options?.limit ?? 100;
+      if (limit < 1) limit = 1;
+      if (limit > 100) limit = 100;
 
-    const conditions = [];
-    if (options?.featuredOnly) {
-      conditions.push(eq(tags.isFeatured, true));
+      const offset = (page - 1) * limit;
+
+      const conditions = [];
+      if (options?.featuredOnly) {
+        conditions.push(eq(tags.isFeatured, true));
+      }
+
+      const query = this.getClient()
+        .select(tagSelection)
+        .from(tags);
+
+      if (conditions.length > 0) {
+        query.where(and(...conditions));
+      }
+
+      const results = await query
+        .orderBy(asc(tags.name))
+        .limit(limit)
+        .offset(offset);
+
+      return results.map((row) => TagMapper.toDomain(row));
+    } catch (err: unknown) {
+      mapDbError(err, 'find all tags');
     }
-
-    const query = this.getClient()
-      .select(tagSelection)
-      .from(tags);
-
-    if (conditions.length > 0) {
-      query.where(and(...conditions));
-    }
-
-    const results = await query.limit(limit).offset(offset);
-    return results.map((row) => TagMapper.toDomain(row));
   }
 
   public async findByIds(ids: string[]): Promise<Tag[]> {
     if (!ids || ids.length === 0) return [];
 
-    const results = await this.getClient()
-      .select(tagSelection)
-      .from(tags)
-      .where(inArray(tags.id, ids));
+    try {
+      const results = await this.getClient()
+        .select(tagSelection)
+        .from(tags)
+        .where(inArray(tags.id, ids))
+        .orderBy(asc(tags.name));
 
-    return results.map((row) => TagMapper.toDomain(row));
+      return results.map((row) => TagMapper.toDomain(row));
+    } catch (err: unknown) {
+      mapDbError(err, 'find tags by ids', { ids });
+    }
   }
 
   public async exists(id: string): Promise<boolean> {
-    const [raw] = await this.getClient()
-      .select({ exists: sql<number>`1` })
-      .from(tags)
-      .where(eq(tags.id, id))
-      .limit(1);
+    try {
+      const [raw] = await this.getClient()
+        .select({ exists: sql<number>`1` })
+        .from(tags)
+        .where(eq(tags.id, id))
+        .limit(1);
 
-    return !!raw;
+      return !!raw;
+    } catch (err: unknown) {
+      mapDbError(err, 'check tag existence', { id });
+    }
   }
 
   public async existsBySlug(slug: string): Promise<boolean> {
-    const [raw] = await this.getClient()
-      .select({ exists: sql<number>`1` })
-      .from(tags)
-      .where(eq(tags.slug, slug))
-      .limit(1);
+    try {
+      const [raw] = await this.getClient()
+        .select({ exists: sql<number>`1` })
+        .from(tags)
+        .where(eq(tags.slug, slug))
+        .limit(1);
 
-    return !!raw;
+      return !!raw;
+    } catch (err: unknown) {
+      mapDbError(err, 'check tag existence by slug', { slug });
+    }
   }
 
   public async save(tag: Tag, tx?: TransactionClient): Promise<void> {
@@ -155,13 +192,18 @@ export class DrizzleTagsRepository implements ITagsRepository {
   }
 
   public async delete(id: string, tx?: TransactionClient): Promise<void> {
-    const [deleted] = await this.getClient(tx)
-      .delete(tags)
-      .where(eq(tags.id, id))
-      .returning({ id: tags.id });
+    try {
+      const [deleted] = await this.getClient(tx)
+        .delete(tags)
+        .where(eq(tags.id, id))
+        .returning({ id: tags.id });
 
-    if (!deleted) {
-      throw new EntityNotFoundRepositoryError(`Tag with ID ${id} not found`);
+      if (!deleted) {
+        throw new EntityNotFoundRepositoryError('Tag not found', { id });
+      }
+    } catch (err: unknown) {
+      if (err instanceof EntityNotFoundRepositoryError) throw err;
+      mapDbError(err, 'delete tag', { id });
     }
   }
 }

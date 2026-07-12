@@ -1,5 +1,7 @@
 import { ArticleDomainError } from './article-errors';
 
+const SEO_SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
 export interface TagProps {
   id: string;
   name: string;
@@ -56,8 +58,15 @@ export class Tag {
       throw new ArticleDomainError('Tag slug is required');
     }
     const cleanSlug = slug.trim();
-    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(cleanSlug)) {
+    if (!SEO_SLUG_REGEX.test(cleanSlug)) {
       throw new ArticleDomainError('Tag slug must be a valid SEO slug format (lowercase alphanumeric and single dashes, no leading/trailing dashes)');
+    }
+  }
+
+  private static validateDescription(description: string | null): void {
+    const cleanDesc = description?.trim() || '';
+    if (cleanDesc.length > 500) {
+      throw new ArticleDomainError('Description must not exceed 500 characters');
     }
   }
 
@@ -72,6 +81,7 @@ export class Tag {
     Tag.validateId(id);
     Tag.validateName(name);
     Tag.validateSlug(slug);
+    Tag.validateDescription(description);
 
     const timestamp = Tag.resolveNow(now);
 
@@ -90,6 +100,7 @@ export class Tag {
     Tag.validateId(props.id);
     Tag.validateName(props.name);
     Tag.validateSlug(props.slug);
+    Tag.validateDescription(props.description);
     if (!props.createdAt || !props.updatedAt) {
       throw new ArticleDomainError('Missing required timestamps for tag rehydration');
     }
@@ -115,13 +126,18 @@ export class Tag {
 
   // Business Methods
   public rename(newName: string, now?: Date): void {
+    const cleanName = newName.trim();
+    if (this._name === cleanName) return;
     Tag.validateName(newName);
-    this._name = newName.trim();
+    this._name = cleanName;
     this._updatedAt = Tag.resolveNow(now);
   }
 
   public changeDescription(newDescription: string | null, now?: Date): void {
-    this._description = newDescription?.trim() || null;
+    const cleanDesc = newDescription?.trim() || null;
+    if (this._description === cleanDesc) return;
+    Tag.validateDescription(newDescription);
+    this._description = cleanDesc;
     this._updatedAt = Tag.resolveNow(now);
   }
 

@@ -14,12 +14,29 @@ import {
 } from '../dto/places.dto';
 import { validateBody, validateQuery, validateParams } from '@/middleware/validator';
 
+import { DrizzleUserRepository } from '@/modules/identity/repository/users.repository';
+import { DrizzleSessionRepository } from '@/modules/identity/repository/sessions.repository';
+import { DrizzleRefreshTokenRepository } from '@/modules/identity/repository/refresh-tokens.repository';
+import { DrizzlePermissionRepository } from '@/modules/identity/repository/permissions.repository';
+import { TokenService } from '@/modules/identity/service/token.service';
+import { SessionService } from '@/modules/identity/service/session.service';
+import { authMiddleware } from '@/modules/identity/middleware/auth.middleware';
+import { requirePermission } from '@/modules/identity/middleware/permission.middleware';
+
 const placesRouter = new Hono();
 
 const regionsRepo = new DrizzleRegionsRepository();
 const placesRepo = new DrizzleTouristPlacesRepository();
 const placesService = new PlacesService(regionsRepo, placesRepo);
 const controller = new PlacesController(placesService);
+
+const userRepo = new DrizzleUserRepository();
+const sessionRepo = new DrizzleSessionRepository();
+const tokenRepo = new DrizzleRefreshTokenRepository();
+const permissionRepo = new DrizzlePermissionRepository();
+const tokenService = new TokenService();
+const sessionService = new SessionService(sessionRepo, tokenRepo);
+const authGuard = authMiddleware(tokenService, sessionService, userRepo, permissionRepo);
 
 // ==========================================
 // PUBLIC ROUTES
@@ -49,25 +66,48 @@ placesRouter.get('/:id', validateParams(PlaceIdParamsSchema), controller.getById
 // ADMIN ROUTES
 // ==========================================
 
-// TODO: Integrate authentication and authorization middleware from Identity module once implemented (e.g. require admin permissions)
-placesRouter.post('/', validateBody(CreatePlaceSchema), controller.create);
+placesRouter.post(
+  '/',
+  authGuard,
+  requirePermission('place:write'),
+  validateBody(CreatePlaceSchema),
+  controller.create
+);
 
-// TODO: Integrate authentication and authorization middleware from Identity module once implemented
 placesRouter.patch(
   '/:id',
+  authGuard,
+  requirePermission('place:write'),
   validateParams(PlaceIdParamsSchema),
   validateBody(UpdatePlaceSchema),
   controller.update
 );
 
-// TODO: Integrate authentication and authorization middleware from Identity module once implemented
-placesRouter.delete('/:id', validateParams(PlaceIdParamsSchema), controller.delete);
+placesRouter.delete(
+  '/:id',
+  authGuard,
+  requirePermission('place:write'),
+  validateParams(PlaceIdParamsSchema),
+  controller.delete
+);
 
-// TODO: Integrate authentication and authorization middleware from Identity module once implemented
-placesRouter.patch('/:id/activate', validateParams(PlaceIdParamsSchema), controller.activate);
+placesRouter.patch(
+  '/:id/activate',
+  authGuard,
+  requirePermission('place:write'),
+  validateParams(PlaceIdParamsSchema),
+  controller.activate
+);
 
-// TODO: Integrate authentication and authorization middleware from Identity module once implemented
-placesRouter.patch('/:id/deactivate', validateParams(PlaceIdParamsSchema), controller.deactivate);
+placesRouter.patch(
+  '/:id/deactivate',
+  authGuard,
+  requirePermission('place:write'),
+  validateParams(PlaceIdParamsSchema),
+  controller.deactivate
+);
+
+
 
 export { placesRouter };
 export type { PlacesController };

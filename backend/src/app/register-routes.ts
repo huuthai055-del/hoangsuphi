@@ -7,6 +7,9 @@ import { placesRouter } from '@/modules/regions/route/places.route';
 import { businessesRouter } from '@/modules/businesses/route/businesses.route';
 import { attractionsRouter } from '@/modules/attractions/route/attractions.route';
 import { identityRouter } from '@/modules/identity/route/identity.route';
+import { categoriesRouter } from '@/modules/articles/route/categories.route';
+import { tagsRouter } from '@/modules/articles/route/tags.route';
+import { articlesRouter } from '@/modules/articles/route/articles.route';
 
 export function registerRoutes(app: Hono) {
   // Liveness Check
@@ -35,6 +38,9 @@ export function registerRoutes(app: Hono) {
   v1Router.route('/businesses', businessesRouter);
   v1Router.route('/attractions', attractionsRouter);
   v1Router.route('/auth', identityRouter);
+  v1Router.route('/categories', categoriesRouter);
+  v1Router.route('/tags', tagsRouter);
+  v1Router.route('/articles', articlesRouter);
 
   app.route(AppConfig.server.apiPrefix, v1Router);
 }

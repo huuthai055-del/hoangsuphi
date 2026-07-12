@@ -206,6 +206,7 @@ describe('Regions API Routing & Controller', () => {
   const mockSoftDelete = mock((_id: string) => Promise.resolve());
 
   beforeEach(async () => {
+    (globalThis as any).setupAuthSpy();
     const { createApp } = await import('../../../app');
     app = createApp();
 
@@ -272,7 +273,10 @@ describe('Regions API Routing & Controller', () => {
   test('POST /api/v1/regions - should return validation error 400 for bad slug or level', async () => {
     const res = await app.request('/api/v1/regions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer valid-token'
+      },
       body: JSON.stringify({
         name: 'Test',
         slug: 'invalid_slug',

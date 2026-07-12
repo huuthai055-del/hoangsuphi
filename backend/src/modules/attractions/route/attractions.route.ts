@@ -14,12 +14,29 @@ import {
 } from '../dto/attractions.dto';
 import { validateBody, validateQuery, validateParams } from '@/middleware/validator';
 
+import { DrizzleUserRepository } from '@/modules/identity/repository/users.repository';
+import { DrizzleSessionRepository } from '@/modules/identity/repository/sessions.repository';
+import { DrizzleRefreshTokenRepository } from '@/modules/identity/repository/refresh-tokens.repository';
+import { DrizzlePermissionRepository } from '@/modules/identity/repository/permissions.repository';
+import { TokenService } from '@/modules/identity/service/token.service';
+import { SessionService } from '@/modules/identity/service/session.service';
+import { authMiddleware } from '@/modules/identity/middleware/auth.middleware';
+import { requirePermission } from '@/modules/identity/middleware/permission.middleware';
+
 const attractionsRouter = new Hono();
 
 const regionsRepo = new DrizzleRegionsRepository();
 const attractionsRepo = new DrizzleAttractionsRepository();
 const service = new AttractionsService(regionsRepo, attractionsRepo);
 const controller = new AttractionsController(service);
+
+const userRepo = new DrizzleUserRepository();
+const sessionRepo = new DrizzleSessionRepository();
+const tokenRepo = new DrizzleRefreshTokenRepository();
+const permissionRepo = new DrizzlePermissionRepository();
+const tokenService = new TokenService();
+const sessionService = new SessionService(sessionRepo, tokenRepo);
+const authGuard = authMiddleware(tokenService, sessionService, userRepo, permissionRepo);
 
 // ==========================================
 // PUBLIC ROUTES
@@ -57,33 +74,48 @@ attractionsRouter.get('/:id', validateParams(AttractionIdParamsSchema), controll
 // ADMIN ROUTES
 // ==========================================
 
-// TODO: Integrate authentication and authorization middleware from Identity module once implemented
-attractionsRouter.post('/', validateBody(CreateAttractionSchema), controller.create);
+attractionsRouter.post(
+  '/',
+  authGuard,
+  requirePermission('attraction:write'),
+  validateBody(CreateAttractionSchema),
+  controller.create
+);
 
-// TODO: Integrate authentication and authorization middleware from Identity module once implemented
 attractionsRouter.patch(
   '/:id',
+  authGuard,
+  requirePermission('attraction:write'),
   validateParams(AttractionIdParamsSchema),
   validateBody(UpdateAttractionSchema),
   controller.update
 );
 
-// TODO: Integrate authentication and authorization middleware from Identity module once implemented
-attractionsRouter.delete('/:id', validateParams(AttractionIdParamsSchema), controller.delete);
+attractionsRouter.delete(
+  '/:id',
+  authGuard,
+  requirePermission('attraction:write'),
+  validateParams(AttractionIdParamsSchema),
+  controller.delete
+);
 
-// TODO: Integrate authentication and authorization middleware from Identity module once implemented
 attractionsRouter.patch(
   '/:id/activate',
+  authGuard,
+  requirePermission('attraction:write'),
   validateParams(AttractionIdParamsSchema),
   controller.activate
 );
 
-// TODO: Integrate authentication and authorization middleware from Identity module once implemented
 attractionsRouter.patch(
   '/:id/deactivate',
+  authGuard,
+  requirePermission('attraction:write'),
   validateParams(AttractionIdParamsSchema),
   controller.deactivate
 );
+
+
 
 export { attractionsRouter };
 export type { AttractionsController };

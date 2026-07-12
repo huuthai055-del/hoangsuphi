@@ -14,12 +14,29 @@ import {
 } from '../dto/businesses.dto';
 import { validateBody, validateQuery, validateParams } from '@/middleware/validator';
 
+import { DrizzleUserRepository } from '@/modules/identity/repository/users.repository';
+import { DrizzleSessionRepository } from '@/modules/identity/repository/sessions.repository';
+import { DrizzleRefreshTokenRepository } from '@/modules/identity/repository/refresh-tokens.repository';
+import { DrizzlePermissionRepository } from '@/modules/identity/repository/permissions.repository';
+import { TokenService } from '@/modules/identity/service/token.service';
+import { SessionService } from '@/modules/identity/service/session.service';
+import { authMiddleware } from '@/modules/identity/middleware/auth.middleware';
+import { requirePermission } from '@/modules/identity/middleware/permission.middleware';
+
 const businessesRouter = new Hono();
 
 const regionsRepo = new DrizzleRegionsRepository();
 const businessesRepo = new DrizzleBusinessesRepository();
 const service = new BusinessesService(regionsRepo, businessesRepo);
 const controller = new BusinessesController(service);
+
+const userRepo = new DrizzleUserRepository();
+const sessionRepo = new DrizzleSessionRepository();
+const tokenRepo = new DrizzleRefreshTokenRepository();
+const permissionRepo = new DrizzlePermissionRepository();
+const tokenService = new TokenService();
+const sessionService = new SessionService(sessionRepo, tokenRepo);
+const authGuard = authMiddleware(tokenService, sessionService, userRepo, permissionRepo);
 
 // ==========================================
 // PUBLIC ROUTES
@@ -49,33 +66,48 @@ businessesRouter.get('/:id', validateParams(BusinessIdParamsSchema), controller.
 // ADMIN ROUTES
 // ==========================================
 
-// TODO: Integrate authentication and authorization middleware from Identity module once implemented (e.g. require admin permissions)
-businessesRouter.post('/', validateBody(CreateBusinessSchema), controller.create);
+businessesRouter.post(
+  '/',
+  authGuard,
+  requirePermission('business:write'),
+  validateBody(CreateBusinessSchema),
+  controller.create
+);
 
-// TODO: Integrate authentication and authorization middleware from Identity module once implemented
 businessesRouter.patch(
   '/:id',
+  authGuard,
+  requirePermission('business:write'),
   validateParams(BusinessIdParamsSchema),
   validateBody(UpdateBusinessSchema),
   controller.update
 );
 
-// TODO: Integrate authentication and authorization middleware from Identity module once implemented
-businessesRouter.delete('/:id', validateParams(BusinessIdParamsSchema), controller.delete);
+businessesRouter.delete(
+  '/:id',
+  authGuard,
+  requirePermission('business:write'),
+  validateParams(BusinessIdParamsSchema),
+  controller.delete
+);
 
-// TODO: Integrate authentication and authorization middleware from Identity module once implemented
 businessesRouter.patch(
   '/:id/activate',
+  authGuard,
+  requirePermission('business:write'),
   validateParams(BusinessIdParamsSchema),
   controller.activate
 );
 
-// TODO: Integrate authentication and authorization middleware from Identity module once implemented
 businessesRouter.patch(
   '/:id/deactivate',
+  authGuard,
+  requirePermission('business:write'),
   validateParams(BusinessIdParamsSchema),
   controller.deactivate
 );
+
+
 
 export { businessesRouter };
 export type { BusinessesController };

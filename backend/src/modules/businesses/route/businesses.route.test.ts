@@ -220,6 +220,7 @@ describe('Businesses API Routing & Controller', () => {
   const mockFindRegionById = mock((_id: string) => Promise.resolve<Region | null>(null));
 
   beforeEach(async () => {
+    (globalThis as any).setupAuthSpy();
     const { createApp } = await import('../../../app');
     app = createApp();
 
@@ -334,7 +335,10 @@ describe('Businesses API Routing & Controller', () => {
 
     const res = await app.request('/api/v1/businesses', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer valid-token'
+      },
       body: JSON.stringify({
         regionId: '3a552ef3-40e1-7ca7-8000-000000000001',
         businessTypeId: '3a552ef3-40e1-7ca7-8000-000000000003',
@@ -357,7 +361,10 @@ describe('Businesses API Routing & Controller', () => {
 
     const res = await app.request('/api/v1/businesses/3a552ef3-40e1-7ca7-8000-000000000002', {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer valid-token'
+      },
       body: JSON.stringify({
         name: 'Updated Name',
       }),
@@ -374,6 +381,9 @@ describe('Businesses API Routing & Controller', () => {
 
     const res = await app.request('/api/v1/businesses/3a552ef3-40e1-7ca7-8000-000000000002', {
       method: 'DELETE',
+      headers: {
+        'Authorization': 'Bearer valid-token'
+      }
     });
 
     expect(res.status).toBe(204);

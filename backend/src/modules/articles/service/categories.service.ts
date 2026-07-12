@@ -2,9 +2,9 @@ import type { ICategoriesRepository } from '../repository/categories-repository.
 import type { ILogger, IClock } from './interfaces';
 import { Category } from '../domain/category.entity';
 import { generateUuidV7 } from '@/common/utils/uuid';
-import { slugify } from '@/common/utils/slug';
 import { NotFoundError, ConflictError, ValidationError } from '@/common/errors/http.errors';
 import { DuplicateKeyRepositoryError, EntityNotFoundRepositoryError } from '../repository/repository-errors';
+import { CategoryDomainError } from '../domain/article-errors';
 
 export interface CreateCategoryCommand {
   id?: string;
@@ -52,6 +52,21 @@ export class CategoriesService {
     }
   }
 
+  private mapDomainError(err: unknown): never {
+    if (err instanceof CategoryDomainError) {
+      throw new ValidationError(err.message);
+    }
+    throw err;
+  }
+
+  private runDomain<T>(fn: () => T): T {
+    try {
+      return fn();
+    } catch (err) {
+      this.mapDomainError(err);
+    }
+  }
+
   public async getCategoryById(id: string): Promise<Category> {
     const category = await this.categoriesRepo.findById(id);
     if (!category) {
@@ -75,7 +90,7 @@ export class CategoriesService {
 
   public async createCategory(command: CreateCategoryCommand): Promise<Category> {
     return this.executeWithLogging('create_category', { code: command.code }, async () => {
-      const code = (command.code || '').trim();
+      const code = (command.code || '').trim().toLowerCase();
       if (!code || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(code)) {
         throw new ValidationError('Category code must be a valid SEO slug format');
       }
@@ -86,12 +101,14 @@ export class CategoriesService {
       }
 
       const id = command.id ?? generateUuidV7();
-      const category = Category.create(
-        id,
-        code,
-        command.name,
-        command.description ?? null,
-        this.clock.now()
+      const category = this.runDomain(() =>
+        Category.create(
+          id,
+          code,
+          command.name,
+          command.description ?? null,
+          this.clock.now()
+        )
       );
 
       try {
@@ -114,12 +131,22 @@ export class CategoriesService {
         throw new NotFoundError(`Category not found with ID: ${id}`);
       }
 
-      if (command.name !== undefined) {
-        category.rename(command.name, this.clock.now());
-      }
+      const originalName = category.name;
+      const originalDescription = category.description;
 
-      if (command.description !== undefined) {
-        category.changeDescription(command.description, this.clock.now());
+      this.runDomain(() => {
+        if (command.name !== undefined) {
+          category.rename(command.name, this.clock.now());
+        }
+
+        if (command.description !== undefined) {
+          category.changeDescription(command.description, this.clock.now());
+        }
+      });
+
+      // Tránh DB write thừa nếu không có bất cứ thay đổi nào
+      if (category.name === originalName && category.description === originalDescription) {
+        return category;
       }
 
       try {

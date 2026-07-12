@@ -217,6 +217,7 @@ describe('Tourist Places API Routing & Controller', () => {
   const mockFindRegionById = mock((_id: string) => Promise.resolve<Region | null>(null));
 
   beforeEach(async () => {
+    (globalThis as any).setupAuthSpy();
     const { createApp } = await import('../../../app');
     app = createApp();
 
@@ -336,7 +337,10 @@ describe('Tourist Places API Routing & Controller', () => {
 
     const res = await app.request('/api/v1/places', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer valid-token'
+      },
       body: JSON.stringify({
         regionId: '3a552ef3-40e1-7ca7-8000-000000000001',
         name: 'Rice Terrace',
@@ -355,7 +359,10 @@ describe('Tourist Places API Routing & Controller', () => {
   test('POST /api/v1/places - should fail with 400 validation error on bad coordinate input', async () => {
     const res = await app.request('/api/v1/places', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer valid-token'
+      },
       body: JSON.stringify({
         regionId: '3a552ef3-40e1-7ca7-8000-000000000001',
         name: 'Rice Terrace',
@@ -373,7 +380,10 @@ describe('Tourist Places API Routing & Controller', () => {
 
     const res = await app.request('/api/v1/places/3a552ef3-40e1-7ca7-8000-000000000002', {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer valid-token'
+      },
       body: JSON.stringify({
         name: 'New Rice Terrace',
       }),
@@ -390,6 +400,9 @@ describe('Tourist Places API Routing & Controller', () => {
 
     const res = await app.request('/api/v1/places/3a552ef3-40e1-7ca7-8000-000000000002', {
       method: 'DELETE',
+      headers: {
+        'Authorization': 'Bearer valid-token'
+      }
     });
 
     expect(res.status).toBe(204);
@@ -414,6 +427,9 @@ describe('Tourist Places API Routing & Controller', () => {
 
     const res = await app.request('/api/v1/places/3a552ef3-40e1-7ca7-8000-000000000002/activate', {
       method: 'PATCH',
+      headers: {
+        'Authorization': 'Bearer valid-token'
+      }
     });
 
     expect(res.status).toBe(200);
@@ -429,6 +445,9 @@ describe('Tourist Places API Routing & Controller', () => {
       '/api/v1/places/3a552ef3-40e1-7ca7-8000-000000000002/deactivate',
       {
         method: 'PATCH',
+        headers: {
+          'Authorization': 'Bearer valid-token'
+        }
       }
     );
 

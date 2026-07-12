@@ -1,4 +1,6 @@
-import { ArticleDomainError } from './article-errors';
+import { CategoryDomainError } from './article-errors';
+
+const SEO_SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export interface CategoryProps {
   id: string;
@@ -34,27 +36,34 @@ export class Category {
   // Pure Validators
   private static validateId(id: string): void {
     if (!id || id.trim() === '') {
-      throw new ArticleDomainError('Category ID is required');
+      throw new CategoryDomainError('Category ID is required');
     }
   }
 
   private static validateCode(code: string): void {
     if (!code || code.trim() === '') {
-      throw new ArticleDomainError('Category code is required');
+      throw new CategoryDomainError('Category code is required');
     }
     const cleanCode = code.trim();
-    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(cleanCode)) {
-      throw new ArticleDomainError('Category code must be a valid SEO slug format (lowercase alphanumeric and single dashes, no leading/trailing dashes)');
+    if (!SEO_SLUG_REGEX.test(cleanCode)) {
+      throw new CategoryDomainError('Category code must be a valid SEO slug format (lowercase alphanumeric and single dashes, no leading/trailing dashes)');
     }
   }
 
   private static validateName(name: string): void {
     const cleanName = name?.trim();
     if (!cleanName || cleanName === '') {
-      throw new ArticleDomainError('Category name cannot be blank');
+      throw new CategoryDomainError('Category name cannot be blank');
     }
     if (cleanName.length > 100) {
-      throw new ArticleDomainError('Category name must not exceed 100 characters');
+      throw new CategoryDomainError('Category name must not exceed 100 characters');
+    }
+  }
+
+  private static validateDescription(description: string | null): void {
+    const cleanDesc = description?.trim() || '';
+    if (cleanDesc.length > 500) {
+      throw new CategoryDomainError('Description must not exceed 500 characters');
     }
   }
 
@@ -68,6 +77,7 @@ export class Category {
     Category.validateId(id);
     Category.validateCode(code);
     Category.validateName(name);
+    Category.validateDescription(description);
 
     const timestamp = Category.resolveNow(now);
 
@@ -85,8 +95,9 @@ export class Category {
     Category.validateId(props.id);
     Category.validateCode(props.code);
     Category.validateName(props.name);
+    Category.validateDescription(props.description);
     if (!props.createdAt || !props.updatedAt) {
-      throw new ArticleDomainError('Missing required timestamps for category rehydration');
+      throw new CategoryDomainError('Missing required timestamps for category rehydration');
     }
     return new Category({
       id: props.id,
@@ -108,13 +119,18 @@ export class Category {
 
   // Business Methods
   public rename(newName: string, now?: Date): void {
+    const cleanName = newName.trim();
+    if (this._name === cleanName) return;
     Category.validateName(newName);
-    this._name = newName.trim();
+    this._name = cleanName;
     this._updatedAt = Category.resolveNow(now);
   }
 
   public changeDescription(newDescription: string | null, now?: Date): void {
-    this._description = newDescription?.trim() || null;
+    const cleanDesc = newDescription?.trim() || null;
+    if (this._description === cleanDesc) return;
+    Category.validateDescription(newDescription);
+    this._description = cleanDesc;
     this._updatedAt = Category.resolveNow(now);
   }
 

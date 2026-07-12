@@ -1,5 +1,8 @@
 import { ArticleDomainError } from './article-errors';
 
+const MAX_VIEW_COUNT = 2147483647;
+const SEO_SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
 export type ArticleStatus = 'draft' | 'under_review' | 'published' | 'archived';
 
 export interface ArticleProps {
@@ -82,7 +85,7 @@ export class Article {
       throw new ArticleDomainError('Article slug is required');
     }
     const cleanSlug = slug.trim();
-    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(cleanSlug)) {
+    if (!SEO_SLUG_REGEX.test(cleanSlug)) {
       throw new ArticleDomainError('Article slug must be a valid SEO slug format (lowercase alphanumeric and single dashes, no leading/trailing dashes)');
     }
   }
@@ -401,7 +404,7 @@ export class Article {
   public recordView(): void {
     this.ensureNotDeleted();
     // PostgreSQL INT limit is 2147483647
-    if (this._viewCount < 2147483647) {
+    if (this._viewCount < MAX_VIEW_COUNT) {
       this._viewCount++;
     }
   }

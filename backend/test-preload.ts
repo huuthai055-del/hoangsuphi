@@ -1,4 +1,10 @@
-import { mock } from 'bun:test';
+import { mock, spyOn as bunSpyOn } from 'bun:test';
+import { DrizzleUserRepository } from '@/modules/identity/repository/users.repository';
+import { DrizzlePermissionRepository } from '@/modules/identity/repository/permissions.repository';
+import { DrizzleSessionRepository } from '@/modules/identity/repository/sessions.repository';
+import { TokenService } from '@/modules/identity/service/token.service';
+import { SessionService } from '@/modules/identity/service/session.service';
+
 
 // Mock database client globally
 mock.module('@/lib/database/client', () => {
@@ -150,3 +156,71 @@ mock.module('@/modules/attractions/repository/attractions.repository', () => {
     },
   };
 });
+
+// Expose globally to support re-creating authorization spies on beforeEach in routing tests (preventing mock.restore() issues)
+(globalThis as any).setupAuthSpy = () => {
+  const { spyOn } = require('bun:test');
+  const { DrizzleUserRepository } = require('@/modules/identity/repository/users.repository');
+  const { DrizzlePermissionRepository } = require('@/modules/identity/repository/permissions.repository');
+  const { DrizzleSessionRepository } = require('@/modules/identity/repository/sessions.repository');
+  const { TokenService } = require('@/modules/identity/service/token.service');
+  const { SessionService } = require('@/modules/identity/service/session.service');
+
+  try {
+    spyOn(DrizzleUserRepository.prototype, 'findById').mockImplementation(async (id: string) => {
+      return {
+        id,
+        email: 'admin@hoangsuphi.vn',
+        status: 'active',
+        permissionsVersion: 1,
+      } as any;
+    });
+
+    spyOn(DrizzlePermissionRepository.prototype, 'findByUserId').mockImplementation(async () => {
+      return [
+        'system:write',
+        'place:write',
+        'attraction:write',
+        'business:write',
+        'article:write',
+        'article:publish'
+      ];
+    });
+
+    spyOn(DrizzleSessionRepository.prototype, 'findById').mockImplementation(async (id: string) => {
+      return {
+        id,
+        userId: '00000000-0000-0000-0000-000000000001',
+        isRevoked: false,
+        expiresAt: new Date(Date.now() + 100000),
+      } as any;
+    });
+
+    spyOn(TokenService.prototype, 'verifyAccessToken').mockImplementation(async (token: string) => {
+      if (token === 'valid-token') {
+        return {
+          sub: '00000000-0000-0000-0000-000000000001',
+          sid: '00000000-0000-0000-0000-000000000002',
+          permissionsVersion: 1,
+        };
+      }
+      return null;
+    });
+
+    spyOn(SessionService.prototype, 'isSessionActive').mockImplementation(async () => {
+      return true;
+    });
+
+    spyOn(SessionService.prototype, 'touchSession').mockImplementation(async () => {
+      return Promise.resolve();
+    });
+  } catch (err) {
+    // Ignore spyOn errors if already spied and not restorable
+  }
+};
+
+// Initial setup
+(globalThis as any).setupAuthSpy();
+
+
+
