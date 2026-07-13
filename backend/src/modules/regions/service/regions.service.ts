@@ -130,25 +130,25 @@ export class RegionsService {
     }
 
     if (command.name !== undefined) {
-      region.name = command.name.trim();
+      region.rename(command.name.trim(), region.slug);
     }
     if (command.description !== undefined) {
-      region.description = command.description;
-    }
-    if (command.latitude !== undefined) {
-      region.latitude = command.latitude;
-    }
-    if (command.longitude !== undefined) {
-      region.longitude = command.longitude;
+      region.changeDescription(command.description);
     }
     if (command.center !== undefined) {
-      region.geom = command.center ? new GPSLocation(command.center.lng, command.center.lat) : null;
+      region.updateLocation(command.center ? new GPSLocation(command.center.lng, command.center.lat) : null);
+    } else if (command.latitude !== undefined || command.longitude !== undefined) {
+      const lat = command.latitude !== undefined ? command.latitude : region.latitude;
+      const lng = command.longitude !== undefined ? command.longitude : region.longitude;
+      region.updateLocation(lat !== null && lng !== null ? new GPSLocation(lng, lat) : null);
     }
     if (command.status !== undefined) {
-      region.status = command.status;
+      if (command.status === 'active') {
+        region.activate();
+      } else {
+        region.deactivate();
+      }
     }
-
-    region.updatedAt = new Date();
 
     const isParentChanging = command.parentId !== undefined && command.parentId !== region.parentId;
 
@@ -181,14 +181,12 @@ export class RegionsService {
 
       const oldPath = region.path.getValue();
       const newPath = newPathValue;
+      const oldLevel = region.level;
 
       const descendants = await this.regionsRepo.findSubtree(oldPath);
 
       await db.transaction(async (tx) => {
-        region.parentId = command.parentId ?? null;
-        const oldLevel = region.level;
-        region.level = newLevel;
-        region.path = new LtreePath(newPath);
+        region.move(command.parentId ?? null, new LtreePath(newPath), newLevel);
 
         await this.regionsRepo.update(region, tx);
 
@@ -200,9 +198,7 @@ export class RegionsService {
           const relativePath = descPathVal.substring(oldPath.length);
           const updatedDescPath = newPath + relativePath;
 
-          desc.level = (desc.level + levelDiff) as RegionLevel;
-          desc.path = new LtreePath(updatedDescPath);
-          desc.updatedAt = new Date();
+          desc.move(desc.parentId, new LtreePath(updatedDescPath), (desc.level + levelDiff) as RegionLevel);
 
           await this.regionsRepo.update(desc, tx);
         }

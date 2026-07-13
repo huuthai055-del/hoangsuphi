@@ -19,22 +19,22 @@ export const RegionMapper = {
     deletedAt: Date | null;
   }): Region {
     const geom = raw.geom ? new GPSLocation(Number(raw.geom.lng), Number(raw.geom.lat)) : null;
-    return new Region(
-      raw.id,
-      raw.parentId,
-      raw.name,
-      raw.slug,
-      raw.level as RegionLevel,
-      new LtreePath(raw.path),
-      raw.latitude ? Number(raw.latitude) : null,
-      raw.longitude ? Number(raw.longitude) : null,
+    return Region.rehydrate({
+      id: raw.id,
+      parentId: raw.parentId,
+      name: raw.name,
+      slug: raw.slug,
+      level: raw.level as RegionLevel,
+      path: new LtreePath(raw.path),
+      latitude: raw.latitude ? Number(raw.latitude) : null,
+      longitude: raw.longitude ? Number(raw.longitude) : null,
       geom,
-      raw.description,
-      raw.deletedAt ? 'inactive' : 'active',
-      raw.createdAt,
-      raw.updatedAt,
-      raw.deletedAt
-    );
+      description: raw.description,
+      status: raw.deletedAt ? 'inactive' : 'active',
+      createdAt: raw.createdAt,
+      updatedAt: raw.updatedAt,
+      deletedAt: raw.deletedAt,
+    });
   },
 
   toPersistence(region: Region) {
