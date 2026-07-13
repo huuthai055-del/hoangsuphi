@@ -154,48 +154,51 @@ export class PlacesService {
       if (region.deletedAt) {
         throw new ValidationError(`Region has been soft-deleted: ${command.regionId}`);
       }
-      place.regionId = command.regionId;
+      place.changeRegion(command.regionId);
     }
 
-    if (command.name !== undefined) {
-      place.name = command.name.trim();
-    }
-
-    if (command.slug !== undefined) {
-      const slug = slugify(command.slug);
-      if (!slug) {
-        throw new ValidationError('Could not generate a valid slug from the provided slug');
-      }
-      if (slug !== place.slug) {
-        const existingSlug = await this.placesRepo.findBySlug(slug);
-        if (existingSlug) {
-          throw new ConflictError(`Slug already exists: ${slug}`);
+    if (command.name !== undefined || command.slug !== undefined) {
+      const newName = command.name !== undefined ? command.name.trim() : place.name;
+      let newSlug = place.slug;
+      if (command.slug !== undefined) {
+        const slug = slugify(command.slug);
+        if (!slug) {
+          throw new ValidationError('Could not generate a valid slug from the provided slug');
         }
-        place.slug = slug;
+        if (slug !== place.slug) {
+          const existingSlug = await this.placesRepo.findBySlug(slug);
+          if (existingSlug) {
+            throw new ConflictError(`Slug already exists: ${slug}`);
+          }
+        }
+        newSlug = slug;
       }
+      place.rename(newName, newSlug);
     }
 
     if (command.location !== undefined) {
       try {
-        place.location = new GPSLocation(command.location.lng, command.location.lat);
+        place.updateLocation(new GPSLocation(command.location.lng, command.location.lat));
       } catch (err) {
         throw new ValidationError(err instanceof Error ? err.message : 'Invalid GPS coordinates');
       }
     }
 
     if (command.description !== undefined) {
-      place.description = command.description;
+      place.updateDescription(command.description);
     }
 
     if (command.coverUrl !== undefined) {
-      place.coverUrl = command.coverUrl;
+      place.changeCover(command.coverUrl);
     }
 
     if (command.status !== undefined) {
-      place.status = command.status;
+      if (command.status === 'active') {
+        place.activate();
+      } else {
+        place.deactivate();
+      }
     }
-
-    place.updatedAt = new Date();
 
     await this.placesRepo.update(place);
 

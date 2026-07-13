@@ -14,19 +14,19 @@ export const TouristPlaceMapper = {
     updatedAt: Date;
     deletedAt: Date | null;
   }): TouristPlace {
-    return new TouristPlace(
-      raw.id,
-      raw.regionId,
-      raw.name,
-      raw.slug,
-      new GPSLocation(Number(raw.geom.lng), Number(raw.geom.lat)),
-      raw.description,
-      raw.coverUrl,
-      raw.deletedAt ? 'inactive' : 'active',
-      raw.createdAt,
-      raw.updatedAt,
-      raw.deletedAt
-    );
+    return TouristPlace.rehydrate({
+      id: raw.id,
+      regionId: raw.regionId,
+      name: raw.name,
+      slug: raw.slug,
+      location: new GPSLocation(Number(raw.geom.lng), Number(raw.geom.lat)),
+      description: raw.description,
+      coverUrl: raw.coverUrl,
+      status: raw.deletedAt ? 'inactive' : 'active',
+      createdAt: raw.createdAt,
+      updatedAt: raw.updatedAt,
+      deletedAt: raw.deletedAt,
+    });
   },
 
   toPersistence(place: TouristPlace) {
