@@ -15,7 +15,7 @@
 
 # 📋 PROJECT CONTEXT — CỔNG THÔNG TIN DU LỊCH HOÀNG SU PHÌ
 
-> **Cập nhật lần cuối:** 2026-07-11T17:55:00+07:00 | **Phiên:** #015 | **Trạng thái:** 🟡 Phase 3 - Đang thực hiện (Sub-phase 3.1 Identity & Access Control 🔒 LOCKED | Sub-phase 3.2 Regions 🔒 LOCKED | Sub-phase 3.3 Tourist Places 🔒 LOCKED | Sub-phase 3.4 Businesses & Amenities 🔒 LOCKED | Sub-phase 3.5 Attractions & Utilities 🔒 LOCKED | Sub-phase 3.6 Articles & Tags Step 4/7 🔒 LOCKED)
+> **Cập nhật lần cuối:** 2026-07-13T22:50:00+07:00 | **Phiên:** #017 | **Trạng thái:** 🟡 Phase 3 - Đang thực hiện (Sub-phase 3.1 Identity & Access Control 🔒 LOCKED | Sub-phase 3.2 Regions 🔒 LOCKED | Sub-phase 3.3 Tourist Places 🔒 LOCKED | Sub-phase 3.4 Businesses & Amenities 🔒 LOCKED | Sub-phase 3.5 Attractions & Utilities 🔒 LOCKED | Sub-phase 3.6 Articles & Tags 🔒 LOCKED | Sub-phase 3.9 Weather + Notifications + Itineraries + FAQs + Top Lists 🔒 LOCKED)
 
 ---
 
@@ -257,17 +257,20 @@ scope: api | db | frontend | infra | auth | search | media
 | 11 | Attractions & Utilities Module — Domain, Repo, Service, DTO, Controller, Route, Tests & Locked | #009 | ✅ |
 | 12 | Identity & Access Control Architecture Design Document | #010 | ✅ |
 | 13 | Identity & Access Control Module — Domain, Repositories, Services, API Endpoints, Middleware, 100% Tests & Locked | #013 | ✅ |
+| 14 | Articles & Tags Module — Domain, Repositories, Services, DTOs, Controllers, Routes, Tests & Locked | #015 | ✅ |
+| 15 | Weather, Notifications, Itineraries, FAQs & Top Lists Modules — Domain, Repositories, Services, DTOs, Controllers, Routes, DI Container, Integration Tests & Locked | #017 | ✅ |
 
 ---
 
 ## 8. CURRENT TASK
 
-> **Phiên #013 — 2026-07-10 (HOÀN THÀNH)**
+> **Phiên #017 — 2026-07-13 (HOÀN THÀNH)**
 
-- [x] Review toàn bộ Step 6 (API Endpoints & Routing) và DTOs, loại bỏ header `x-session-id` dư thừa.
-- [x] Triển khai Step 7/7 (Integration Tests & Security Audit): bổ sung các test cases bảo mật (RTR replay attacks, expired tokens, revoked sessions, user status, permissions version validation).
-- [x] Đạt 100% Lines Coverage cho lõi module, vượt qua toàn bộ 362/362 tests, linter & build sạch.
-- [x] Rà soát và khóa (LOCKED) toàn bộ module Identity & Access Control.
+- [x] Triển khai toàn bộ module Weather, Notifications, Itineraries, FAQs, và Top Lists.
+- [x] Tái cấu trúc sang mô hình Composition Root với DI Container (`container.ts`) giải quyết các phụ thuộc tự động.
+- [x] Tích hợp Middleware xác thực, phân quyền (với Permission Constants & Roles) và chống lỗ hổng bảo mật IDOR.
+- [x] Viết integration tests đầy đủ cho tất cả các Router, đạt 863/863 tests pass, build thành công và Biome linter sạch lỗi.
+- [x] Khóa (LOCKED) toàn bộ Sub-phase 3.9.
 
 ---
 
@@ -336,6 +339,7 @@ scope: api | db | frontend | infra | auth | search | media
 | D8 | 2026-07-06 | Debezium CDC thay sync thủ công | Đáng tin cậy hơn, không bị missed update khi API fail |
 | D9 | 2026-07-09 | Single-DB-trip In-Memory authorization architecture | Tránh query DB liên tục trong các middleware phân quyền bằng cách load song song permissions tại authMiddleware và lưu vào Hono context |
 | D10 | 2026-07-09 | Bỏ hoàn toàn vai trò của Role Repository và RBAC database layer | Chỉ tuân thủ kiến trúc phân quyền dựa trên quyền hạn (PBAC), bỏ Role queries, giảm thiểu bảng user_roles |
+| D11 | 2026-07-13 | Composition Root / DI Container (`container.ts`) | Tách biệt hoàn toàn việc khởi tạo giữa các Router và Repository/Service/Middleware, hỗ trợ cơ chế ghi đè (override registry) sạch khi kiểm thử tích hợp (integration tests) mà không gây rò rỉ bộ nhớ hoặc sửa đổi mã nguồn production. |
 
 ---
 

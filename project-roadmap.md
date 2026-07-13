@@ -1,17 +1,17 @@
 # 🗺️ PROJECT ROADMAP — CỔNG THÔNG TIN DU LỊCH HOÀNG SU PHÌ
-
-> **Cập nhật lần cuối:** 2026-07-13T20:30:00+07:00 | **Phiên:** #021
+ 
+> **Cập nhật lần cuối:** 2026-07-13T22:50:00+07:00 | **Phiên:** #022
 > **Mục đích:** Theo dõi tiến độ toàn bộ vòng đời dự án từ ý tưởng đến vận hành.
-
+ 
 ---
-
+ 
 ## TỔNG QUAN TIẾN ĐỘ
-
+ 
 ```
 Phase  0  Planning                ██████████  ✅ HOÀN THÀNH
 Phase  1  Database Design         ██████████  ✅ HOÀN THÀNH
 Phase  2  Backend Foundation      ██████████  ✅ HOÀN THÀNH (V1.0 Code & Docs Locked)
-Phase  3  Core Modules            █████████░  [/] Đang thực hiện (3.1 🔒, 3.2 Regions 🔒, 3.3 Places 🔒, 3.4 Businesses 🔒, 3.5 Attractions 🔒, 3.6 Articles & Tags 🔒, 3.7 🔒, 3.8 [/])
+Phase  3  Core Modules            ██████████  ✅ PHASE COMPLETED (3.1 - 3.9 🔒 Locked)
 Phase  4  Advanced Features       ░░░░░░░░░░  ⬜ Chưa bắt đầu
 Phase  5  Frontend                ░░░░░░░░░░  ⬜ Chưa bắt đầu
 Phase  6  Admin CMS               ░░░░░░░░░░  ⬜ Chưa bắt đầu
@@ -23,15 +23,15 @@ Phase 11  Content                 ░░░░░░░░░░  ⬜ Chưa bắ
 Phase 12  Launch                  ░░░░░░░░░░  ⬜ Chưa bắt đầu
 Phase 13  Maintenance & Expansion ░░░░░░░░░░  ⬜ Chưa bắt đầu
 ```
-
+ 
 ---
-
+ 
 ## LUỒNG PHÁT TRIỂN
-
+ 
 ```
 Phase 0          Phase 1          Phase 2          Phase 3
 Planning    →    Database    →    Backend     →    Core
-✅ Done          ✅ Done          ✅ Done          [/] In Progress (3.1 🔒, 3.2 Regions 🔒, 3.3 Places 🔒, 3.4 Businesses 🔒, 3.5 Attractions 🔒, 3.6 Articles & Tags 🔒, 3.7 🔒, 3.8 [/])
+✅ Done          ✅ Done          ✅ Done          ✅ Phase Completed (3.1 - 3.9 🔒 Locked)
     ↓
 Phase 4          Phase 5          Phase 6          Phase 7
 Advanced    →    Frontend    →    Admin CMS   →    Performance
@@ -132,15 +132,15 @@ Launch      →    Maintenance & Expansion
 
 ---
 
-### 🔑 PHASE 3 — CORE MODULES (Các module nghiệp vụ chính) `ĐANG THỰC HIỆN`
-
+### ✅ PHASE 3 — CORE MODULES (Các module nghiệp vụ chính) `HOÀN THÀNH`
+ 
 > **Mục tiêu:** Xây dựng đầy đủ CRUD cho tất cả các module nghiệp vụ cốt lõi.
 > 
 > **Quy định nhãn trạng thái:**
 > - 🟡 **In Progress**: Đang thực hiện (thiết kế schema hoặc đang code logic/test).
 > - 🟢 **Completed**: Hoàn thành (code & test xong, đang chờ tích hợp hoặc review).
 > - 🔒 **Locked**: Đóng gói và khóa (đã chạy tích hợp, sửa lỗi, review và LOCK để tránh sửa chéo).
-
+ 
 | Sub-phase | Module nghiệp vụ | Trạng thái | Ghi chú |
 | :--- | :--- | :--- | :--- |
 | **3.1** | **Identity & Access Control** | 🔒 **Locked** | Toàn bộ module bao gồm Domain, Repositories, Services, Middlewares, API Endpoints, Integration Tests & Security Audit đã hoàn thành và 🔒 LOCKED (Session #013). |
@@ -150,8 +150,8 @@ Launch      →    Maintenance & Expansion
 | **3.5** | **Attractions & Utilities** | 🔒 **Locked** | Domain, Repository, Service, DTO, Controller, Routes, Tests. |
 | **3.6** | **Articles & Tags** | 🔒 **Locked** | CMS workflow. Step 1-7 Hoàn thành và 🔒 LOCKED (Session #019). |
 | **3.7** | **Media Manager** | 🔒 **Locked** | Media Schema, Domain, Storage, Upload service, EXIF variations, Hono controllers, routes, permissions và tests. 🔒 LOCKED (Session #020). |
-| **3.8** | **Reviews & Favorites** | 🟡 **In Progress** | Polymorphic reviews & favorites. Step 1 CSDL & Domain đã LOCK. |
-| **3.9** | **Operational Utilities** | ⬜ **Chưa bắt đầu** | Itineraries, Weather, FAQs, Notifications, Top Lists. |
+| **3.8** | **Reviews & Favorites** | 🔒 **Locked** | Repositories, Services, DTOs, Controllers, Routes, and Tests completed and 🔒 LOCKED (Session #021). |
+| **3.9** | **Operational Utilities** | 🔒 **Locked** | Weather, Notifications, Itineraries, FAQs, Top Lists modules with Domain, Repo, Service, DTO, Controller, Route, DI Container, Integration Tests completed and 🔒 LOCKED (Session #022). |
 
 **Điều kiện hoàn thành:**
 - [x] Tất cả module có CRUD API đầy đủ
@@ -452,22 +452,8 @@ Launch      →    Maintenance & Expansion
 | 2026-07-12 | Hoàn thành và khóa (LOCKED) Step 3: EXIF & Processing Pipeline của module Media Manager | Phiên #020 — Triển khai MediaProcessingService, NativeImageProcessor đọc binary headers (PNG/JPEG/GIF/EXIF), sinh variants (thumbnail, medium, large), bọc safe errors, và pass 32 tests với coverage >98%, build & lint ✅ |
 | 2026-07-12 | Hoàn thành và khóa (LOCKED) Step 4: API & Final Audit của module Media Manager | Phiên #020 — Triển khai Hono router, Controller, DTOs, response mappers, bind permission/auth guards, và pass 39 tests với coverage >98%, build & lint ✅ |
 | 2026-07-13 | Hoàn thành và khóa (LOCKED) Step 1: Database & Domain Layer của Reviews & Favorites | Phiên #021 — Thiết kế CSDL polymorphic (reviews/favorites), unique indexes chống duplicate, rating check constraints, viết Rich Domain model entities và Value Object, pass 28 tests đạt 100% test coverage |
-
----
-
-## ⏳ CURRENT CORE MODULES & ROUTING STATUS (Sub-phase 3.8 IN PROGRESS)
-
-### Trạng thái cuối phiên #021
-
-| Layer | Regions | Tourist Places | Businesses & Amenities | Attractions & Utilities | Identity & Auth | Articles & Tags | Media Manager | Reviews & Favorites |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| Domain (Entity/VO) | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED |
-| Repository | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | ⬜ |
-| Service | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | ⬜ |
-| DTO & Validation | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | ⬜ |
-| Controller & Routes | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | ⬜ |
-| Unit / Integration Tests | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | ⏳ IN PROGRESS |
-
+| Unit / Integration Tests | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED |
+ 
 - ✅ Phase 0 (Planning) — HOÀN THÀNH
 - ✅ Phase 1 (Database Design) — HOÀN THÀNH
 - ✅ Phase 2 (Backend Foundation) — HOÀN THÀNH
