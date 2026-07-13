@@ -1,6 +1,6 @@
 # 🗺️ PROJECT ROADMAP — CỔNG THÔNG TIN DU LỊCH HOÀNG SU PHÌ
  
-> **Cập nhật lần cuối:** 2026-07-13T22:50:00+07:00 | **Phiên:** #022
+> **Cập nhật lần cuối:** 2026-07-14T00:05:00+07:00 | **Phiên:** #023
 > **Mục đích:** Theo dõi tiến độ toàn bộ vòng đời dự án từ ý tưởng đến vận hành.
  
 ---
@@ -452,62 +452,58 @@ Launch      →    Maintenance & Expansion
 | 2026-07-12 | Hoàn thành và khóa (LOCKED) Step 3: EXIF & Processing Pipeline của module Media Manager | Phiên #020 — Triển khai MediaProcessingService, NativeImageProcessor đọc binary headers (PNG/JPEG/GIF/EXIF), sinh variants (thumbnail, medium, large), bọc safe errors, và pass 32 tests với coverage >98%, build & lint ✅ |
 | 2026-07-12 | Hoàn thành và khóa (LOCKED) Step 4: API & Final Audit của module Media Manager | Phiên #020 — Triển khai Hono router, Controller, DTOs, response mappers, bind permission/auth guards, và pass 39 tests với coverage >98%, build & lint ✅ |
 | 2026-07-13 | Hoàn thành và khóa (LOCKED) Step 1: Database & Domain Layer của Reviews & Favorites | Phiên #021 — Thiết kế CSDL polymorphic (reviews/favorites), unique indexes chống duplicate, rating check constraints, viết Rich Domain model entities và Value Object, pass 28 tests đạt 100% test coverage |
-| Unit / Integration Tests | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED |
- 
+| 2026-07-13 | Hoàn thành toàn bộ Reviews & Favorites (Sub-phase 3.8) và Operational Utilities (Sub-phase 3.9) | Phiên #022 — Triển khai CRUD, Repo, Service, API, DI Container, và chạy pass 100% tests cho Weather, Notifications, Itineraries, FAQs, Top Lists |
+| 2026-07-14 | Thực hiện Audit toàn diện Phase 3, viết báo cáo audit và đề xuất kế hoạch khắc phục | Phiên #023 — Hoàn tất Audit 10 levels, phát hiện các lỗi Critical/High (lọt transaction ở Identity, leak data ở Itineraries, roles rỗng) |
+
+---
+
 - ✅ Phase 0 (Planning) — HOÀN THÀNH
 - ✅ Phase 1 (Database Design) — HOÀN THÀNH
 - ✅ Phase 2 (Backend Foundation) — HOÀN THÀNH
-- ⏳ **Phase 3 (Core Modules) — ĐANG THỰC HIỆN**
-  - Sub-phase 3.1 Identity: 🔒 **LOCKED (Step 7/7 Hoàn thành)**
-  - Sub-phase 3.2 Regions: 🔒 **LOCKED (Tích hợp & Khóa)**
-  - Sub-phase 3.3 Tourist Places: 🔒 **LOCKED (Tích hợp & Khóa)**
-  - Sub-phase 3.4 Businesses & Amenities: 🔒 **LOCKED (Tích hợp & Khóa)**
-  - Sub-phase 3.5 Attractions & Utilities: 🔒 **LOCKED (Tích hợp & Khóa)**
-  - Sub-phase 3.6 Articles & Tags: 🔒 **LOCKED (Step 7/7 Hoàn thành)**
-  - Sub-phase 3.7 Media Manager: 🔒 **LOCKED (Step 4/4 Hoàn thành)**
-  - Sub-phase 3.8 Reviews & Favorites: ⏳ **IN PROGRESS**
-
-### Lộ trình chi tiết Reviews & Favorites Module (Sub-phase 3.8)
-
-| Phiên / Step | Nội dung | Trạng thái |
-| :--- | :--- | :--- |
-| **#021** | **Step 1: Database Foundation & Domain Layer** | 🔒 **LOCKED** |
-| **#021** | **Step 2: Repository Layer** | ⬜ **Chưa bắt đầu** |
-| **#021** | **Step 3: Service Layer** | ⬜ **Chưa bắt đầu** |
-| **#021** | **Step 4: API & Final Audit** | ⬜ **Chưa bắt đầu** |
+- ✅ Phase 3 (Core Modules) — HOÀN THÀNH (Code Complete & Audited)
+  - Sub-phase 3.1 Identity: 🔒 **LOCKED**
+  - Sub-phase 3.2 Regions: 🔒 **LOCKED**
+  - Sub-phase 3.3 Tourist Places: 🔒 **LOCKED**
+  - Sub-phase 3.4 Businesses & Amenities: 🔒 **LOCKED**
+  - Sub-phase 3.5 Attractions & Utilities: 🔒 **LOCKED**
+  - Sub-phase 3.6 Articles & Tags: 🔒 **LOCKED**
+  - Sub-phase 3.7 Media Manager: 🔒 **LOCKED**
+  - Sub-phase 3.8 Reviews & Favorites: 🔒 **LOCKED**
+  - Sub-phase 3.9 Operational Utilities: 🔒 **LOCKED**
 
 ## Next Session
 
 ### Objective
-Triển khai sub-phase tiếp theo: **Sub-phase 3.8: Reviews & Favorites (Step 2: Repository Layer)**.
+Khắc phục các lỗi mức độ Critical và High (Priority 1) được chỉ ra trong báo cáo Enterprise Audit của Phase 3 để đảm bảo tính an toàn dữ liệu và toàn vẹn giao dịch trước khi chuyển sang Phase 4.
 
 ### Current Position
-- **Current Phase**: Phase 3 (Core Modules)
-- **Current Session**: SESSION #021
-- **Current Step**: Sub-phase 3.8 Reviews & Favorites - Step 2 Repository Layer
+- **Current Phase**: Phase 3 (Core Modules) - Bug Remediation
+- **Current Session**: SESSION #023
+- **Current Step**: Sửa lỗi bảo mật & giao dịch (Priority 1 Issues)
 
 ### Priority Tasks
-1. **Repository Interfaces:** Thiết kế interfaces repository `IReviewsRepository` và `IFavoritesRepository`.
-2. **Drizzle Repositories:** Triển khai Drizzle ORM repositories cho Reviews và Favorites.
-3. **Repository Unit Tests:** Viết mock tests và DB integration tests cho repositories.
+1. **Repository Transaction Propagation (R-1):** Refactor `DrizzleUserRepository`, `DrizzleSessionRepository`, và `DrizzleRefreshTokenRepository` để nhận và truyền đúng đối tượng `tx` (Transaction Client) từ Service Layer.
+2. **Itinerary Data Leak (SEC-3):** Sửa lỗi logic trong `ItinerariesController.list()` (phần `else if` rỗng) để đảm bảo bộ lọc visibility được áp dụng chính xác cho người dùng không phải admin khi họ không chỉ định `userId`.
+3. **RBAC Roles Loading (SEC-1):** Cập nhật `authMiddleware` để tải danh sách vai trò (roles) của người dùng từ cơ sở dữ liệu thay vì hardcode mảng rỗng `roles: []`.
+4. **Redis Rate Limiter (SEC-4):** Thay thế cơ chế rate limiting lưu trữ trong bộ nhớ RAM hiện tại bằng Redis để hỗ trợ môi trường chạy phân tán đa tiến trình.
 
 ### Remaining Work
-- Module Reviews & Favorites (Sub-phase 3.8 - Step 2 to 4)
-- Module Operational Utilities (Sub-phase 3.9)
+- Sửa các lỗi Medium và Low trong báo cáo audit Phase 3.
+- Bắt đầu thiết kế & triển khai Phase 4 (Advanced Features).
 
 ### Important Notes
-- Chú ý xử lý các câu truy vấn polymorphic trên DB (Join ORM hoặc Query Builder).
+- Đảm bảo toàn bộ 861 tests hiện có vẫn tiếp tục pass sau khi sửa đổi các hàm trong repository và controller.
 
 ### Risks
-- Việc mock Drizzle transaction trong unit tests của repository đòi hỏi setup Mock Proxy tương tự như các module trước để tránh cache conflicts của Bun.
+- Việc thay đổi chữ ký (signature) của các hàm repository trong module Identity yêu cầu cập nhật lại toàn bộ code mock trong các file test liên quan.
 
 ### Completion Criteria
-- Khai báo đầy đủ Repository Contracts và triển khai Drizzle Repositories.
-- Chạy pass 100% unit tests của Repositories và test coverage đạt >= 95%.
+- Các lỗi Critical/High được khắc phục thành công.
+- 100% test suite chạy pass sạch.
 
 ---
 
 *Tài liệu được tạo và bảo trì bởi AI Agent Antigravity (Google DeepMind)*
-*Cập nhật lần cuối: 2026-07-13T20:30:00+07:00*
+*Cập nhật lần cuối: 2026-07-14T00:05:00+07:00*
 
 
