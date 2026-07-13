@@ -7,4 +7,10 @@ export * from './attractions';
 export * from './articles';
 export * from './tags';
 export * from './media';
+export * from './reviews';
+export * from './itineraries';
+export * from './faqs';
+export * from './notifications';
+
+
 

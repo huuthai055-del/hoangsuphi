@@ -11,6 +11,12 @@ import { categoriesRouter } from '@/modules/articles/route/categories.route';
 import { tagsRouter } from '@/modules/articles/route/tags.route';
 import { articlesRouter } from '@/modules/articles/route/articles.route';
 import { mediaRouter } from '@/modules/media/route/media.route';
+import { reviewsRouter } from '@/modules/reviews/route/reviews.route';
+import { itinerariesRouter } from '@/modules/itineraries/route/itineraries.route';
+import { faqsRouter } from '@/modules/faqs/route/faqs.route';
+import { topListsRouter } from '@/modules/faqs/route/top-lists.route';
+import { weatherRouter } from '@/modules/weather/route/weather.route';
+import { notificationsRouter } from '@/modules/notifications/route/notifications.route';
 
 export function registerRoutes(app: Hono) {
   // Liveness Check
@@ -43,6 +49,12 @@ export function registerRoutes(app: Hono) {
   v1Router.route('/tags', tagsRouter);
   v1Router.route('/articles', articlesRouter);
   v1Router.route('/media', mediaRouter);
+  v1Router.route('/', reviewsRouter);
+  v1Router.route('/itineraries', itinerariesRouter);
+  v1Router.route('/faqs', faqsRouter);
+  v1Router.route('/top-lists', topListsRouter);
+  v1Router.route('/weather', weatherRouter);
+  v1Router.route('/notifications', notificationsRouter);
 
   app.route(AppConfig.server.apiPrefix, v1Router);
 }

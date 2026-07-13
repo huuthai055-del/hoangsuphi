@@ -204,7 +204,6 @@ mock.module('@/modules/media/repository/media.repository', () => {
   };
 });
 
-
 // Expose globally to support re-creating authorization spies on beforeEach in routing tests (preventing mock.restore() issues)
 
 (globalThis as any).setupAuthSpy = () => {
@@ -232,7 +231,31 @@ mock.module('@/modules/media/repository/media.repository', () => {
         'attraction:write',
         'business:write',
         'article:write',
-        'article:publish'
+        'article:publish',
+        'review:create',
+        'review:update',
+        'review:approve',
+        'review:reject',
+        'review:delete',
+        'review:read',
+        'favorite:create',
+        'favorite:delete',
+        'favorite:read',
+        'itinerary:create',
+        'itinerary:read',
+        'itinerary:update',
+        'itinerary:delete',
+        'faq:create',
+        'faq:update',
+        'faq:delete',
+        'toplist:create',
+        'toplist:update',
+        'toplist:delete',
+        'notification:create',
+        'notification:read',
+        'notification:update',
+        'notification:dismiss',
+        'notification:delete'
       ];
     });
 

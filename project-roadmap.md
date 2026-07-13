@@ -1,6 +1,6 @@
 # 🗺️ PROJECT ROADMAP — CỔNG THÔNG TIN DU LỊCH HOÀNG SU PHÌ
 
-> **Cập nhật lần cuối:** 2026-07-13T00:20:00+07:00 | **Phiên:** #020
+> **Cập nhật lần cuối:** 2026-07-13T20:30:00+07:00 | **Phiên:** #021
 > **Mục đích:** Theo dõi tiến độ toàn bộ vòng đời dự án từ ý tưởng đến vận hành.
 
 ---
@@ -11,7 +11,7 @@
 Phase  0  Planning                ██████████  ✅ HOÀN THÀNH
 Phase  1  Database Design         ██████████  ✅ HOÀN THÀNH
 Phase  2  Backend Foundation      ██████████  ✅ HOÀN THÀNH (V1.0 Code & Docs Locked)
-Phase  3  Core Modules            █████████░  [/] Đang thực hiện (3.1 🔒, 3.2 Regions 🔒, 3.3 Places 🔒, 3.4 Businesses 🔒, 3.5 Attractions 🔒, 3.6 Articles & Tags 🔒, 3.7 🔒)
+Phase  3  Core Modules            █████████░  [/] Đang thực hiện (3.1 🔒, 3.2 Regions 🔒, 3.3 Places 🔒, 3.4 Businesses 🔒, 3.5 Attractions 🔒, 3.6 Articles & Tags 🔒, 3.7 🔒, 3.8 [/])
 Phase  4  Advanced Features       ░░░░░░░░░░  ⬜ Chưa bắt đầu
 Phase  5  Frontend                ░░░░░░░░░░  ⬜ Chưa bắt đầu
 Phase  6  Admin CMS               ░░░░░░░░░░  ⬜ Chưa bắt đầu
@@ -31,7 +31,7 @@ Phase 13  Maintenance & Expansion ░░░░░░░░░░  ⬜ Chưa bắ
 ```
 Phase 0          Phase 1          Phase 2          Phase 3
 Planning    →    Database    →    Backend     →    Core
-✅ Done          ✅ Done          ✅ Done          [/] In Progress (3.1 🔒, 3.2 Regions 🔒, 3.3 Places 🔒, 3.4 Businesses 🔒, 3.5 Attractions 🔒, 3.6 Articles & Tags 🔒, 3.7 🔒)
+✅ Done          ✅ Done          ✅ Done          [/] In Progress (3.1 🔒, 3.2 Regions 🔒, 3.3 Places 🔒, 3.4 Businesses 🔒, 3.5 Attractions 🔒, 3.6 Articles & Tags 🔒, 3.7 🔒, 3.8 [/])
     ↓
 Phase 4          Phase 5          Phase 6          Phase 7
 Advanced    →    Frontend    →    Admin CMS   →    Performance
@@ -150,7 +150,7 @@ Launch      →    Maintenance & Expansion
 | **3.5** | **Attractions & Utilities** | 🔒 **Locked** | Domain, Repository, Service, DTO, Controller, Routes, Tests. |
 | **3.6** | **Articles & Tags** | 🔒 **Locked** | CMS workflow. Step 1-7 Hoàn thành và 🔒 LOCKED (Session #019). |
 | **3.7** | **Media Manager** | 🔒 **Locked** | Media Schema, Domain, Storage, Upload service, EXIF variations, Hono controllers, routes, permissions và tests. 🔒 LOCKED (Session #020). |
-| **3.8** | **Reviews & Favorites** | ⬜ **Chưa bắt đầu** | Polymorphic reviews & favorites. |
+| **3.8** | **Reviews & Favorites** | 🟡 **In Progress** | Polymorphic reviews & favorites. Step 1 CSDL & Domain đã LOCK. |
 | **3.9** | **Operational Utilities** | ⬜ **Chưa bắt đầu** | Itineraries, Weather, FAQs, Notifications, Top Lists. |
 
 **Điều kiện hoàn thành:**
@@ -451,21 +451,22 @@ Launch      →    Maintenance & Expansion
 | 2026-07-12 | Hoàn thành và khóa (LOCKED) Step 2: Upload Pipeline của module Media Manager | Phiên #020 — Triển khai MediaUploadService, LocalStorageAdapter, config size/MIME, SHA-256 duplicate checks, transaction safety storage cleanups, và pass 27 tests với coverage >98%, build & lint ✅ |
 | 2026-07-12 | Hoàn thành và khóa (LOCKED) Step 3: EXIF & Processing Pipeline của module Media Manager | Phiên #020 — Triển khai MediaProcessingService, NativeImageProcessor đọc binary headers (PNG/JPEG/GIF/EXIF), sinh variants (thumbnail, medium, large), bọc safe errors, và pass 32 tests với coverage >98%, build & lint ✅ |
 | 2026-07-12 | Hoàn thành và khóa (LOCKED) Step 4: API & Final Audit của module Media Manager | Phiên #020 — Triển khai Hono router, Controller, DTOs, response mappers, bind permission/auth guards, và pass 39 tests với coverage >98%, build & lint ✅ |
+| 2026-07-13 | Hoàn thành và khóa (LOCKED) Step 1: Database & Domain Layer của Reviews & Favorites | Phiên #021 — Thiết kế CSDL polymorphic (reviews/favorites), unique indexes chống duplicate, rating check constraints, viết Rich Domain model entities và Value Object, pass 28 tests đạt 100% test coverage |
 
 ---
 
-## ⏳ CURRENT CORE MODULES & ROUTING STATUS (Sub-phase 3.7 LOCKED)
+## ⏳ CURRENT CORE MODULES & ROUTING STATUS (Sub-phase 3.8 IN PROGRESS)
 
-### Trạng thái cuối phiên #020
+### Trạng thái cuối phiên #021
 
-| Layer | Regions | Tourist Places | Businesses & Amenities | Attractions & Utilities | Identity & Auth | Articles & Tags | Media Manager |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| Domain (Entity/VO) | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED |
-| Repository | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED |
-| Service | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED |
-| DTO & Validation | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED |
-| Controller & Routes | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED |
-| Unit / Integration Tests | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED |
+| Layer | Regions | Tourist Places | Businesses & Amenities | Attractions & Utilities | Identity & Auth | Articles & Tags | Media Manager | Reviews & Favorites |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Domain (Entity/VO) | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED |
+| Repository | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | ⬜ |
+| Service | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | ⬜ |
+| DTO & Validation | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | ⬜ |
+| Controller & Routes | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | ⬜ |
+| Unit / Integration Tests | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | 🔒 LOCKED | ⏳ IN PROGRESS |
 
 - ✅ Phase 0 (Planning) — HOÀN THÀNH
 - ✅ Phase 1 (Database Design) — HOÀN THÀNH
@@ -478,48 +479,49 @@ Launch      →    Maintenance & Expansion
   - Sub-phase 3.5 Attractions & Utilities: 🔒 **LOCKED (Tích hợp & Khóa)**
   - Sub-phase 3.6 Articles & Tags: 🔒 **LOCKED (Step 7/7 Hoàn thành)**
   - Sub-phase 3.7 Media Manager: 🔒 **LOCKED (Step 4/4 Hoàn thành)**
+  - Sub-phase 3.8 Reviews & Favorites: ⏳ **IN PROGRESS**
 
-### Lộ trình chi tiết Media Manager Module (Sub-phase 3.7)
+### Lộ trình chi tiết Reviews & Favorites Module (Sub-phase 3.8)
 
 | Phiên / Step | Nội dung | Trạng thái |
 | :--- | :--- | :--- |
-| **#020** | **Step 1: Media Foundation** | 🔒 **LOCKED** |
-| **#020** | **Step 2: Upload Pipeline** | 🔒 **LOCKED** |
-| **#020** | **Step 3: EXIF & Processing Pipeline** | 🔒 **LOCKED** |
-| **#020** | **Step 4: API + Final Audit** | 🔒 **LOCKED** |
+| **#021** | **Step 1: Database Foundation & Domain Layer** | 🔒 **LOCKED** |
+| **#021** | **Step 2: Repository Layer** | ⬜ **Chưa bắt đầu** |
+| **#021** | **Step 3: Service Layer** | ⬜ **Chưa bắt đầu** |
+| **#021** | **Step 4: API & Final Audit** | ⬜ **Chưa bắt đầu** |
 
 ## Next Session
 
 ### Objective
-Triển khai sub-phase tiếp theo: **Sub-phase 3.8: Reviews & Favorites** trong Phase 3 Core Modules.
+Triển khai sub-phase tiếp theo: **Sub-phase 3.8: Reviews & Favorites (Step 2: Repository Layer)**.
 
 ### Current Position
 - **Current Phase**: Phase 3 (Core Modules)
-- **Current Session**: SESSION #020
-- **Current Step**: Sub-phase 3.8 Reviews & Favorites - Step 1 Database Schema
+- **Current Session**: SESSION #021
+- **Current Step**: Sub-phase 3.8 Reviews & Favorites - Step 2 Repository Layer
 
 ### Priority Tasks
-1. **Polymorphic Reviews Schema:** Thiết kế schema và migration bảng `reviews` có quan hệ polymorphic đến Homestays, Restaurants, Attractions, Places, và Articles.
-2. **Favorites Registry Schema:** Thiết kế schema lưu trữ các địa điểm và bài viết được người dùng đánh dấu yêu thích, hỗ trợ indexes tối ưu hóa tìm kiếm.
+1. **Repository Interfaces:** Thiết kế interfaces repository `IReviewsRepository` và `IFavoritesRepository`.
+2. **Drizzle Repositories:** Triển khai Drizzle ORM repositories cho Reviews và Favorites.
+3. **Repository Unit Tests:** Viết mock tests và DB integration tests cho repositories.
 
 ### Remaining Work
-- Module Reviews & Favorites (Sub-phase 3.8 - Step 1 to 4)
+- Module Reviews & Favorites (Sub-phase 3.8 - Step 2 to 4)
 - Module Operational Utilities (Sub-phase 3.9)
 
 ### Important Notes
-- Rà soát các logic polymorphic `ownerType` và `ownerId` đã triển khai thành công ở Media Manager để áp dụng cho Reviews & Favorites.
-- Đảm bảo tính toàn vẹn khoá ngoại logic (vì Postgres không hỗ trợ Foreign Key cứng polymorphic).
+- Chú ý xử lý các câu truy vấn polymorphic trên DB (Join ORM hoặc Query Builder).
 
 ### Risks
-- Xung đột Bun parallel module cache khi test routes Reviews có thể xảy ra nếu không áp dụng Mock Proxy / Prototype spies tập trung từ đầu.
+- Việc mock Drizzle transaction trong unit tests của repository đòi hỏi setup Mock Proxy tương tự như các module trước để tránh cache conflicts của Bun.
 
 ### Completion Criteria
-- Bảng `reviews` và `favorites` được định nghĩa đầy đủ, sinh SQL migration pass.
-- Logic Reviews & Favorites được triển khai tách biệt (Domain, Repository, Service, Route Controllers).
-- Toàn bộ unit/integration tests viết mới đạt coverage >= 90% và toàn hệ thống test pass 100%.
+- Khai báo đầy đủ Repository Contracts và triển khai Drizzle Repositories.
+- Chạy pass 100% unit tests của Repositories và test coverage đạt >= 95%.
 
 ---
 
 *Tài liệu được tạo và bảo trì bởi AI Agent Antigravity (Google DeepMind)*
-*Cập nhật lần cuối: 2026-07-13T06:45:00+07:00*
+*Cập nhật lần cuối: 2026-07-13T20:30:00+07:00*
+
 
