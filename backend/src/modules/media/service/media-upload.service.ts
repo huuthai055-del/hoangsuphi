@@ -1,71 +1,16 @@
 import { createHash } from 'node:crypto';
 import type { IMediaRepository } from '../repository/media-repository.interface';
 import type { IMediaStorage } from '../domain/storage.interface';
-import { Media, type MediaType } from '../domain/media.entity';
-import { MEDIA_CONFIG } from '../config/media.config';
-import { generateUuidV7 } from '@/common/utils/uuid';
-import {
-  MediaValidationError,
-  UnsupportedMediaTypeError,
-  FileTooLargeError,
-  StorageUploadError,
-} from '../domain/media-errors';
+import { Media } from '../domain/media.entity';
+import { StorageUploadError } from '../domain/media-errors';
+import { MediaValidationPolicy } from './media-validation.policy';
+import { StorageKeyGenerator } from './storage-key.generator';
 
 export class MediaUploadService {
   constructor(
     private readonly mediaRepo: IMediaRepository,
     private readonly storage: IMediaStorage
   ) {}
-
-  private validateFileName(fileName: string): string {
-    const trimmed = (fileName || '').trim();
-    if (!trimmed) {
-      throw new MediaValidationError('File name is required');
-    }
-
-    // Path traversal block
-    if (trimmed.includes('..') || trimmed.includes('/') || trimmed.includes('\\')) {
-      throw new MediaValidationError('Invalid characters or path traversal detected in file name');
-    }
-
-    // Sanitize filename: keep alphanumeric, dots, dashes, underscores
-    const sanitized = trimmed.replace(/[^a-zA-Z0-9.\-_]/g, '_');
-    if (!sanitized) {
-      throw new MediaValidationError('File name consists of invalid characters only');
-    }
-
-    return sanitized;
-  }
-
-  private determineMediaTypeAndLimit(mimeType: string, fileSize: number): { mediaType: MediaType; limit: number } {
-    const cleanMime = (mimeType || '').trim().toLowerCase();
-    if (!cleanMime) {
-      throw new UnsupportedMediaTypeError('MIME type is required');
-    }
-
-    if (MEDIA_CONFIG.allowedMimeTypes.IMAGE.includes(cleanMime)) {
-      if (fileSize > MEDIA_CONFIG.maxImageSize) {
-        throw new FileTooLargeError(`Image exceeds maximum allowed size of ${MEDIA_CONFIG.maxImageSize / (1024 * 1024)}MB`);
-      }
-      return { mediaType: 'IMAGE', limit: MEDIA_CONFIG.maxImageSize };
-    }
-
-    if (MEDIA_CONFIG.allowedMimeTypes.VIDEO.includes(cleanMime)) {
-      if (fileSize > MEDIA_CONFIG.maxVideoSize) {
-        throw new FileTooLargeError(`Video exceeds maximum allowed size of ${MEDIA_CONFIG.maxVideoSize / (1024 * 1024)}MB`);
-      }
-      return { mediaType: 'VIDEO', limit: MEDIA_CONFIG.maxVideoSize };
-    }
-
-    if (MEDIA_CONFIG.allowedMimeTypes.DOCUMENT.includes(cleanMime)) {
-      if (fileSize > MEDIA_CONFIG.maxDocumentSize) {
-        throw new FileTooLargeError(`Document exceeds maximum allowed size of ${MEDIA_CONFIG.maxDocumentSize / (1024 * 1024)}MB`);
-      }
-      return { mediaType: 'DOCUMENT', limit: MEDIA_CONFIG.maxDocumentSize };
-    }
-
-    throw new UnsupportedMediaTypeError(`Unsupported file MIME type: ${mimeType}`);
-  }
 
   public async upload(props: {
     fileName: string;
@@ -74,9 +19,10 @@ export class MediaUploadService {
     ownerType?: string | null;
     ownerId?: string | null;
   }): Promise<Media> {
-    const sanitizedName = this.validateFileName(props.fileName);
+    // 1. Delegate validation policies
+    const sanitizedName = MediaValidationPolicy.validateFileName(props.fileName);
     const fileSize = props.fileBuffer.length;
-    const { mediaType } = this.determineMediaTypeAndLimit(props.mimeType, fileSize);
+    const { mediaType } = MediaValidationPolicy.determineMediaTypeAndLimit(props.mimeType, fileSize);
 
     // Calculate SHA-256 hash for deduplication
     const hash = createHash('sha256').update(props.fileBuffer).digest('hex');
@@ -87,21 +33,18 @@ export class MediaUploadService {
       return existingMedia;
     }
 
-    // Generate unique identity & storage key
-    const id = generateUuidV7();
+    // 2. Delegate storage key generation
     const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const storageKey = `uploads/${year}/${month}/${id}-${sanitizedName}`;
+    const { id, storageKey } = StorageKeyGenerator.generate(sanitizedName, now);
 
-    // 1. Storage Upload
+    // 3. Storage Upload
     try {
       await this.storage.upload(storageKey, props.fileBuffer, props.mimeType);
     } catch (err) {
       throw new StorageUploadError(`Failed to store uploaded file: ${err instanceof Error ? err.message : String(err)}`);
     }
 
-    // 2. Database Save
+    // 4. Database Save
     const media = Media.create({
       id,
       fileName: sanitizedName,
@@ -119,17 +62,26 @@ export class MediaUploadService {
       await this.mediaRepo.save(media);
     } catch (dbErr) {
       // Transaction Safety Rollback: Cleanup uploaded storage file if DB save fails
-      await this.storage.delete(storageKey);
+      // We wrap storage delete inside try/catch to protect the original DB exception context
+      try {
+        await this.storage.delete(storageKey);
+      } catch {
+        // Suppress storage delete exceptions to preserve the primary DB error context
+      }
       throw dbErr;
     }
 
-    // 3. Mark Ready
+    // 5. Mark Ready
     try {
       media.markReady();
       await this.mediaRepo.update(media);
     } catch (updateErr) {
       // Cleanup both storage file and db record if confirmation fails
-      await this.storage.delete(storageKey);
+      try {
+        await this.storage.delete(storageKey);
+      } catch {
+        // Suppress storage cleanup exceptions
+      }
       try {
         await this.mediaRepo.delete(media.id);
       } catch {

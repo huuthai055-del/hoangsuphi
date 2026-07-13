@@ -7,8 +7,9 @@ import {
   MediaValidationError,
   UnsupportedMediaTypeError,
   FileTooLargeError,
-  StorageUploadError,
 } from '../domain/media-errors';
+import { MediaValidationPolicy } from './media-validation.policy';
+import { StorageKeyGenerator } from './storage-key.generator';
 
 describe('MediaUploadService', () => {
   let findByIdMock: ReturnType<typeof mock>;
@@ -44,6 +45,10 @@ describe('MediaUploadService', () => {
       save: saveMock,
       update: updateMock,
       delete: deleteMock,
+      saveMetadata: mock(() => Promise.resolve()),
+      saveVariant: mock(() => Promise.resolve()),
+      getMetadata: mock(() => Promise.resolve(null)),
+      getVariants: mock(() => Promise.resolve([])),
     };
 
     // Storage mocks
@@ -54,6 +59,7 @@ describe('MediaUploadService', () => {
 
     storage = {
       upload: uploadStorageMock,
+      download: mock(() => Promise.resolve(Buffer.from('source'))),
       delete: deleteStorageMock,
       exists: existsStorageMock,
       getUrl: getUrlStorageMock,
@@ -95,6 +101,35 @@ describe('MediaUploadService', () => {
     });
   });
 
+  describe('MediaValidationPolicy & StorageKeyGenerator Unit Tests', () => {
+    test('should throw validation error if filename is empty or invalid', () => {
+      expect(() => MediaValidationPolicy.validateFileName('')).toThrow(MediaValidationError);
+      expect(() => MediaValidationPolicy.validateFileName('   ')).toThrow(MediaValidationError);
+      expect(() => MediaValidationPolicy.validateFileName('???')).toThrow(MediaValidationError);
+    });
+
+    test('should throw validation error if mimeType is empty', () => {
+      expect(() => MediaValidationPolicy.determineMediaTypeAndLimit('', 100)).toThrow(UnsupportedMediaTypeError);
+    });
+
+    test('should validate large video and document limits', () => {
+      // Limit for video is 50MB
+      expect(() => MediaValidationPolicy.determineMediaTypeAndLimit('video/mp4', 51 * 1024 * 1024)).toThrow(FileTooLargeError);
+      expect(MediaValidationPolicy.determineMediaTypeAndLimit('video/mp4', 40 * 1024 * 1024).mediaType).toBe('VIDEO');
+
+      // Limit for document is 20MB
+      expect(() => MediaValidationPolicy.determineMediaTypeAndLimit('application/pdf', 21 * 1024 * 1024)).toThrow(FileTooLargeError);
+      expect(MediaValidationPolicy.determineMediaTypeAndLimit('application/pdf', 10 * 1024 * 1024).mediaType).toBe('DOCUMENT');
+    });
+
+    test('StorageKeyGenerator should generate structured key', () => {
+      const result = StorageKeyGenerator.generate('test.png', new Date('2026-07-15T00:00:00Z'));
+      expect(result.id).toBeDefined();
+      expect(result.storageKey).toContain('uploads/2026/07/');
+      expect(result.storageKey).toContain('-test.png');
+    });
+  });
+
   describe('Duplicate Detection & Deduplication', () => {
     test('should return existing media instance and bypass storage upload if hash matches ready file', async () => {
       const existingMedia = Media.create({
@@ -131,9 +166,24 @@ describe('MediaUploadService', () => {
           mimeType: validMimeType,
           fileBuffer: validBuffer,
         })
-      ).rejects.toThrow();
+      ).rejects.toThrow('DB Save Failed');
 
       expect(uploadStorageMock).toHaveBeenCalled();
+      expect(deleteStorageMock).toHaveBeenCalled();
+    });
+
+    test('should suppress storage delete exceptions and bubble up actual DB save error', async () => {
+      saveMock.mockImplementation(() => Promise.reject(new Error('DB Save Failed')));
+      deleteStorageMock.mockImplementation(() => Promise.reject(new Error('Disk Disconnected')));
+
+      await expect(
+        service.upload({
+          fileName: validFileName,
+          mimeType: validMimeType,
+          fileBuffer: validBuffer,
+        })
+      ).rejects.toThrow('DB Save Failed');
+
       expect(deleteStorageMock).toHaveBeenCalled();
     });
 
