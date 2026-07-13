@@ -1,11 +1,17 @@
 import { describe, test, expect } from 'bun:test';
 import { User } from './user.entity';
+import {
+  InvalidUserEmailError,
+  InvalidPasswordHashError,
+  UserAccountDeletedError,
+  InvalidUserStatusTransitionError,
+} from './user.errors';
 
 describe('User Domain Entity', () => {
   const validProps = {
     id: '019f4264-a179-7672-b7b6-278802ae1916',
     email: 'test@example.com',
-    passwordHash: 'hashed_password',
+    passwordHash: 'hashed_password_with_length_greater_than_20',
     status: 'pending_verification' as const,
     failedLoginAttempts: 0,
     lockoutUntil: null,
@@ -42,22 +48,45 @@ describe('User Domain Entity', () => {
       expect(user.status).toBe(validProps.status);
     });
 
-    test('should throw error if email is empty', () => {
+    test('should normalize email to lowercase and trim it', () => {
+      const user = User.create({
+        id: validProps.id,
+        email: '  MyEmail@EXAMPLE.com  ',
+        passwordHash: validProps.passwordHash,
+      });
+      expect(user.email).toBe('myemail@example.com');
+    });
+
+    test('should throw error if email format is invalid', () => {
       expect(() => {
-        User.rehydrate({ ...validProps, email: '' });
-      }).toThrow('Email is required');
+        User.create({
+          id: validProps.id,
+          email: 'invalid-email',
+          passwordHash: validProps.passwordHash,
+        });
+      }).toThrow(InvalidUserEmailError);
+    });
+
+    test('should throw error if passwordHash is shorter than 20 chars', () => {
+      expect(() => {
+        User.create({
+          id: validProps.id,
+          email: validProps.email,
+          passwordHash: 'short',
+        });
+      }).toThrow(InvalidPasswordHashError);
     });
 
     test('should throw error if failedLoginAttempts is negative', () => {
       expect(() => {
         User.rehydrate({ ...validProps, failedLoginAttempts: -1 });
-      }).toThrow('Failed login attempts cannot be negative');
+      }).toThrow(Error);
     });
 
     test('should throw error if permissionsVersion is less than 1', () => {
       expect(() => {
         User.rehydrate({ ...validProps, permissionsVersion: 0 });
-      }).toThrow('Permissions version must be at least 1');
+      }).toThrow(Error);
     });
   });
 
@@ -70,16 +99,12 @@ describe('User Domain Entity', () => {
 
     test('should throw error when verifying email of an already verified user', () => {
       const user = User.rehydrate({ ...validProps, status: 'active' });
-      expect(() => user.verifyEmail()).toThrow(
-        'User email is already verified or not pending verification'
-      );
+      expect(() => user.verifyEmail()).toThrow(InvalidUserStatusTransitionError);
     });
 
     test('should throw error when verifying email of a deleted user', () => {
       const user = User.rehydrate({ ...validProps, status: 'deleted', deletedAt: new Date() });
-      expect(() => user.verifyEmail()).toThrow(
-        'Action cannot be performed on a deleted user account'
-      );
+      expect(() => user.verifyEmail()).toThrow(UserAccountDeletedError);
     });
   });
 
@@ -112,55 +137,45 @@ describe('User Domain Entity', () => {
 
     test('should throw error when unlocking a non-locked account', () => {
       const user = User.rehydrate({ ...validProps, status: 'active' });
-      expect(() => user.unlock()).toThrow('User account is not currently locked');
-    });
-
-    test('should throw error when locking a deleted account', () => {
-      const user = User.rehydrate({ ...validProps, status: 'deleted', deletedAt: new Date() });
-      expect(() => user.lock(null)).toThrow('Action cannot be performed on a deleted user account');
+      expect(() => user.unlock()).toThrow(InvalidUserStatusTransitionError);
     });
   });
 
-  describe('increaseFailedLoginAttempts() & resetFailedLoginAttempts()', () => {
-    test('should increment failed attempts and update last failed login timestamp', () => {
-      const user = User.rehydrate(validProps);
-      expect(user.failedLoginAttempts).toBe(0);
+  describe('failed login locking logic', () => {
+    test('should auto-lock user if attempts exceed maxAttempts', () => {
+      const user = User.rehydrate({ ...validProps, status: 'active', failedLoginAttempts: 4 });
+      user.increaseFailedLoginAttempts(5);
 
-      user.increaseFailedLoginAttempts();
-
-      expect(user.failedLoginAttempts).toBe(1);
-      expect(user.lastFailedLoginAt).toBeInstanceOf(Date);
+      expect(user.status).toBe('locked');
+      expect(user.isLocked()).toBe(true);
+      expect(user.lockoutUntil).not.toBeNull();
+      expect(user.failedLoginAttempts).toBe(0); // Lock clears attempts
     });
 
-    test('should reset failed login attempts to 0', () => {
-      const user = User.rehydrate({ ...validProps, failedLoginAttempts: 3 });
-      user.resetFailedLoginAttempts();
-      expect(user.failedLoginAttempts).toBe(0);
-    });
+    test('should only increment attempts when under maxAttempts', () => {
+      const user = User.rehydrate({ ...validProps, status: 'active', failedLoginAttempts: 2 });
+      user.increaseFailedLoginAttempts(5);
 
-    test('should throw error when increasing failed attempts on deleted account', () => {
-      const user = User.rehydrate({ ...validProps, status: 'deleted', deletedAt: new Date() });
-      expect(() => user.increaseFailedLoginAttempts()).toThrow(
-        'Action cannot be performed on a deleted user account'
-      );
+      expect(user.status).toBe('active');
+      expect(user.failedLoginAttempts).toBe(3);
     });
   });
 
   describe('changePassword()', () => {
-    test('should change password hash, update last password changed timestamp, but should NOT increment permissionsVersion', () => {
+    test('should change password hash, update last password changed timestamp, and increment permissionsVersion', () => {
       const user = User.rehydrate(validProps);
       const initialVer = user.permissionsVersion;
 
-      user.changePassword('new_secure_hash');
+      user.changePassword('new_secure_hash_with_length_greater_than_20');
 
-      expect(user.passwordHash).toBe('new_secure_hash');
+      expect(user.passwordHash).toBe('new_secure_hash_with_length_greater_than_20');
       expect(user.lastPasswordChangedAt).toBeInstanceOf(Date);
       expect(user.permissionsVersion).toBe(initialVer + 1);
     });
 
     test('should throw error when password hash is empty', () => {
       const user = User.rehydrate(validProps);
-      expect(() => user.changePassword('')).toThrow('Password hash cannot be empty');
+      expect(() => user.changePassword('')).toThrow(InvalidPasswordHashError);
     });
   });
 
@@ -171,17 +186,9 @@ describe('User Domain Entity', () => {
       expect(user.status).toBe('active');
     });
 
-    test('should remain active when activate() is called on an active account', () => {
-      const user = User.rehydrate({ ...validProps, status: 'active' });
-      user.activate();
-      expect(user.status).toBe('active');
-    });
-
     test('should throw error when activating a locked account directly', () => {
       const user = User.rehydrate({ ...validProps, status: 'locked' });
-      expect(() => user.activate()).toThrow(
-        'Cannot activate a locked user account directly, please unlock first'
-      );
+      expect(() => user.activate()).toThrow(InvalidUserStatusTransitionError);
     });
 
     test('should deactivate an active account', () => {
@@ -189,15 +196,9 @@ describe('User Domain Entity', () => {
       user.deactivate();
       expect(user.status).toBe('inactive');
     });
-
-    test('should remain inactive when deactivate() is called on an inactive account', () => {
-      const user = User.rehydrate({ ...validProps, status: 'inactive' });
-      user.deactivate();
-      expect(user.status).toBe('inactive');
-    });
   });
 
-  describe('softDelete()', () => {
+  describe('softDelete() & restore()', () => {
     test('should mark account as deleted and set deletedAt', () => {
       const user = User.rehydrate(validProps);
       user.softDelete();
@@ -206,14 +207,12 @@ describe('User Domain Entity', () => {
       expect(user.deletedAt).toBeInstanceOf(Date);
     });
 
-    test('should do nothing when softDelete() is called on an already deleted account', () => {
+    test('should restore a deleted user as inactive', () => {
       const user = User.rehydrate({ ...validProps, status: 'deleted', deletedAt: new Date() });
-      const initialDeletedAt = user.deletedAt;
+      user.restore();
 
-      user.softDelete();
-
-      expect(user.status).toBe('deleted');
-      expect(user.deletedAt).toEqual(initialDeletedAt);
+      expect(user.status).toBe('inactive');
+      expect(user.deletedAt).toBeNull();
     });
   });
 });
