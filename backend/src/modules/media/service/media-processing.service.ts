@@ -1,10 +1,12 @@
 import type { IMediaRepository } from '../repository/media-repository.interface';
 import type { IMediaStorage } from '../domain/storage.interface';
 import type { IImageProcessor } from '../domain/image-processor.interface';
+import { runInTransaction } from '@/lib/database/client';
 import {
   ImageProcessingError,
   StorageProcessingError,
   VariantGenerationError,
+  MediaDomainError,
 } from '../domain/media-errors';
 
 export class MediaProcessingService {
@@ -24,7 +26,6 @@ export class MediaProcessingService {
     media.markProcessing();
     await this.mediaRepo.update(media);
 
-
     // Verify storage source file existence
     const exists = await this.storage.exists(media.storageKey);
     if (!exists) {
@@ -42,7 +43,7 @@ export class MediaProcessingService {
       // 2. Extract EXIF / GPS / Dimensions metadata
       const metadata = await this.imageProcessor.extractMetadata(originalBuffer);
 
-      // Save structured metadata to database
+      // Structuring metadata
       const dbMetadata: Record<string, unknown> = {
         width: metadata.width ?? null,
         height: metadata.height ?? null,
@@ -58,9 +59,15 @@ export class MediaProcessingService {
         processedAt: new Date().toISOString(),
       };
 
-      await this.mediaRepo.saveMetadata(media.id, dbMetadata);
-
       // 3. Generate image variants (only for images)
+      const variantsToSave: Array<{
+        variantType: string;
+        storageKey: string;
+        width: number;
+        height: number;
+        fileSize: number;
+      }> = [];
+
       if (media.mediaType === 'IMAGE') {
         const variantsConfig = [
           { type: 'thumbnail', width: 150, height: 150 },
@@ -68,10 +75,10 @@ export class MediaProcessingService {
           { type: 'large', width: 1200, height: 800 },
         ];
 
-        // Parse date path from original storageKey to keep organization path structure
-        const storageParts = media.storageKey.split('/');
-        const year = storageParts[1] || new Date().getFullYear();
-        const month = storageParts[2] || '01';
+        // Format dates based on the media entity metadata date rather than formatting paths
+        const mediaProps = media.toPersistence();
+        const year = mediaProps.createdAt.getFullYear();
+        const month = String(mediaProps.createdAt.getMonth() + 1).padStart(2, '0');
 
         for (const config of variantsConfig) {
           const { buffer: resizedBuffer, fileSize } = await this.imageProcessor.resize(
@@ -87,9 +94,7 @@ export class MediaProcessingService {
           await this.storage.upload(variantKey, resizedBuffer, 'image/webp');
           uploadedVariantKeys.push(variantKey);
 
-          // Save variant registry in DB
-          await this.mediaRepo.saveVariant({
-            mediaId: media.id,
+          variantsToSave.push({
             variantType: config.type,
             storageKey: variantKey,
             width: config.width,
@@ -99,9 +104,23 @@ export class MediaProcessingService {
         }
       }
 
-      // 4. Mark status completed READY
-      media.markReady();
-      await this.mediaRepo.update(media);
+      // 4. Save metadata, variants and update media status inside a single DB transaction block
+      await runInTransaction(async (tx) => {
+        await this.mediaRepo.saveMetadata(media.id, dbMetadata, tx);
+
+        for (const variantProps of variantsToSave) {
+          await this.mediaRepo.saveVariant(
+            {
+              mediaId: media.id,
+              ...variantProps,
+            },
+            tx
+          );
+        }
+
+        media.markReady();
+        await this.mediaRepo.update(media, tx);
+      });
     } catch (err) {
       // Transition lifecycle status to FAILED on processing crash
       try {
@@ -111,9 +130,12 @@ export class MediaProcessingService {
         // Suppress nested DB status update failures
       }
 
-      // Cleanup generated variant files from storage to prevent leaks
-      for (const variantKey of uploadedVariantKeys) {
-        await this.storage.delete(variantKey);
+      // Cleanup generated variant files safely using settled promises
+      await Promise.allSettled(uploadedVariantKeys.map((variantKey) => this.storage.delete(variantKey)));
+
+      // Rethrow domain errors directly
+      if (err instanceof MediaDomainError) {
+        throw err;
       }
 
       throw new VariantGenerationError(
