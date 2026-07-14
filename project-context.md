@@ -375,6 +375,10 @@ scope: api | db | frontend | infra | auth | search | media
 3. SQL phải dùng parameterized query
 4. File upload phải validate MIME type và kích thước
 
+### Module Locking & Interface Boundaries (Phase 3 🔒 Locked)
+1. **Tuyệt đối không chỉnh sửa Phase 3**: Trừ khi phát hiện lỗi nghiêm trọng ảnh hưởng trực tiếp đến môi trường Production hoặc phát hiện lỗ hổng bảo mật nghiêm trọng cần vá khẩn cấp.
+2. **Nguyên tắc giao tiếp qua Interface/Public API**: Khi triển khai các tính năng nâng cao ở Phase 4, bắt buộc chỉ sử dụng và gọi các API công khai và interface xuất khẩu của các module Phase 3. Tuyệt đối không truy cập hay chỉnh sửa trực tiếp vào logic triển khai (implementation details) bên trong các module đã khóa, nhằm giảm thiểu rủi ro làm hỏng nền tảng khi phát triển các tính năng tiếp theo.
+
 ---
 
 ## 13. SESSION HISTORY
