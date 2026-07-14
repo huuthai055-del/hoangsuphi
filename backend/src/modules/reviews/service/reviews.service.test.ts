@@ -319,9 +319,11 @@ describe('Reviews & Favorites Services', () => {
       test('should list reviews via findMany', async () => {
         const activeReview = generateTestReview('PENDING');
         mockReviewFindMany.mockImplementation(() => Promise.resolve([activeReview]));
+        mockReviewCount.mockImplementation(() => Promise.resolve(1));
         
-        const list = await reviewsService.listReviews({ filters: { status: 'PENDING' } });
-        expect(list.length).toBe(1);
+        const result = await reviewsService.listReviews({ filters: { status: 'PENDING' } });
+        expect(result.items.length).toBe(1);
+        expect(result.total).toBe(1);
       });
 
       test('should list reviews by owner', async () => {

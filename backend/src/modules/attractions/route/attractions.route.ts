@@ -1,9 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { AttractionsController } from './attractions.controller';
-import { AttractionsService } from '../service/attractions.service';
-import { DrizzleRegionsRepository } from '@/modules/regions/repository/regions.repository';
-import { DrizzleAttractionsRepository } from '../repository/attractions.repository';
+import { container } from '@/common/di/container';
 import {
   CreateAttractionSchema,
   UpdateAttractionSchema,
@@ -13,50 +10,34 @@ import {
   AttractionSlugParamsSchema,
 } from '../dto/attractions.dto';
 import { validateBody, validateQuery, validateParams } from '@/middleware/validator';
-
-import { DrizzleUserRepository } from '@/modules/identity/repository/users.repository';
-import { DrizzleSessionRepository } from '@/modules/identity/repository/sessions.repository';
-import { DrizzleRefreshTokenRepository } from '@/modules/identity/repository/refresh-tokens.repository';
-import { DrizzlePermissionRepository } from '@/modules/identity/repository/permissions.repository';
-import { TokenService } from '@/modules/identity/service/token.service';
-import { SessionService } from '@/modules/identity/service/session.service';
-import { authMiddleware } from '@/modules/identity/middleware/auth.middleware';
 import { requirePermission } from '@/modules/identity/middleware/permission.middleware';
+import type { MiddlewareHandler } from 'hono';
+import type { AttractionsController } from './attractions.controller';
 
 const attractionsRouter = new Hono();
 
-const regionsRepo = new DrizzleRegionsRepository();
-const attractionsRepo = new DrizzleAttractionsRepository();
-const service = new AttractionsService(regionsRepo, attractionsRepo);
-const controller = new AttractionsController(service);
-
-const userRepo = new DrizzleUserRepository();
-const sessionRepo = new DrizzleSessionRepository();
-const tokenRepo = new DrizzleRefreshTokenRepository();
-const permissionRepo = new DrizzlePermissionRepository();
-const tokenService = new TokenService();
-const sessionService = new SessionService(sessionRepo, tokenRepo);
-const authGuard = authMiddleware(tokenService, sessionService, userRepo, permissionRepo);
+const authGuard: MiddlewareHandler = (c, next) => container.resolve<MiddlewareHandler>('AuthGuard')(c, next);
+const getController = (): AttractionsController => container.resolve<AttractionsController>('AttractionsController');
 
 // ==========================================
 // PUBLIC ROUTES
 // ==========================================
 
 // GET /api/v1/attractions
-attractionsRouter.get('/', validateQuery(ListAttractionsQuerySchema), controller.list);
+attractionsRouter.get('/', validateQuery(ListAttractionsQuerySchema), (c) => getController().list(c));
 
 // GET /api/v1/attractions/nearby
 attractionsRouter.get(
   '/nearby',
   validateQuery(AttractionNearbyQuerySchema),
-  controller.searchNearby
+  (c) => getController().searchNearby(c)
 );
 
 // GET /api/v1/attractions/slug/:slug
 attractionsRouter.get(
   '/slug/:slug',
   validateParams(AttractionSlugParamsSchema),
-  controller.getBySlug
+  (c) => getController().getBySlug(c)
 );
 
 // GET /api/v1/attractions/region/:regionId
@@ -64,11 +45,11 @@ attractionsRouter.get(
   '/region/:regionId',
   validateParams(z.object({ regionId: z.string().uuid('Region ID must be a valid UUID') })),
   validateQuery(ListAttractionsQuerySchema),
-  controller.listByRegion
+  (c) => getController().listByRegion(c)
 );
 
 // GET /api/v1/attractions/:id
-attractionsRouter.get('/:id', validateParams(AttractionIdParamsSchema), controller.getById);
+attractionsRouter.get('/:id', validateParams(AttractionIdParamsSchema), (c) => getController().getById(c));
 
 // ==========================================
 // ADMIN ROUTES
@@ -79,7 +60,7 @@ attractionsRouter.post(
   authGuard,
   requirePermission('attraction:write'),
   validateBody(CreateAttractionSchema),
-  controller.create
+  (c) => getController().create(c)
 );
 
 attractionsRouter.patch(
@@ -88,7 +69,7 @@ attractionsRouter.patch(
   requirePermission('attraction:write'),
   validateParams(AttractionIdParamsSchema),
   validateBody(UpdateAttractionSchema),
-  controller.update
+  (c) => getController().update(c)
 );
 
 attractionsRouter.delete(
@@ -96,7 +77,7 @@ attractionsRouter.delete(
   authGuard,
   requirePermission('attraction:write'),
   validateParams(AttractionIdParamsSchema),
-  controller.delete
+  (c) => getController().delete(c)
 );
 
 attractionsRouter.patch(
@@ -104,7 +85,7 @@ attractionsRouter.patch(
   authGuard,
   requirePermission('attraction:write'),
   validateParams(AttractionIdParamsSchema),
-  controller.activate
+  (c) => getController().activate(c)
 );
 
 attractionsRouter.patch(
@@ -112,11 +93,7 @@ attractionsRouter.patch(
   authGuard,
   requirePermission('attraction:write'),
   validateParams(AttractionIdParamsSchema),
-  controller.deactivate
+  (c) => getController().deactivate(c)
 );
 
-
-
 export { attractionsRouter };
-export type { AttractionsController };
-export type { AttractionsService };

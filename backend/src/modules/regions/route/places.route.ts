@@ -1,9 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { PlacesController } from './places.controller';
-import { PlacesService } from '../service/places.service';
-import { DrizzleRegionsRepository } from '@/modules/regions/repository/regions.repository';
-import { DrizzleTouristPlacesRepository } from '@/modules/regions/repository/places.repository';
+import { container } from '@/common/di/container';
 import {
   CreatePlaceSchema,
   UpdatePlaceSchema,
@@ -13,54 +10,38 @@ import {
   PlaceSlugParamsSchema,
 } from '../dto/places.dto';
 import { validateBody, validateQuery, validateParams } from '@/middleware/validator';
-
-import { DrizzleUserRepository } from '@/modules/identity/repository/users.repository';
-import { DrizzleSessionRepository } from '@/modules/identity/repository/sessions.repository';
-import { DrizzleRefreshTokenRepository } from '@/modules/identity/repository/refresh-tokens.repository';
-import { DrizzlePermissionRepository } from '@/modules/identity/repository/permissions.repository';
-import { TokenService } from '@/modules/identity/service/token.service';
-import { SessionService } from '@/modules/identity/service/session.service';
-import { authMiddleware } from '@/modules/identity/middleware/auth.middleware';
 import { requirePermission } from '@/modules/identity/middleware/permission.middleware';
+import type { MiddlewareHandler } from 'hono';
+import type { PlacesController } from './places.controller';
 
 const placesRouter = new Hono();
 
-const regionsRepo = new DrizzleRegionsRepository();
-const placesRepo = new DrizzleTouristPlacesRepository();
-const placesService = new PlacesService(regionsRepo, placesRepo);
-const controller = new PlacesController(placesService);
-
-const userRepo = new DrizzleUserRepository();
-const sessionRepo = new DrizzleSessionRepository();
-const tokenRepo = new DrizzleRefreshTokenRepository();
-const permissionRepo = new DrizzlePermissionRepository();
-const tokenService = new TokenService();
-const sessionService = new SessionService(sessionRepo, tokenRepo);
-const authGuard = authMiddleware(tokenService, sessionService, userRepo, permissionRepo);
+const authGuard: MiddlewareHandler = (c, next) => container.resolve<MiddlewareHandler>('AuthGuard')(c, next);
+const getController = (): PlacesController => container.resolve<PlacesController>('PlacesController');
 
 // ==========================================
 // PUBLIC ROUTES
 // ==========================================
 
 // GET /api/v1/places
-placesRouter.get('/', validateQuery(ListPlacesQuerySchema), controller.list);
+placesRouter.get('/', validateQuery(ListPlacesQuerySchema), (c) => getController().list(c));
 
 // GET /api/v1/places/nearby
-placesRouter.get('/nearby', validateQuery(PlaceNearbyQuerySchema), controller.searchNearby);
+placesRouter.get('/nearby', validateQuery(PlaceNearbyQuerySchema), (c) => getController().searchNearby(c));
 
 // GET /api/v1/places/slug/:slug
-placesRouter.get('/slug/:slug', validateParams(PlaceSlugParamsSchema), controller.getBySlug);
+placesRouter.get('/slug/:slug', validateParams(PlaceSlugParamsSchema), (c) => getController().getBySlug(c));
 
 // GET /api/v1/places/region/:regionId
 placesRouter.get(
   '/region/:regionId',
   validateParams(z.object({ regionId: z.string().uuid('Region ID must be a valid UUID') })),
   validateQuery(ListPlacesQuerySchema),
-  controller.listByRegion
+  (c) => getController().listByRegion(c)
 );
 
 // GET /api/v1/places/:id
-placesRouter.get('/:id', validateParams(PlaceIdParamsSchema), controller.getById);
+placesRouter.get('/:id', validateParams(PlaceIdParamsSchema), (c) => getController().getById(c));
 
 // ==========================================
 // ADMIN ROUTES
@@ -71,7 +52,7 @@ placesRouter.post(
   authGuard,
   requirePermission('place:write'),
   validateBody(CreatePlaceSchema),
-  controller.create
+  (c) => getController().create(c)
 );
 
 placesRouter.patch(
@@ -80,7 +61,7 @@ placesRouter.patch(
   requirePermission('place:write'),
   validateParams(PlaceIdParamsSchema),
   validateBody(UpdatePlaceSchema),
-  controller.update
+  (c) => getController().update(c)
 );
 
 placesRouter.delete(
@@ -88,7 +69,7 @@ placesRouter.delete(
   authGuard,
   requirePermission('place:write'),
   validateParams(PlaceIdParamsSchema),
-  controller.delete
+  (c) => getController().delete(c)
 );
 
 placesRouter.patch(
@@ -96,7 +77,7 @@ placesRouter.patch(
   authGuard,
   requirePermission('place:write'),
   validateParams(PlaceIdParamsSchema),
-  controller.activate
+  (c) => getController().activate(c)
 );
 
 placesRouter.patch(
@@ -104,11 +85,7 @@ placesRouter.patch(
   authGuard,
   requirePermission('place:write'),
   validateParams(PlaceIdParamsSchema),
-  controller.deactivate
+  (c) => getController().deactivate(c)
 );
 
-
-
 export { placesRouter };
-export type { PlacesController };
-export type { PlacesService };

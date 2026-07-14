@@ -80,7 +80,7 @@ export class ReviewsController {
     const pagination = c.get('validQuery') as PaginationQueryDto;
     const search = c.get('validQuery') as SearchQueryDto;
 
-    const reviews = await this.service.listReviews({
+    const result = await this.service.listReviews({
       filters: {
         ownerType: queryFilters.ownerType,
         ownerId: queryFilters.ownerId,
@@ -95,8 +95,15 @@ export class ReviewsController {
       search: search.search,
     });
 
-    const mapped = reviews.map(mapReviewToResponse);
-    return c.json({ data: mapped }, 200);
+    const mapped = result.items.map(mapReviewToResponse);
+    return c.json({
+      data: mapped,
+      meta: {
+        total: result.total,
+        limit: pagination.limit,
+        offset: pagination.offset,
+      },
+    }, 200);
   };
 
   public listByOwner = async (c: Context) => {

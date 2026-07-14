@@ -9,4 +9,5 @@ export interface IUserRepository {
   delete(id: string, tx?: unknown): Promise<void>;
   assignRole(userId: string, roleId: string, tx?: unknown): Promise<void>;
   removeRole(userId: string, roleId: string, tx?: unknown): Promise<void>;
+  findRoleByCode(code: string, tx?: unknown): Promise<{ id: string } | null>;
 }

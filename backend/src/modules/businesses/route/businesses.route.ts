@@ -1,9 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { BusinessesController } from './businesses.controller';
-import { BusinessesService } from '../service/businesses.service';
-import { DrizzleRegionsRepository } from '@/modules/regions/repository/regions.repository';
-import { DrizzleBusinessesRepository } from '../repository/businesses.repository';
+import { container } from '@/common/di/container';
 import {
   CreateBusinessSchema,
   UpdateBusinessSchema,
@@ -13,54 +10,38 @@ import {
   BusinessSlugParamsSchema,
 } from '../dto/businesses.dto';
 import { validateBody, validateQuery, validateParams } from '@/middleware/validator';
-
-import { DrizzleUserRepository } from '@/modules/identity/repository/users.repository';
-import { DrizzleSessionRepository } from '@/modules/identity/repository/sessions.repository';
-import { DrizzleRefreshTokenRepository } from '@/modules/identity/repository/refresh-tokens.repository';
-import { DrizzlePermissionRepository } from '@/modules/identity/repository/permissions.repository';
-import { TokenService } from '@/modules/identity/service/token.service';
-import { SessionService } from '@/modules/identity/service/session.service';
-import { authMiddleware } from '@/modules/identity/middleware/auth.middleware';
 import { requirePermission } from '@/modules/identity/middleware/permission.middleware';
+import type { MiddlewareHandler } from 'hono';
+import type { BusinessesController } from './businesses.controller';
 
 const businessesRouter = new Hono();
 
-const regionsRepo = new DrizzleRegionsRepository();
-const businessesRepo = new DrizzleBusinessesRepository();
-const service = new BusinessesService(regionsRepo, businessesRepo);
-const controller = new BusinessesController(service);
-
-const userRepo = new DrizzleUserRepository();
-const sessionRepo = new DrizzleSessionRepository();
-const tokenRepo = new DrizzleRefreshTokenRepository();
-const permissionRepo = new DrizzlePermissionRepository();
-const tokenService = new TokenService();
-const sessionService = new SessionService(sessionRepo, tokenRepo);
-const authGuard = authMiddleware(tokenService, sessionService, userRepo, permissionRepo);
+const authGuard: MiddlewareHandler = (c, next) => container.resolve<MiddlewareHandler>('AuthGuard')(c, next);
+const getController = (): BusinessesController => container.resolve<BusinessesController>('BusinessesController');
 
 // ==========================================
 // PUBLIC ROUTES
 // ==========================================
 
 // GET /api/v1/businesses
-businessesRouter.get('/', validateQuery(ListBusinessesQuerySchema), controller.list);
+businessesRouter.get('/', validateQuery(ListBusinessesQuerySchema), (c) => getController().list(c));
 
 // GET /api/v1/businesses/nearby
-businessesRouter.get('/nearby', validateQuery(BusinessNearbyQuerySchema), controller.searchNearby);
+businessesRouter.get('/nearby', validateQuery(BusinessNearbyQuerySchema), (c) => getController().searchNearby(c));
 
 // GET /api/v1/businesses/slug/:slug
-businessesRouter.get('/slug/:slug', validateParams(BusinessSlugParamsSchema), controller.getBySlug);
+businessesRouter.get('/slug/:slug', validateParams(BusinessSlugParamsSchema), (c) => getController().getBySlug(c));
 
 // GET /api/v1/businesses/region/:regionId
 businessesRouter.get(
   '/region/:regionId',
   validateParams(z.object({ regionId: z.string().uuid('Region ID must be a valid UUID') })),
   validateQuery(ListBusinessesQuerySchema),
-  controller.listByRegion
+  (c) => getController().listByRegion(c)
 );
 
 // GET /api/v1/businesses/:id
-businessesRouter.get('/:id', validateParams(BusinessIdParamsSchema), controller.getById);
+businessesRouter.get('/:id', validateParams(BusinessIdParamsSchema), (c) => getController().getById(c));
 
 // ==========================================
 // ADMIN ROUTES
@@ -71,7 +52,7 @@ businessesRouter.post(
   authGuard,
   requirePermission('business:write'),
   validateBody(CreateBusinessSchema),
-  controller.create
+  (c) => getController().create(c)
 );
 
 businessesRouter.patch(
@@ -80,7 +61,7 @@ businessesRouter.patch(
   requirePermission('business:write'),
   validateParams(BusinessIdParamsSchema),
   validateBody(UpdateBusinessSchema),
-  controller.update
+  (c) => getController().update(c)
 );
 
 businessesRouter.delete(
@@ -88,7 +69,7 @@ businessesRouter.delete(
   authGuard,
   requirePermission('business:write'),
   validateParams(BusinessIdParamsSchema),
-  controller.delete
+  (c) => getController().delete(c)
 );
 
 businessesRouter.patch(
@@ -96,7 +77,7 @@ businessesRouter.patch(
   authGuard,
   requirePermission('business:write'),
   validateParams(BusinessIdParamsSchema),
-  controller.activate
+  (c) => getController().activate(c)
 );
 
 businessesRouter.patch(
@@ -104,11 +85,7 @@ businessesRouter.patch(
   authGuard,
   requirePermission('business:write'),
   validateParams(BusinessIdParamsSchema),
-  controller.deactivate
+  (c) => getController().deactivate(c)
 );
 
-
-
 export { businessesRouter };
-export type { BusinessesController };
-export type { BusinessesService };

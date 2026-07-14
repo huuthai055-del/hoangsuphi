@@ -1,14 +1,5 @@
 import { Hono } from 'hono';
-import { IdentityController } from './identity.controller';
-import { AuthService } from '../service/auth.service';
-import { PasswordService } from '../service/password.service';
-import { TokenService } from '../service/token.service';
-import { SessionService } from '../service/session.service';
-import { DrizzleUserRepository } from '../repository/users.repository';
-import { DrizzleSessionRepository } from '../repository/sessions.repository';
-import { DrizzleRefreshTokenRepository } from '../repository/refresh-tokens.repository';
-import { DrizzlePermissionRepository } from '../repository/permissions.repository';
-import { authMiddleware } from '../middleware/auth.middleware';
+import { container } from '@/common/di/container';
 import {
   RegisterRequestSchema,
   LoginRequestSchema,
@@ -17,23 +8,14 @@ import {
 } from '../dto/identity.dto';
 import { validateBody } from '@/middleware/validator';
 import { rateLimit } from '@/middleware/rate-limit';
-
+import type { MiddlewareHandler } from 'hono';
+import type { IdentityController } from './identity.controller';
 
 const identityRouter = new Hono();
 
 // Dependency Injection Setup
-const userRepo = new DrizzleUserRepository();
-const sessionRepo = new DrizzleSessionRepository();
-const tokenRepo = new DrizzleRefreshTokenRepository();
-const permissionRepo = new DrizzlePermissionRepository();
-
-const passwordService = new PasswordService();
-const tokenService = new TokenService();
-const sessionService = new SessionService(sessionRepo, tokenRepo);
-const authService = new AuthService(passwordService, tokenService, sessionService, userRepo);
-
-const controller = new IdentityController(authService);
-const authGuard = authMiddleware(tokenService, sessionService, userRepo, permissionRepo);
+const authGuard: MiddlewareHandler = (c, next) => container.resolve<MiddlewareHandler>('AuthGuard')(c, next);
+const getController = (): IdentityController => container.resolve<IdentityController>('IdentityController');
 
 // Public Routes — rate-limited by IP to mitigate brute-force and enumeration.
 // Account-level lockout in User domain is kept as an independent second layer.
@@ -41,33 +23,33 @@ identityRouter.post(
   '/register',
   rateLimit('identity-register', 5),
   validateBody(RegisterRequestSchema),
-  controller.register
+  (c) => getController().register(c)
 );
 
 identityRouter.post(
   '/login',
   rateLimit('identity-login', 10),
   validateBody(LoginRequestSchema),
-  controller.login
+  (c) => getController().login(c)
 );
 
 identityRouter.post(
   '/refresh',
   rateLimit('identity-refresh', 20),
   validateBody(RefreshRequestSchema),
-  controller.refresh
+  (c) => getController().refresh(c)
 );
 
 // Protected Routes
-identityRouter.post('/logout', authGuard, controller.logout);
+identityRouter.post('/logout', authGuard, (c) => getController().logout(c));
 
-identityRouter.post('/logout-all', authGuard, controller.logoutAll);
+identityRouter.post('/logout-all', authGuard, (c) => getController().logoutAll(c));
 
 identityRouter.post(
   '/change-password',
   authGuard,
   validateBody(ChangePasswordRequestSchema),
-  controller.changePassword
+  (c) => getController().changePassword(c)
 );
 
 // OpenAPI Spec endpoint for Identity Module

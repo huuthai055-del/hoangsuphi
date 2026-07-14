@@ -306,6 +306,145 @@ async function main() {
     };
     await db.insert(userProfiles).values(adminProfile).onConflictDoNothing();
 
+    // ─── 6. SEED ROLES & PERMISSIONS & USER ROLES ─────────────────────────────────
+    console.info('Seeding roles, permissions, and assigning role to admin user...');
+    
+    const { roles, permissions, rolePermissions, userRoles } = require('./schema');
+
+    const allPermissionsList = [
+      // Regions & Places
+      { code: 'system:write', name: 'System Write', description: 'Modify system regions and configurations' },
+      { code: 'place:write', name: 'Place Write', description: 'Create and modify tourist places' },
+      // Attractions & Businesses
+      { code: 'attraction:write', name: 'Attraction Write', description: 'Create and modify attractions' },
+      { code: 'business:write', name: 'Business Write', description: 'Create and modify businesses' },
+      // Articles
+      { code: 'article:write', name: 'Article Write', description: 'Create and modify articles' },
+      { code: 'article:publish', name: 'Article Publish', description: 'Publish or reject articles' },
+      // Reviews & Favorites
+      { code: 'review:create', name: 'Review Create', description: 'Write reviews' },
+      { code: 'review:read', name: 'Review Read', description: 'View reviews list' },
+      { code: 'review:update', name: 'Review Update', description: 'Edit own reviews' },
+      { code: 'review:delete', name: 'Review Delete', description: 'Delete reviews' },
+      { code: 'review:approve', name: 'Review Approve', description: 'Approve reviews' },
+      { code: 'review:reject', name: 'Review Reject', description: 'Reject reviews' },
+      { code: 'favorite:create', name: 'Favorite Create', description: 'Add to favorites' },
+      { code: 'favorite:delete', name: 'Favorite Delete', description: 'Remove from favorites' },
+      { code: 'favorite:read', name: 'Favorite Read', description: 'View favorites list' },
+      // Media
+      { code: 'media:upload', name: 'Media Upload', description: 'Upload media files' },
+      { code: 'media:read', name: 'Media Read', description: 'View media details' },
+      { code: 'media:delete', name: 'Media Delete', description: 'Delete media' },
+      // Itineraries
+      { code: 'itinerary:create', name: 'Itinerary Create', description: 'Create itineraries' },
+      { code: 'itinerary:read', name: 'Itinerary Read', description: 'View itineraries' },
+      { code: 'itinerary:update', name: 'Itinerary Update', description: 'Modify itineraries' },
+      { code: 'itinerary:delete', name: 'Itinerary Delete', description: 'Delete itineraries' },
+      // FAQs
+      { code: 'faq:create', name: 'FAQ Create', description: 'Create FAQs' },
+      { code: 'faq:update', name: 'FAQ Update', description: 'Modify FAQs' },
+      { code: 'faq:delete', name: 'FAQ Delete', description: 'Delete FAQs' },
+      // TopLists
+      { code: 'toplist:create', name: 'TopList Create', description: 'Create TopLists' },
+      { code: 'toplist:update', name: 'TopList Update', description: 'Modify TopLists' },
+      { code: 'toplist:delete', name: 'TopList Delete', description: 'Delete TopLists' },
+      // Notifications
+      { code: 'notification:create', name: 'Notification Create', description: 'Create notifications' },
+      { code: 'notification:read', name: 'Notification Read', description: 'Read notifications' },
+      { code: 'notification:update', name: 'Notification Update', description: 'Modify notifications' },
+      { code: 'notification:dismiss', name: 'Notification Dismiss', description: 'Dismiss notifications' },
+      { code: 'notification:delete', name: 'Notification Delete', description: 'Delete notifications' },
+    ];
+
+    const permissionMap = new Map<string, string>();
+    for (const p of allPermissionsList) {
+      const pId = generateUuidV7();
+      await db.insert(permissions).values({
+        id: pId,
+        code: p.code,
+        name: p.name,
+        description: p.description,
+      }).onConflictDoNothing();
+
+      const existing = await db.select({ id: permissions.id }).from(permissions).where(sql`${permissions.code} = ${p.code}`);
+      permissionMap.set(p.code, existing[0]?.id || pId);
+    }
+
+    // Insert Roles
+    const rolesList = [
+      { code: 'admin', name: 'Admin', description: 'Super Administrator with all permissions' },
+      { code: 'editor', name: 'Editor', description: 'Content Editor with write permissions' },
+      { code: 'viewer', name: 'Viewer', description: 'Registered User with basic write/read permissions' },
+    ];
+
+    const roleMap = new Map<string, string>();
+    for (const r of rolesList) {
+      const rId = generateUuidV7();
+      await db.insert(roles).values({
+        id: rId,
+        code: r.code,
+        name: r.name,
+        description: r.description,
+      }).onConflictDoNothing();
+
+      const existing = await db.select({ id: roles.id }).from(roles).where(sql`${roles.code} = ${r.code}`);
+      roleMap.set(r.code, existing[0]?.id || rId);
+    }
+
+    // Link Role Permissions
+    // Admin gets all
+    const adminRoleId = roleMap.get('admin')!;
+    for (const [_, pId] of permissionMap.entries()) {
+      await db.insert(rolePermissions).values({
+        roleId: adminRoleId,
+        permissionId: pId,
+      }).onConflictDoNothing();
+    }
+
+    // Editor permissions
+    const editorRoleId = roleMap.get('editor')!;
+    const editorPermissionCodes = [
+      'place:write', 'attraction:write', 'business:write', 'article:write', 'article:publish',
+      'review:create', 'review:read', 'review:update', 'review:delete', 'review:approve', 'review:reject',
+      'favorite:create', 'favorite:delete', 'favorite:read', 'media:upload', 'media:read', 'media:delete',
+      'itinerary:create', 'itinerary:read', 'itinerary:update', 'itinerary:delete',
+      'faq:create', 'faq:update', 'faq:delete', 'toplist:create', 'toplist:update', 'toplist:delete',
+      'notification:create', 'notification:read', 'notification:update', 'notification:dismiss', 'notification:delete'
+    ];
+    for (const code of editorPermissionCodes) {
+      const pId = permissionMap.get(code);
+      if (pId) {
+        await db.insert(rolePermissions).values({
+          roleId: editorRoleId,
+          permissionId: pId,
+        }).onConflictDoNothing();
+      }
+    }
+
+    // Viewer permissions
+    const viewerRoleId = roleMap.get('viewer')!;
+    const viewerPermissionCodes = [
+      'review:create', 'review:read', 'review:update', 'review:delete',
+      'favorite:create', 'favorite:delete', 'favorite:read', 'media:upload', 'media:read',
+      'itinerary:create', 'itinerary:read', 'itinerary:update', 'itinerary:delete',
+      'notification:read', 'notification:dismiss'
+    ];
+    for (const code of viewerPermissionCodes) {
+      const pId = permissionMap.get(code);
+      if (pId) {
+        await db.insert(rolePermissions).values({
+          roleId: viewerRoleId,
+          permissionId: pId,
+        }).onConflictDoNothing();
+      }
+    }
+
+    // Link Admin User to Admin Role
+    await db.insert(userRoles).values({
+      userId: adminId,
+      roleId: adminRoleId,
+    }).onConflictDoNothing();
+
     console.info('✅ Database seeding completed successfully.');
   } catch (error) {
     console.error('❌ Error during database seeding:', error);

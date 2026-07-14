@@ -54,7 +54,7 @@ describe('Reviews & Favorites API Routing & Controller', () => {
   const mockGetReview = mock(() => Promise.resolve(Review.rehydrate(sampleReviewData)));
   const mockApproveReview = mock(() => Promise.resolve({} as any));
   const mockRejectReview = mock(() => Promise.resolve({} as any));
-  const mockListReviews = mock(() => Promise.resolve([]));
+  const mockListReviews = mock(() => Promise.resolve({ items: [], total: 0 }));
   const mockListReviewsByOwner = mock(() => Promise.resolve([]));
   const mockListReviewsByUser = mock(async (userId: string, caller: any, _pagination?: any) => {
     if (userId !== caller?.id && !caller?.roles?.includes('admin')) {

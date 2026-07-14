@@ -1,9 +1,5 @@
 import { Hono } from 'hono';
-import { ReviewsController } from './reviews.controller';
-import { FavoritesController } from './favorites.controller';
-import { ReviewsService } from '@/modules/reviews/service/reviews.service';
-import { FavoritesService } from '@/modules/reviews/service/favorites.service';
-import { DrizzleReviewsRepository, DrizzleFavoritesRepository } from '@/modules/reviews/repository/reviews.repository';
+import { container } from '@/common/di/container';
 import {
   ReviewIdParamsSchema,
   FavoriteIdParamsSchema,
@@ -18,58 +14,24 @@ import {
   FavoriteFilterQuerySchema,
 } from '../dto/reviews.dto';
 import { validateBody, validateParams, validateQuery } from '@/middleware/validator';
-
-import { DrizzleUserRepository } from '@/modules/identity/repository/users.repository';
-import { DrizzleSessionRepository } from '@/modules/identity/repository/sessions.repository';
-import { DrizzleRefreshTokenRepository } from '@/modules/identity/repository/refresh-tokens.repository';
-import { DrizzlePermissionRepository } from '@/modules/identity/repository/permissions.repository';
-import { TokenService } from '@/modules/identity/service/token.service';
-import { SessionService } from '@/modules/identity/service/session.service';
-import { authMiddleware } from '@/modules/identity/middleware/auth.middleware';
 import { requirePermission } from '@/modules/identity/middleware/permission.middleware';
+import type { MiddlewareHandler } from 'hono';
+import type { ReviewsController } from './reviews.controller';
+import type { FavoritesController } from './favorites.controller';
 
 const reviewsRouter = new Hono();
-
-// Lazy Instances
-let reviewsService: ReviewsService | null = null;
-let favoritesService: FavoritesService | null = null;
-let reviewsController: ReviewsController | null = null;
-let favoritesController: FavoritesController | null = null;
 
 export function injectMockControllers(
   mockReviewsCtrl: ReviewsController,
   mockFavoritesCtrl: FavoritesController
 ) {
-  reviewsController = mockReviewsCtrl;
-  favoritesController = mockFavoritesCtrl;
+  container.register('ReviewsController', mockReviewsCtrl);
+  container.register('FavoritesController', mockFavoritesCtrl);
 }
 
-function getReviewsController(): ReviewsController {
-  if (!reviewsController) {
-    const reviewsRepo = new DrizzleReviewsRepository();
-    reviewsService = new ReviewsService(reviewsRepo);
-    reviewsController = new ReviewsController(reviewsService);
-  }
-  return reviewsController;
-}
-
-function getFavoritesController(): FavoritesController {
-  if (!favoritesController) {
-    const favoritesRepo = new DrizzleFavoritesRepository();
-    favoritesService = new FavoritesService(favoritesRepo);
-    favoritesController = new FavoritesController(favoritesService);
-  }
-  return favoritesController;
-}
-
-// Authentication Guard dependencies
-const userRepo = new DrizzleUserRepository();
-const sessionRepo = new DrizzleSessionRepository();
-const tokenRepo = new DrizzleRefreshTokenRepository();
-const permissionRepo = new DrizzlePermissionRepository();
-const tokenService = new TokenService();
-const sessionService = new SessionService(sessionRepo, tokenRepo);
-const authGuard = authMiddleware(tokenService, sessionService, userRepo, permissionRepo);
+const authGuard: MiddlewareHandler = (c, next) => container.resolve<MiddlewareHandler>('AuthGuard')(c, next);
+const getReviewsController = (): ReviewsController => container.resolve<ReviewsController>('ReviewsController');
+const getFavoritesController = (): FavoritesController => container.resolve<FavoritesController>('FavoritesController');
 
 // -----------------------------------------------------------------------------
 // Reviews Routes

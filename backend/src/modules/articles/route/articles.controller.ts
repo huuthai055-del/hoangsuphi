@@ -94,6 +94,7 @@ export class ArticlesController {
   public update = async (c: Context): Promise<Response> => {
     const params = c.get('validParams') as ArticleIdParamsDto;
     const body = c.get('validBody') as UpdateArticleRequestDto;
+    const user = requireAuthenticatedUser(c);
 
     const article = await this.service.updateArticle(params.id, {
       title: body.title,
@@ -104,20 +105,22 @@ export class ArticlesController {
       categoryId: body.categoryId,
       tagIds: body.tagIds,
       isFeatured: body.isFeatured,
-    });
+    }, user);
 
     return c.json(mapArticleToResponse(article), 200);
   };
 
   public delete = async (c: Context): Promise<Response> => {
     const params = c.get('validParams') as ArticleIdParamsDto;
-    await this.service.deleteArticle(params.id);
+    const user = requireAuthenticatedUser(c);
+    await this.service.deleteArticle(params.id, user);
     return c.body(null, 204);
   };
 
   public submitReview = async (c: Context): Promise<Response> => {
     const params = c.get('validParams') as ArticleIdParamsDto;
-    const article = await this.service.submitReview(params.id);
+    const user = requireAuthenticatedUser(c);
+    const article = await this.service.submitReview(params.id, user);
     return c.json(mapArticleToResponse(article), 200);
   };
 
@@ -136,13 +139,15 @@ export class ArticlesController {
 
   public archive = async (c: Context): Promise<Response> => {
     const params = c.get('validParams') as ArticleIdParamsDto;
-    const article = await this.service.archiveArticle(params.id);
+    const user = requireAuthenticatedUser(c);
+    const article = await this.service.archiveArticle(params.id, user);
     return c.json(mapArticleToResponse(article), 200);
   };
 
   public restore = async (c: Context): Promise<Response> => {
     const params = c.get('validParams') as ArticleIdParamsDto;
-    const article = await this.service.restoreArticle(params.id);
+    const user = requireAuthenticatedUser(c);
+    const article = await this.service.restoreArticle(params.id, user);
     return c.json(mapArticleToResponse(article), 200);
   };
 
@@ -155,14 +160,16 @@ export class ArticlesController {
   public bindTags = async (c: Context): Promise<Response> => {
     const params = c.get('validParams') as ArticleIdParamsDto;
     const body = c.get('validBody') as BindTagsDto;
-    await this.service.bindTags(params.id, body.tagIds);
+    const user = requireAuthenticatedUser(c);
+    await this.service.bindTags(params.id, body.tagIds, user);
     return c.body(null, 204);
   };
 
   public removeTags = async (c: Context): Promise<Response> => {
     const params = c.get('validParams') as ArticleIdParamsDto;
     const body = c.get('validBody') as RemoveTagsDto;
-    await this.service.removeTags(params.id, body.tagIds);
+    const user = requireAuthenticatedUser(c);
+    await this.service.removeTags(params.id, body.tagIds, user);
     return c.body(null, 204);
   };
 }

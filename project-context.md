@@ -15,7 +15,7 @@
 
 # 📋 PROJECT CONTEXT — CỔNG THÔNG TIN DU LỊCH HOÀNG SU PHÌ
 
-> **Cập nhật lần cuối:** 2026-07-13T22:50:00+07:00 | **Phiên:** #017 | **Trạng thái:** 🟡 Phase 3 - Đang thực hiện (Sub-phase 3.1 Identity & Access Control 🔒 LOCKED | Sub-phase 3.2 Regions 🔒 LOCKED | Sub-phase 3.3 Tourist Places 🔒 LOCKED | Sub-phase 3.4 Businesses & Amenities 🔒 LOCKED | Sub-phase 3.5 Attractions & Utilities 🔒 LOCKED | Sub-phase 3.6 Articles & Tags 🔒 LOCKED | Sub-phase 3.9 Weather + Notifications + Itineraries + FAQs + Top Lists 🔒 LOCKED)
+> **Cập nhật lần cuối:** 2026-07-14T12:35:00+07:00 | **Phiên:** #018 | **Trạng thái:** 🟢 Phase 3 - Hoàn thành (Sub-phase 3.1 đến 3.9 🔒 LOCKED)
 
 ---
 
@@ -30,7 +30,7 @@
 | **Ngôn ngữ chính** | Tiếng Việt (Ưu tiên) — Hỗ trợ: EN, ZH, KO, JA (Phase sau) |
 | **Thị trường mục tiêu** | Du khách nội địa Việt Nam + khách nước ngoài (backpacker) |
 | **Tạo dự án** | 2026-07-06 |
-| **Trạng thái hiện tại** | 🟡 Phase 3 — Đang thực hiện (Sub-phase 3.1 Identity 🔒 LOCKED | Sub-phase 3.2 Regions 🔒 LOCKED | Sub-phase 3.3 Tourist Places 🔒 LOCKED | Sub-phase 3.4 Businesses & Amenities 🔒 LOCKED | Sub-phase 3.5 Attractions & Utilities 🔒 LOCKED | Sub-phase 3.6 Articles & Tags Step 4/7 🔒 LOCKED) |
+| **Trạng thái hiện tại** | 🟢 Phase 3 — Hoàn thành (Sub-phase 3.1 đến 3.9 🔒 LOCKED) |
 
 ### Mục tiêu chiến lược
 
@@ -340,6 +340,8 @@ scope: api | db | frontend | infra | auth | search | media
 | D9 | 2026-07-09 | Single-DB-trip In-Memory authorization architecture | Tránh query DB liên tục trong các middleware phân quyền bằng cách load song song permissions tại authMiddleware và lưu vào Hono context |
 | D10 | 2026-07-09 | Bỏ hoàn toàn vai trò của Role Repository và RBAC database layer | Chỉ tuân thủ kiến trúc phân quyền dựa trên quyền hạn (PBAC), bỏ Role queries, giảm thiểu bảng user_roles |
 | D11 | 2026-07-13 | Composition Root / DI Container (`container.ts`) | Tách biệt hoàn toàn việc khởi tạo giữa các Router và Repository/Service/Middleware, hỗ trợ cơ chế ghi đè (override registry) sạch khi kiểm thử tích hợp (integration tests) mà không gây rò rỉ bộ nhớ hoặc sửa đổi mã nguồn production. |
+| D12 | 2026-07-14 | Enforced Article Owner Check & Authorization checks | Chặn đứng lỗ hổng bảo mật IDOR thông qua đối chiếu bắt buộc quyền sở hữu bài viết (article.authorId === caller.id hoặc Admin) trong toàn bộ các mutation của Articles. |
+| D13 | 2026-07-14 | Cấu trúc lại AuthService.register() tuân thủ repository pattern | Chuyển đổi logic truy vấn vai trò người dùng vào IUserRepository.findRoleByCode(), loại bỏ hoàn toàn việc import Schema DB ở Service, chặn đứng race condition bằng cách đối chiếu vai trò viewer được seed sẵn. |
 
 ---
 
@@ -626,5 +628,15 @@ scope: api | db | frontend | infra | auth | search | media
 
 ---
 
+### 📅 Phiên #018 — 2026-07-14 (Chiều)
+
+**Việc đã làm:**
+- Vá lỗ hổng IDOR trên Articles bằng việc kiểm soát quyền sở hữu (authorId === caller.id hoặc Admin) trong toàn bộ các mutation của `ArticlesService`.
+- Sửa lỗi default role assignment: Tái cấu trúc `AuthService.register()` để lấy thông tin vai trò qua `IUserRepository.findRoleByCode`, loại bỏ bypass CSDL và race condition trong hot path đăng ký.
+- Đồng nhất hóa cấu trúc Routing và Middleware: Tách biệt toàn bộ việc khởi tạo thông qua Composition Root trong `container.ts`, giải quyết dependencies tự động cho toàn bộ 9 route.
+- Bổ sung validation và integration tests đầy đủ, chạy thành công 883/883 tests, build và linter sạch lỗi.
+
+---
+
 *Tài liệu được tạo và bảo trì bởi AI Agent Antigravity (Google DeepMind)*
-*Cập nhật lần cuối: 2026-07-11T18:50:00+07:00*
+*Cập nhật lần cuối: 2026-07-14T12:35:00+07:00*

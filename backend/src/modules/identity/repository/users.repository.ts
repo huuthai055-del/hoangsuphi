@@ -1,6 +1,6 @@
 import { db, type TransactionClient } from '@/lib/database/client';
 import { users } from '@/lib/database/schema/users';
-import { userRoles } from '@/lib/database/schema/references';
+import { userRoles, roles } from '@/lib/database/schema/references';
 import { eq, and, isNull } from 'drizzle-orm';
 import type { User } from '../domain/user.entity';
 import type { IUserRepository } from './users-repository.interface';
@@ -73,5 +73,14 @@ export class DrizzleUserRepository implements IUserRepository {
     await this.getClient(tx)
       .delete(userRoles)
       .where(and(eq(userRoles.userId, userId), eq(userRoles.roleId, roleId)));
+  }
+
+  public async findRoleByCode(code: string, tx?: unknown): Promise<{ id: string } | null> {
+    const [raw] = await this.getClient(tx)
+      .select({ id: roles.id })
+      .from(roles)
+      .where(eq(roles.code, code))
+      .limit(1);
+    return raw || null;
   }
 }

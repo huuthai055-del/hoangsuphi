@@ -209,8 +209,16 @@ export class ReviewsService {
     pagination?: ReviewPagination;
     sort?: ReviewSort;
     search?: string;
-  }): Promise<Review[]> {
-    return this.reviewsRepo.findMany(options);
+  }): Promise<{ items: Review[]; total: number }> {
+    try {
+      const [items, total] = await Promise.all([
+        this.reviewsRepo.findMany(options),
+        this.reviewsRepo.count(options.filters),
+      ]);
+      return { items, total };
+    } catch (err) {
+      throw mapDomainError(err as Error);
+    }
   }
 
   public async listReviewsByOwner(

@@ -32,6 +32,8 @@ describe('Identity API Routing & Controller', () => {
   const mockUserExistsByEmail = mock((_email: string) => Promise.resolve<boolean>(false));
   const mockUserCreate = mock((_user: any) => Promise.resolve());
   const mockUserUpdate = mock((_user: any) => Promise.resolve());
+  const mockUserFindRoleByCode = mock((_code: string) => Promise.resolve<any>({ id: 'viewer-role-id' }));
+  const mockUserAssignRole = mock((_userId: string, _roleId: string) => Promise.resolve());
 
   const mockSessionCreate = mock((_session: any) => Promise.resolve());
   const mockSessionFindById = mock((_id: string) => Promise.resolve<any>(null));
@@ -56,6 +58,8 @@ describe('Identity API Routing & Controller', () => {
     mockUserExistsByEmail.mockReset();
     mockUserCreate.mockReset();
     mockUserUpdate.mockReset();
+    mockUserFindRoleByCode.mockReset().mockResolvedValue({ id: 'viewer-role-id' });
+    mockUserAssignRole.mockReset().mockResolvedValue(undefined);
     mockSessionCreate.mockReset();
     mockSessionFindById.mockReset();
     mockSessionUpdate.mockReset();
@@ -77,6 +81,8 @@ describe('Identity API Routing & Controller', () => {
     );
     spyOn(DrizzleUserRepository.prototype, 'create').mockImplementation(mockUserCreate);
     spyOn(DrizzleUserRepository.prototype, 'update').mockImplementation(mockUserUpdate);
+    spyOn(DrizzleUserRepository.prototype, 'findRoleByCode').mockImplementation(mockUserFindRoleByCode);
+    spyOn(DrizzleUserRepository.prototype, 'assignRole').mockImplementation(mockUserAssignRole);
 
     spyOn(DrizzleSessionRepository.prototype, 'create').mockImplementation(mockSessionCreate);
     spyOn(DrizzleSessionRepository.prototype, 'findById').mockImplementation(mockSessionFindById);

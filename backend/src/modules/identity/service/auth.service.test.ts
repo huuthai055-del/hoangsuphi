@@ -134,6 +134,7 @@ describe('AuthService', () => {
       delete: async () => {},
       assignRole: async () => {},
       removeRole: async () => {},
+      findRoleByCode: async () => ({ id: 'viewer-role-id' }),
     };
 
     service = new AuthService(
@@ -213,6 +214,14 @@ describe('AuthService', () => {
       });
 
       await expect(service.register(email, password, '')).rejects.toThrow('Database down');
+    });
+
+    test('should throw error if default viewer role is not found in database', async () => {
+      spyOn(mockUserRepo, 'findRoleByCode').mockImplementation(async () => null);
+
+      await expect(service.register(email, password, '')).rejects.toThrow(
+        'Default role "viewer" not found in the database. Please run seeding.'
+      );
     });
   });
 

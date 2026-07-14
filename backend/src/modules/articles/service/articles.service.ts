@@ -12,7 +12,7 @@ import { Article } from '../domain/article.entity';
 import { ArticleDomainError } from '../domain/article-errors';
 import { generateUuidV7 } from '@/common/utils/uuid';
 import { slugify } from '@/common/utils/slug';
-import { NotFoundError, ConflictError, ValidationError } from '@/common/errors/http.errors';
+import { NotFoundError, ConflictError, ValidationError, AuthorizationError } from '@/common/errors/http.errors';
 import { runInTransaction } from '@/lib/database/client';
 import {
   DuplicateKeyRepositoryError,
@@ -96,6 +96,13 @@ export class ArticlesService {
   private ensureNotArchived(article: Article, message = 'Cannot perform operation on an archived article'): void {
     if (article.status === 'archived') {
       throw new ValidationError(message);
+    }
+  }
+
+  private assertAccess(article: Article, caller: { id: string; roles: string[] }): void {
+    const roles = caller.roles || [];
+    if (article.authorId !== caller.id && !roles.includes('admin')) {
+      throw new AuthorizationError('You do not have permission to modify this article');
     }
   }
 
@@ -187,12 +194,14 @@ export class ArticlesService {
     });
   }
 
-  public async updateArticle(id: string, command: UpdateArticleCommand): Promise<Article> {
+  public async updateArticle(id: string, command: UpdateArticleCommand, caller: { id: string; roles: string[] }): Promise<Article> {
     return this.executeWithLogging('update_article', { articleId: id }, async () => {
       const article = await this.articlesRepo.findById(id, { includeDeleted: true });
       if (!article) {
         throw new NotFoundError(`Article not found with ID: ${id}`);
       }
+
+      this.assertAccess(article, caller);
 
       if (article.deletedAt) {
         throw new ValidationError('Cannot update a deleted article');
@@ -283,12 +292,14 @@ export class ArticlesService {
     });
   }
 
-  public async submitReview(id: string): Promise<Article> {
+  public async submitReview(id: string, caller: { id: string; roles: string[] }): Promise<Article> {
     return this.executeWithLogging('submit_review', { articleId: id }, async () => {
       const article = await this.articlesRepo.findById(id, { includeDeleted: false });
       if (!article) {
         throw new NotFoundError(`Article not found with ID: ${id}`);
       }
+
+      this.assertAccess(article, caller);
 
       this.ensureNotArchived(article);
 
@@ -358,12 +369,14 @@ export class ArticlesService {
     });
   }
 
-  public async archiveArticle(id: string): Promise<Article> {
+  public async archiveArticle(id: string, caller: { id: string; roles: string[] }): Promise<Article> {
     return this.executeWithLogging('archive_article', { articleId: id }, async () => {
       const article = await this.articlesRepo.findById(id, { includeDeleted: false });
       if (!article) {
         throw new NotFoundError(`Article not found with ID: ${id}`);
       }
+
+      this.assertAccess(article, caller);
 
       // Rule: Chỉ bài viết published mới được archive (bao gồm chặn cả draft và under_review)
       if (article.status !== 'published') {
@@ -399,12 +412,14 @@ export class ArticlesService {
     });
   }
 
-  public async deleteArticle(id: string): Promise<void> {
+  public async deleteArticle(id: string, caller: { id: string; roles: string[] }): Promise<void> {
     await this.executeWithLogging('delete_article', { articleId: id }, async () => {
       const article = await this.articlesRepo.findById(id, { includeDeleted: true });
       if (!article) {
         throw new NotFoundError(`Article not found with ID: ${id}`);
       }
+
+      this.assertAccess(article, caller);
       if (article.deletedAt) {
         throw new ValidationError('Article is already deleted');
       }
@@ -422,12 +437,14 @@ export class ArticlesService {
     });
   }
 
-  public async restoreArticle(id: string): Promise<Article> {
+  public async restoreArticle(id: string, caller: { id: string; roles: string[] }): Promise<Article> {
     return this.executeWithLogging('restore_article', { articleId: id }, async () => {
       const article = await this.articlesRepo.findById(id, { includeDeleted: true });
       if (!article) {
         throw new NotFoundError(`Article not found with ID: ${id}`);
       }
+
+      this.assertAccess(article, caller);
       if (!article.deletedAt) {
         throw new ValidationError('Article is not deleted');
       }
@@ -449,7 +466,7 @@ export class ArticlesService {
     });
   }
 
-  public async bindTags(articleId: string, tagIds: string[]): Promise<void> {
+  public async bindTags(articleId: string, tagIds: string[], caller: { id: string; roles: string[] }): Promise<void> {
     if (!tagIds || tagIds.length === 0) {
       return;
     }
@@ -461,6 +478,8 @@ export class ArticlesService {
       if (!article) {
         throw new NotFoundError(`Article not found with ID: ${articleId}`);
       }
+
+      this.assertAccess(article, caller);
 
       this.ensureNotArchived(article);
 
@@ -475,7 +494,7 @@ export class ArticlesService {
     });
   }
 
-  public async removeTags(articleId: string, tagIds: string[]): Promise<void> {
+  public async removeTags(articleId: string, tagIds: string[], caller: { id: string; roles: string[] }): Promise<void> {
     if (!tagIds || tagIds.length === 0) {
       return;
     }
@@ -487,6 +506,8 @@ export class ArticlesService {
       if (!article) {
         throw new NotFoundError(`Article not found with ID: ${articleId}`);
       }
+
+      this.assertAccess(article, caller);
 
       this.ensureNotArchived(article);
 

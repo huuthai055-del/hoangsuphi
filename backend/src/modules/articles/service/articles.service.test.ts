@@ -19,7 +19,7 @@ import type { IArticlesRepository } from '../repository/articles-repository.inte
 import type { ICategoriesRepository } from '../repository/categories-repository.interface';
 import type { ITagsRepository } from '../repository/tags-repository.interface';
 import { Article } from '../domain/article.entity';
-import { NotFoundError, ConflictError, ValidationError } from '@/common/errors/http.errors';
+import { NotFoundError, ConflictError, ValidationError, AuthorizationError } from '@/common/errors/http.errors';
 import { DuplicateKeyRepositoryError } from '../repository/repository-errors';
 
 describe('ArticlesService & Locked Domain Integration', () => {
@@ -238,12 +238,31 @@ describe('ArticlesService & Locked Domain Integration', () => {
         isFeatured: true,
       };
 
-      const result = await service.updateArticle(articleId, cmd);
+      const result = await service.updateArticle(articleId, cmd, { id: authorId, roles: [] });
       expect(result.title).toBe('New Title');
       expect(result.slug).toBe('new-title');
       expect(result.excerpt).toBe('New Excerpt');
       expect(result.content).toBe('New Content');
       expect(result.isFeatured).toBe(true);
+      expect(updateMock).toHaveBeenCalled();
+    });
+
+    test('should throw AuthorizationError when non-owner updates article', async () => {
+      const article = Article.create(articleId, title, slug, excerpt, content, categoryId, authorId);
+      findByIdMock.mockImplementation(() => Promise.resolve(article));
+
+      const cmd: UpdateArticleCommand = { title: 'New Title' };
+      await expect(service.updateArticle(articleId, cmd, { id: 'other-user-id', roles: [] })).rejects.toThrow(AuthorizationError);
+      expect(updateMock).not.toHaveBeenCalled();
+    });
+
+    test('should allow admin to update another user\'s article', async () => {
+      const article = Article.create(articleId, title, slug, excerpt, content, categoryId, authorId);
+      findByIdMock.mockImplementation(() => Promise.resolve(article));
+
+      const cmd: UpdateArticleCommand = { title: 'Admin Title' };
+      const result = await service.updateArticle(articleId, cmd, { id: 'admin-user-id', roles: ['admin'] });
+      expect(result.title).toBe('Admin Title');
       expect(updateMock).toHaveBeenCalled();
     });
 
@@ -255,7 +274,7 @@ describe('ArticlesService & Locked Domain Integration', () => {
       findByIdMock.mockImplementation(() => Promise.resolve(article));
 
       const cmd: UpdateArticleCommand = { title: 'Some Title' };
-      await expect(service.updateArticle(articleId, cmd)).rejects.toThrow(ValidationError);
+      await expect(service.updateArticle(articleId, cmd, { id: authorId, roles: [] })).rejects.toThrow(ValidationError);
     });
 
     test('should throw NotFoundError and not update article if category does not exist', async () => {
@@ -264,7 +283,7 @@ describe('ArticlesService & Locked Domain Integration', () => {
       catExistsMock.mockImplementation(() => Promise.resolve(false));
 
       const cmd: UpdateArticleCommand = { categoryId: 'non-existent-cat-id' };
-      await expect(service.updateArticle(articleId, cmd)).rejects.toThrow(NotFoundError);
+      await expect(service.updateArticle(articleId, cmd, { id: authorId, roles: [] })).rejects.toThrow(NotFoundError);
       expect(updateMock).not.toHaveBeenCalled();
     });
 
@@ -274,7 +293,7 @@ describe('ArticlesService & Locked Domain Integration', () => {
       existsBySlugMock.mockImplementation(() => Promise.resolve(true));
 
       const cmd: UpdateArticleCommand = { slug: 'already-existing-slug' };
-      await expect(service.updateArticle(articleId, cmd)).rejects.toThrow(ConflictError);
+      await expect(service.updateArticle(articleId, cmd, { id: authorId, roles: [] })).rejects.toThrow(ConflictError);
       expect(updateMock).not.toHaveBeenCalled();
     });
   });
@@ -284,9 +303,16 @@ describe('ArticlesService & Locked Domain Integration', () => {
       const article = Article.create(articleId, title, slug, excerpt, content, categoryId, authorId);
       findByIdMock.mockImplementation(() => Promise.resolve(article));
 
-      const result = await service.submitReview(articleId);
+      const result = await service.submitReview(articleId, { id: authorId, roles: [] });
       expect(result.status).toBe('under_review');
       expect(updateMock).toHaveBeenCalled();
+    });
+
+    test('submitReview should throw AuthorizationError if non-owner submits', async () => {
+      const article = Article.create(articleId, title, slug, excerpt, content, categoryId, authorId);
+      findByIdMock.mockImplementation(() => Promise.resolve(article));
+
+      await expect(service.submitReview(articleId, { id: 'other-user-id', roles: [] })).rejects.toThrow(AuthorizationError);
     });
 
     test('archiveArticle should transition published to archived', async () => {
@@ -295,16 +321,25 @@ describe('ArticlesService & Locked Domain Integration', () => {
       article.publish();
       findByIdMock.mockImplementation(() => Promise.resolve(article));
 
-      const result = await service.archiveArticle(articleId);
+      const result = await service.archiveArticle(articleId, { id: authorId, roles: [] });
       expect(result.status).toBe('archived');
       expect(updateMock).toHaveBeenCalled();
+    });
+
+    test('archiveArticle should throw AuthorizationError if non-owner archives', async () => {
+      const article = Article.create(articleId, title, slug, excerpt, content, categoryId, authorId);
+      article.submitForReview();
+      article.publish();
+      findByIdMock.mockImplementation(() => Promise.resolve(article));
+
+      await expect(service.archiveArticle(articleId, { id: 'other-user-id', roles: [] })).rejects.toThrow(AuthorizationError);
     });
 
     test('archiveArticle should throw ValidationError if article is draft', async () => {
       const article = Article.create(articleId, title, slug, excerpt, content, categoryId, authorId);
       findByIdMock.mockImplementation(() => Promise.resolve(article));
 
-      await expect(service.archiveArticle(articleId)).rejects.toThrow(ValidationError);
+      await expect(service.archiveArticle(articleId, { id: authorId, roles: [] })).rejects.toThrow(ValidationError);
     });
   });
 
@@ -313,8 +348,15 @@ describe('ArticlesService & Locked Domain Integration', () => {
       const article = Article.create(articleId, title, slug, excerpt, content, categoryId, authorId);
       findByIdMock.mockImplementation(() => Promise.resolve(article));
 
-      await service.deleteArticle(articleId);
+      await service.deleteArticle(articleId, { id: authorId, roles: [] });
       expect(softDeleteMock).toHaveBeenCalledWith(articleId, {});
+    });
+
+    test('deleteArticle should throw AuthorizationError if non-owner deletes', async () => {
+      const article = Article.create(articleId, title, slug, excerpt, content, categoryId, authorId);
+      findByIdMock.mockImplementation(() => Promise.resolve(article));
+
+      await expect(service.deleteArticle(articleId, { id: 'other-user-id', roles: [] })).rejects.toThrow(AuthorizationError);
     });
 
     test('deleteArticle should throw ValidationError if article is already deleted', async () => {
@@ -322,7 +364,7 @@ describe('ArticlesService & Locked Domain Integration', () => {
       article.softDelete(); // set deletedAt
       findByIdMock.mockImplementation(() => Promise.resolve(article));
 
-      await expect(service.deleteArticle(articleId)).rejects.toThrow(ValidationError);
+      await expect(service.deleteArticle(articleId, { id: authorId, roles: [] })).rejects.toThrow(ValidationError);
       expect(softDeleteMock).not.toHaveBeenCalled();
     });
 
@@ -331,17 +373,25 @@ describe('ArticlesService & Locked Domain Integration', () => {
       article.softDelete(); // set deletedAt
       findByIdMock.mockImplementation(() => Promise.resolve(article));
 
-      const result = await service.restoreArticle(articleId);
+      const result = await service.restoreArticle(articleId, { id: authorId, roles: [] });
       expect(result.deletedAt).toBeNull();
       expect(updateMock).toHaveBeenCalled();
       expect(restoreMock).not.toHaveBeenCalled(); // redundant repo restore should not be called
+    });
+
+    test('restoreArticle should throw AuthorizationError if non-owner restores', async () => {
+      const article = Article.create(articleId, title, slug, excerpt, content, categoryId, authorId);
+      article.softDelete(); // set deletedAt
+      findByIdMock.mockImplementation(() => Promise.resolve(article));
+
+      await expect(service.restoreArticle(articleId, { id: 'other-user-id', roles: [] })).rejects.toThrow(AuthorizationError);
     });
 
     test('restoreArticle should throw ValidationError if article is not deleted', async () => {
       const article = Article.create(articleId, title, slug, excerpt, content, categoryId, authorId);
       findByIdMock.mockImplementation(() => Promise.resolve(article));
 
-      await expect(service.restoreArticle(articleId)).rejects.toThrow(ValidationError);
+      await expect(service.restoreArticle(articleId, { id: authorId, roles: [] })).rejects.toThrow(ValidationError);
     });
   });
 });

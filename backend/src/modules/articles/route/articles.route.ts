@@ -1,9 +1,5 @@
 import { Hono } from 'hono';
-import { ArticlesController } from './articles.controller';
-import { ArticlesService } from '../service/articles.service';
-import { DrizzleArticlesRepository } from '../repository/articles.repository';
-import { DrizzleCategoriesRepository } from '../repository/categories.repository';
-import { DrizzleTagsRepository } from '../repository/tags.repository';
+import { container } from '@/common/di/container';
 import {
   CreateArticleSchema,
   UpdateArticleSchema,
@@ -15,39 +11,20 @@ import {
   RejectArticleSchema,
 } from '../dto/articles.dto';
 import { validateBody, validateQuery, validateParams } from '@/middleware/validator';
-
-import { DrizzleUserRepository } from '@/modules/identity/repository/users.repository';
-import { DrizzleSessionRepository } from '@/modules/identity/repository/sessions.repository';
-import { DrizzleRefreshTokenRepository } from '@/modules/identity/repository/refresh-tokens.repository';
-import { DrizzlePermissionRepository } from '@/modules/identity/repository/permissions.repository';
-import { TokenService } from '@/modules/identity/service/token.service';
-import { SessionService } from '@/modules/identity/service/session.service';
-import { authMiddleware } from '@/modules/identity/middleware/auth.middleware';
 import { requirePermission } from '@/modules/identity/middleware/permission.middleware';
-import { logger } from '@/lib/logger';
+import type { MiddlewareHandler } from 'hono';
+import type { ArticlesController } from './articles.controller';
 
 const articlesRouter = new Hono();
 
-const articlesRepo = new DrizzleArticlesRepository();
-const categoriesRepo = new DrizzleCategoriesRepository();
-const tagsRepo = new DrizzleTagsRepository();
-const clock = { now: () => new Date() };
-const service = new ArticlesService(articlesRepo, categoriesRepo, tagsRepo, logger, clock);
-const controller = new ArticlesController(service);
-
-const userRepo = new DrizzleUserRepository();
-const sessionRepo = new DrizzleSessionRepository();
-const tokenRepo = new DrizzleRefreshTokenRepository();
-const permissionRepo = new DrizzlePermissionRepository();
-const tokenService = new TokenService();
-const sessionService = new SessionService(sessionRepo, tokenRepo);
-const authGuard = authMiddleware(tokenService, sessionService, userRepo, permissionRepo);
+const authGuard: MiddlewareHandler = (c, next) => container.resolve<MiddlewareHandler>('AuthGuard')(c, next);
+const getController = (): ArticlesController => container.resolve<ArticlesController>('ArticlesController');
 
 // Public Routes
-articlesRouter.get('/', validateQuery(SearchArticlesQuerySchema), controller.list);
-articlesRouter.get('/slug/:slug', validateParams(ArticleSlugParamsSchema), controller.getBySlug);
-articlesRouter.post('/:id/views', validateParams(ArticleIdParamsSchema), controller.recordView);
-articlesRouter.get('/:id', validateParams(ArticleIdParamsSchema), controller.getById);
+articlesRouter.get('/', validateQuery(SearchArticlesQuerySchema), (c) => getController().list(c));
+articlesRouter.get('/slug/:slug', validateParams(ArticleSlugParamsSchema), (c) => getController().getBySlug(c));
+articlesRouter.post('/:id/views', validateParams(ArticleIdParamsSchema), (c) => getController().recordView(c));
+articlesRouter.get('/:id', validateParams(ArticleIdParamsSchema), (c) => getController().getById(c));
 
 // Admin / Author / Publisher Routes
 articlesRouter.post(
@@ -55,7 +32,7 @@ articlesRouter.post(
   authGuard,
   requirePermission('article:write'),
   validateBody(CreateArticleSchema),
-  controller.create
+  (c) => getController().create(c)
 );
 
 articlesRouter.patch(
@@ -64,7 +41,7 @@ articlesRouter.patch(
   requirePermission('article:write'),
   validateParams(ArticleIdParamsSchema),
   validateBody(UpdateArticleSchema),
-  controller.update
+  (c) => getController().update(c)
 );
 
 articlesRouter.delete(
@@ -72,7 +49,7 @@ articlesRouter.delete(
   authGuard,
   requirePermission('article:write'),
   validateParams(ArticleIdParamsSchema),
-  controller.delete
+  (c) => getController().delete(c)
 );
 
 articlesRouter.post(
@@ -80,7 +57,7 @@ articlesRouter.post(
   authGuard,
   requirePermission('article:write'),
   validateParams(ArticleIdParamsSchema),
-  controller.submitReview
+  (c) => getController().submitReview(c)
 );
 
 articlesRouter.post(
@@ -88,7 +65,7 @@ articlesRouter.post(
   authGuard,
   requirePermission('article:publish'),
   validateParams(ArticleIdParamsSchema),
-  controller.publish
+  (c) => getController().publish(c)
 );
 
 articlesRouter.post(
@@ -97,7 +74,7 @@ articlesRouter.post(
   requirePermission('article:publish'),
   validateParams(ArticleIdParamsSchema),
   validateBody(RejectArticleSchema),
-  controller.reject
+  (c) => getController().reject(c)
 );
 
 articlesRouter.post(
@@ -105,7 +82,7 @@ articlesRouter.post(
   authGuard,
   requirePermission('article:write'),
   validateParams(ArticleIdParamsSchema),
-  controller.archive
+  (c) => getController().archive(c)
 );
 
 articlesRouter.post(
@@ -113,7 +90,7 @@ articlesRouter.post(
   authGuard,
   requirePermission('article:write'),
   validateParams(ArticleIdParamsSchema),
-  controller.restore
+  (c) => getController().restore(c)
 );
 
 articlesRouter.post(
@@ -122,7 +99,7 @@ articlesRouter.post(
   requirePermission('article:write'),
   validateParams(ArticleIdParamsSchema),
   validateBody(BindTagsSchema),
-  controller.bindTags
+  (c) => getController().bindTags(c)
 );
 
 articlesRouter.delete(
@@ -131,9 +108,7 @@ articlesRouter.delete(
   requirePermission('article:write'),
   validateParams(ArticleIdParamsSchema),
   validateBody(RemoveTagsSchema),
-  controller.removeTags
+  (c) => getController().removeTags(c)
 );
 
 export { articlesRouter };
-export type { ArticlesController };
-export type { ArticlesService };

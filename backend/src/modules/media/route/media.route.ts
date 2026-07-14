@@ -1,48 +1,24 @@
 import { Hono } from 'hono';
-import { MediaController } from './media.controller';
-import { MediaUploadService } from '../service/media-upload.service';
-import { MediaProcessingService } from '../service/media-processing.service';
-import { DrizzleMediaRepository } from '../repository/media.repository';
-import { LocalStorageAdapter } from '../repository/local-storage.adapter';
-import { NativeImageProcessor } from '../repository/native-image-processor';
+import { container } from '@/common/di/container';
 import { MediaIdParamsSchema } from '../dto/media.dto';
 import { validateParams } from '@/middleware/validator';
-
-import { DrizzleUserRepository } from '@/modules/identity/repository/users.repository';
-import { DrizzleSessionRepository } from '@/modules/identity/repository/sessions.repository';
-import { DrizzleRefreshTokenRepository } from '@/modules/identity/repository/refresh-tokens.repository';
-import { DrizzlePermissionRepository } from '@/modules/identity/repository/permissions.repository';
-import { TokenService } from '@/modules/identity/service/token.service';
-import { SessionService } from '@/modules/identity/service/session.service';
-import { authMiddleware } from '@/modules/identity/middleware/auth.middleware';
 import { requirePermission } from '@/modules/identity/middleware/permission.middleware';
+import type { MiddlewareHandler } from 'hono';
+import type { MediaController } from './media.controller';
 
 const mediaRouter = new Hono();
 
-const mediaRepo = new DrizzleMediaRepository();
-const storage = new LocalStorageAdapter();
-const imageProcessor = new NativeImageProcessor();
+const authGuard: MiddlewareHandler = (c, next) => container.resolve<MiddlewareHandler>('AuthGuard')(c, next);
+const getController = (): MediaController => container.resolve<MediaController>('MediaController');
 
-const uploadService = new MediaUploadService(mediaRepo, storage);
-const processingService = new MediaProcessingService(mediaRepo, storage, imageProcessor);
-const controller = new MediaController(uploadService, processingService, mediaRepo, storage);
-
-const userRepo = new DrizzleUserRepository();
-const sessionRepo = new DrizzleSessionRepository();
-const tokenRepo = new DrizzleRefreshTokenRepository();
-const permissionRepo = new DrizzlePermissionRepository();
-const tokenService = new TokenService();
-const sessionService = new SessionService(sessionRepo, tokenRepo);
-const authGuard = authMiddleware(tokenService, sessionService, userRepo, permissionRepo);
-
-mediaRouter.post('/upload', authGuard, requirePermission('media:upload'), controller.upload);
+mediaRouter.post('/upload', authGuard, requirePermission('media:upload'), (c) => getController().upload(c));
 
 mediaRouter.get(
   '/:id',
   authGuard,
   requirePermission('media:read'),
   validateParams(MediaIdParamsSchema),
-  controller.getById
+  (c) => getController().getById(c)
 );
 
 mediaRouter.get(
@@ -50,7 +26,7 @@ mediaRouter.get(
   authGuard,
   requirePermission('media:read'),
   validateParams(MediaIdParamsSchema),
-  controller.getVariants
+  (c) => getController().getVariants(c)
 );
 
 mediaRouter.delete(
@@ -58,7 +34,7 @@ mediaRouter.delete(
   authGuard,
   requirePermission('media:delete'),
   validateParams(MediaIdParamsSchema),
-  controller.delete
+  (c) => getController().delete(c)
 );
 
 export { mediaRouter };

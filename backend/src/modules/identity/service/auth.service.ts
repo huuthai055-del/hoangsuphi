@@ -88,6 +88,15 @@ export class AuthService implements IAuthService {
       });
 
       await this.userRepo.create(user, tx);
+
+      // Assign default 'viewer' role via user repository
+      const role = await this.userRepo.findRoleByCode('viewer', tx);
+      if (!role) {
+        throw new Error('Default role "viewer" not found in the database. Please run seeding.');
+      }
+
+      await this.userRepo.assignRole(userId, role.id, tx);
+
       return user;
     });
   }

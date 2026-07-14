@@ -454,13 +454,14 @@ Launch      →    Maintenance & Expansion
 | 2026-07-13 | Hoàn thành và khóa (LOCKED) Step 1: Database & Domain Layer của Reviews & Favorites | Phiên #021 — Thiết kế CSDL polymorphic (reviews/favorites), unique indexes chống duplicate, rating check constraints, viết Rich Domain model entities và Value Object, pass 28 tests đạt 100% test coverage |
 | 2026-07-13 | Hoàn thành toàn bộ Reviews & Favorites (Sub-phase 3.8) và Operational Utilities (Sub-phase 3.9) | Phiên #022 — Triển khai CRUD, Repo, Service, API, DI Container, và chạy pass 100% tests cho Weather, Notifications, Itineraries, FAQs, Top Lists |
 | 2026-07-14 | Thực hiện Audit toàn diện Phase 3, viết báo cáo audit và đề xuất kế hoạch khắc phục | Phiên #023 — Hoàn tất Audit 10 levels, phát hiện các lỗi Critical/High (lọt transaction ở Identity, leak data ở Itineraries, roles rỗng) |
+| 2026-07-14 | Hoàn thành toàn bộ Remediation sửa lỗi bảo mật (Articles IDOR, Default Role Assignment) & DI Container | Phiên #024 — Hoàn tất sửa lỗi IDOR trong Articles, sửa default role registry logic trong AuthService, hợp nhất DI container tự động, pass 883/883 tests, build & lint sạch |
 
 ---
 
 - ✅ Phase 0 (Planning) — HOÀN THÀNH
 - ✅ Phase 1 (Database Design) — HOÀN THÀNH
 - ✅ Phase 2 (Backend Foundation) — HOÀN THÀNH
-- ✅ Phase 3 (Core Modules) — HOÀN THÀNH (Code Complete & Audited)
+- ✅ Phase 3 (Core Modules) — HOÀN THÀNH (Remediation & Code Complete & 🔒 Locked)
   - Sub-phase 3.1 Identity: 🔒 **LOCKED**
   - Sub-phase 3.2 Regions: 🔒 **LOCKED**
   - Sub-phase 3.3 Tourist Places: 🔒 **LOCKED**
@@ -474,36 +475,37 @@ Launch      →    Maintenance & Expansion
 ## Next Session
 
 ### Objective
-Khắc phục các lỗi mức độ Critical và High (Priority 1) được chỉ ra trong báo cáo Enterprise Audit của Phase 3 để đảm bảo tính an toàn dữ liệu và toàn vẹn giao dịch trước khi chuyển sang Phase 4.
+Triển khai Phase 4 (Advanced Features) để tích hợp các tính năng nghiệp vụ và khám phá nâng cao cho Cổng thông tin du lịch, bắt đầu bằng việc tích hợp Typesense Full-text Search và đồng bộ dữ liệu CDC.
 
 ### Current Position
-- **Current Phase**: Phase 3 (Core Modules) - Bug Remediation
-- **Current Session**: SESSION #023
-- **Current Step**: Sửa lỗi bảo mật & giao dịch (Priority 1 Issues)
+- **Current Phase**: Phase 4 (Advanced Features)
+- **Current Session**: SESSION #024
+- **Current Step**: Step 1: Typesense Full-text Search Integration
 
 ### Priority Tasks
-1. **Repository Transaction Propagation (R-1):** Refactor `DrizzleUserRepository`, `DrizzleSessionRepository`, và `DrizzleRefreshTokenRepository` để nhận và truyền đúng đối tượng `tx` (Transaction Client) từ Service Layer.
-2. **Itinerary Data Leak (SEC-3):** Sửa lỗi logic trong `ItinerariesController.list()` (phần `else if` rỗng) để đảm bảo bộ lọc visibility được áp dụng chính xác cho người dùng không phải admin khi họ không chỉ định `userId`.
-3. **RBAC Roles Loading (SEC-1):** Cập nhật `authMiddleware` để tải danh sách vai trò (roles) của người dùng từ cơ sở dữ liệu thay vì hardcode mảng rỗng `roles: []`.
-4. **Redis Rate Limiter (SEC-4):** Thay thế cơ chế rate limiting lưu trữ trong bộ nhớ RAM hiện tại bằng Redis để hỗ trợ môi trường chạy phân tán đa tiến trình.
+1. **Tích hợp Typesense Search Engine:** Thiết lập Typesense client, cấu hình schema tìm kiếm cho bài viết (`articles`), điểm đến (`places`), homestay (`businesses`), và điểm tham quan (`attractions`).
+2. **Xây dựng Pipeline đồng bộ dữ liệu CDC:** Triển khai cơ chế lắng nghe sự kiện thay đổi dữ liệu (Insert/Update/Delete/Restore/Soft-delete) từ database và đồng bộ tương ứng sang Typesense để đảm bảo kết quả tìm kiếm tức thì.
+3. **Tìm kiếm địa điểm lân cận (PostGIS Nearby Search):** Triển khai API tìm kiếm và sắp xếp các tiện ích/địa điểm gần nhất theo bán kính xung quanh tọa độ địa lý được truyền lên.
+4. **Tạo Sitemap tự động (SEO Sitemap Generator):** Viết background job để tự động sinh file `sitemap.xml` động dựa trên dữ liệu thật của bài viết và cơ sở kinh doanh.
 
 ### Remaining Work
-- Sửa các lỗi Medium và Low trong báo cáo audit Phase 3.
-- Bắt đầu thiết kế & triển khai Phase 4 (Advanced Features).
+- Xây dựng cơ chế quản lý chuyển hướng (Redirect Manager) dựa trên bảng `redirects` phục vụ SEO.
+- Tích hợp Queue & Background Jobs (BullMQ + Redis) để gửi email và xử lý nén ảnh không chặn thread chính.
+- Tích hợp Cloudinary / S3 cho môi trường Production.
+- Tích hợp Schema.org JSON-LD tự động.
 
 ### Important Notes
-- Đảm bảo toàn bộ 861 tests hiện có vẫn tiếp tục pass sau khi sửa đổi các hàm trong repository và controller.
+- Đảm bảo các chỉ mục PostgreSQL (B-Tree, GIN, GIST) được cấu hình tối ưu phục vụ cho truy vấn vị trí địa lý.
+- Đảm bảo các API tìm kiếm đều được validate chặt chẽ đầu vào bằng Zod.
 
 ### Risks
-- Việc thay đổi chữ ký (signature) của các hàm repository trong module Identity yêu cầu cập nhật lại toàn bộ code mock trong các file test liên quan.
+- Việc đồng bộ dữ liệu CDC sang Typesense cần được thiết kế cẩn thận để tránh mất tin nhắn hoặc không đồng bộ khi dịch vụ bên thứ ba tạm thời mất kết nối.
 
 ### Completion Criteria
-- Các lỗi Critical/High được khắc phục thành công.
-- 100% test suite chạy pass sạch.
+- Tìm kiếm Full-text và tìm kiếm lân cận (Nearby Search) hoạt động đúng đắn và có thời gian phản hồi dưới 100ms.
+- Tự động sinh sitemap và tiêm JSON-LD schema thành công.
 
 ---
 
 *Tài liệu được tạo và bảo trì bởi AI Agent Antigravity (Google DeepMind)*
-*Cập nhật lần cuối: 2026-07-14T00:05:00+07:00*
-
-
+*Cập nhật lần cuối: 2026-07-14T12:35:00+07:00*
