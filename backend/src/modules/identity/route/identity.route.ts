@@ -16,6 +16,8 @@ import {
   ChangePasswordRequestSchema,
 } from '../dto/identity.dto';
 import { validateBody } from '@/middleware/validator';
+import { rateLimit } from '@/middleware/rate-limit';
+
 
 const identityRouter = new Hono();
 
@@ -33,12 +35,28 @@ const authService = new AuthService(passwordService, tokenService, sessionServic
 const controller = new IdentityController(authService);
 const authGuard = authMiddleware(tokenService, sessionService, userRepo, permissionRepo);
 
-// Public Routes
-identityRouter.post('/register', validateBody(RegisterRequestSchema), controller.register);
+// Public Routes — rate-limited by IP to mitigate brute-force and enumeration.
+// Account-level lockout in User domain is kept as an independent second layer.
+identityRouter.post(
+  '/register',
+  rateLimit('identity-register', 5),
+  validateBody(RegisterRequestSchema),
+  controller.register
+);
 
-identityRouter.post('/login', validateBody(LoginRequestSchema), controller.login);
+identityRouter.post(
+  '/login',
+  rateLimit('identity-login', 10),
+  validateBody(LoginRequestSchema),
+  controller.login
+);
 
-identityRouter.post('/refresh', validateBody(RefreshRequestSchema), controller.refresh);
+identityRouter.post(
+  '/refresh',
+  rateLimit('identity-refresh', 20),
+  validateBody(RefreshRequestSchema),
+  controller.refresh
+);
 
 // Protected Routes
 identityRouter.post('/logout', authGuard, controller.logout);

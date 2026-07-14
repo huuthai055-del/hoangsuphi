@@ -94,6 +94,27 @@ export class DrizzleBusinessesRepository implements IBusinessesRepository {
     return this.populateAmenities(results);
   }
 
+  public async count(options: ListBusinessesOptions): Promise<number> {
+    const conditions = [isNull(businesses.deletedAt)];
+
+    if (options.regionId) {
+      conditions.push(eq(businesses.regionId, options.regionId));
+    }
+    if (options.businessTypeId) {
+      conditions.push(eq(businesses.businessTypeId, options.businessTypeId));
+    }
+    if (options.status) {
+      conditions.push(eq(businesses.status, options.status));
+    }
+
+    const [result] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(businesses)
+      .where(and(...conditions));
+
+    return result ? Number(result.count) : 0;
+  }
+
   public async findNearby(
     lng: number,
     lat: number,

@@ -53,8 +53,12 @@ export class PlacesService {
     return place;
   }
 
-  public async listPlaces(options: ListPlacesOptions): Promise<TouristPlace[]> {
-    return this.placesRepo.list(options);
+  public async listPlaces(options: ListPlacesOptions): Promise<{ items: TouristPlace[]; total: number }> {
+    const [items, total] = await Promise.all([
+      this.placesRepo.list(options),
+      this.placesRepo.count(options),
+    ]);
+    return { items, total };
   }
 
   public async listPlacesByRegion(

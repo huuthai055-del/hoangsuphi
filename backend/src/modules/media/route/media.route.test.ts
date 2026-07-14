@@ -212,9 +212,42 @@ describe('Media API Routing & Controller', () => {
     });
   });
 
+  describe('POST /api/v1/media/upload - ownerType=USER constraint', () => {
+    test('should return 400 when ownerType is USER and ownerId does not match caller', async () => {
+      const formData = new FormData();
+      formData.append('file', new File(['data'], 'test.jpg', { type: 'image/jpeg' }));
+      formData.append('ownerType', 'USER');
+      // ownerId is a valid UUID but belongs to a different user
+      formData.append('ownerId', '00000000-0000-0000-0000-000000000099');
+
+      const res = await app.request('/api/v1/media/upload', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer valid-token' },
+        body: formData,
+      });
+
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      expect(body.code).toBe('VAL_001');
+    });
+  });
+
   describe('DELETE /api/v1/media/:id', () => {
-    test('should soft-delete media and update state database', async () => {
-      mockFindById.mockImplementation(() => Promise.resolve(sampleMedia));
+    test('should soft-delete media when caller is the uploader (uploadedBy match)', async () => {
+      // uploadedBy must match the mock user id ('00000000-0000-0000-0000-000000000001')
+      const uploadedByCallerMedia = Media.create({
+        id: mediaId,
+        fileName: 'original.jpg',
+        storageKey: originalKey,
+        mimeType: 'image/jpeg',
+        mediaType: 'IMAGE',
+        fileSize: 10000,
+        hash: 'hash-uploader',
+        ownerType: 'ARTICLE',
+        ownerId: '019f4bc4-f550-7d52-bba4-3b6258b55702', // content entity — NOT the user
+        uploadedBy: '00000000-0000-0000-0000-000000000001', // uploader == caller
+      });
+      mockFindById.mockImplementation(() => Promise.resolve(uploadedByCallerMedia));
 
       const res = await app.request(`/api/v1/media/${mediaId}`, {
         method: 'DELETE',
@@ -224,5 +257,39 @@ describe('Media API Routing & Controller', () => {
       expect(res.status).toBe(204);
       expect(mockUpdate).toHaveBeenCalled();
     });
+
+    test('should return 403 when caller is NOT the uploader', async () => {
+      // sampleMedia has uploadedBy=null — no uploader recorded, non-admin cannot delete
+      mockFindById.mockImplementation(() => Promise.resolve(sampleMedia));
+
+      const res = await app.request(`/api/v1/media/${mediaId}`, {
+        method: 'DELETE',
+        headers: { Authorization: 'Bearer valid-token' },
+      });
+
+      expect(res.status).toBe(403);
+    });
+
+    test('should return 403 when uploadedBy belongs to a different user', async () => {
+      const otherUploaderMedia = Media.create({
+        id: mediaId,
+        fileName: 'original.jpg',
+        storageKey: originalKey,
+        mimeType: 'image/jpeg',
+        mediaType: 'IMAGE',
+        fileSize: 10000,
+        hash: 'hash-other',
+        uploadedBy: '00000000-0000-0000-0000-000000000099', // different user uploaded it
+      });
+      mockFindById.mockImplementation(() => Promise.resolve(otherUploaderMedia));
+
+      const res = await app.request(`/api/v1/media/${mediaId}`, {
+        method: 'DELETE',
+        headers: { Authorization: 'Bearer valid-token' },
+      });
+
+      expect(res.status).toBe(403);
+    });
   });
 });
+

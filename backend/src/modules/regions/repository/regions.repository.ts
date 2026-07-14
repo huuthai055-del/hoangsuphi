@@ -6,6 +6,10 @@ import { eq, and, isNull, sql } from 'drizzle-orm';
 import { RegionMapper } from './regions.mapper';
 
 export class DrizzleRegionsRepository implements IRegionsRepository {
+  private getClient(tx?: TransactionClient) {
+    return (tx as TransactionClient) ?? db;
+  }
+
   public async findById(id: string): Promise<Region | null> {
     const [raw] = await db
       .select()
@@ -46,15 +50,18 @@ export class DrizzleRegionsRepository implements IRegionsRepository {
     return results.map((row) => RegionMapper.toDomain(row));
   }
 
-  public async findSubtree(parentPath: string): Promise<Region[]> {
+  public async findSubtree(parentPath: string, tx?: TransactionClient): Promise<Region[]> {
     // PostgreSQL ltree operator: <@
-    // Lấy toàn bộ descendant node
-    const results = await db
+    // Lấy toàn bộ descendant node (bao gồm chính node đó)
+    // When inside a transaction, lock rows to prevent concurrent subtree moves from racing.
+    const query = this.getClient(tx)
       .select()
       .from(regions)
       .where(and(sql`${regions.path} <@ ${parentPath}::ltree`, isNull(regions.deletedAt)));
 
-    return results.map((row) => RegionMapper.toDomain(row));
+    const results = tx ? await (query as any).for('update') : await query;
+
+    return results.map((row: any) => RegionMapper.toDomain(row));
   }
 
   public async list(options: ListRegionsOptions): Promise<Region[]> {
@@ -84,6 +91,29 @@ export class DrizzleRegionsRepository implements IRegionsRepository {
       .offset(offset);
 
     return results.map((row) => RegionMapper.toDomain(row));
+  }
+
+  public async count(options: ListRegionsOptions): Promise<number> {
+    const conditions = [isNull(regions.deletedAt)];
+
+    if (options.level !== undefined) {
+      conditions.push(eq(regions.level, options.level));
+    }
+
+    if (options.parentId !== undefined) {
+      if (options.parentId === null) {
+        conditions.push(isNull(regions.parentId));
+      } else {
+        conditions.push(eq(regions.parentId, options.parentId));
+      }
+    }
+
+    const [result] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(regions)
+      .where(and(...conditions));
+
+    return result ? Number(result.count) : 0;
   }
 
   public async save(region: Region): Promise<void> {

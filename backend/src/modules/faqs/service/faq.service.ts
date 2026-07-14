@@ -9,6 +9,8 @@ import {
 } from '@/common/errors/repository.errors';
 import { FaqDomainError } from '../domain/faq.errors';
 import { runInTransaction } from '@/lib/database/client';
+import { logger } from '@/lib/logger';
+import { requestStore } from '@/lib/logger/context';
 import type { PaginatedResult, PaginationOptions } from '@/common/types/pagination';
 
 function mapDomainError(err: Error): Error {
@@ -48,6 +50,7 @@ export class FaqService {
     createdBy: string;
     now?: Date;
   }): Promise<Faq> {
+    const store = requestStore.getStore();
     try {
       return await runInTransaction(async (tx) => {
         const { Faq: FaqClass } = await import('../domain/faq.entity');
@@ -61,6 +64,7 @@ export class FaqService {
           now: input.now,
         });
         await this.faqRepo.create(faq, tx);
+        logger.info({ traceId: store?.requestId, faqId: faq.id, action: 'create_faq' }, `FAQ created: ${faq.id}`);
         return faq;
       });
     } catch (err) {
@@ -78,11 +82,13 @@ export class FaqService {
     },
     now?: Date
   ): Promise<Faq> {
+    const store = requestStore.getStore();
     try {
       return await runInTransaction(async (tx) => {
         const faq = await this.loadFaqOrThrow(id, tx);
         faq.update(input, now);
         await this.faqRepo.update(faq, tx);
+        logger.info({ traceId: store?.requestId, faqId: faq.id, action: 'update_faq' }, `FAQ updated: ${faq.id}`);
         return faq;
       });
     } catch (err) {
@@ -91,11 +97,13 @@ export class FaqService {
   }
 
   public async publishFaq(id: string, now?: Date): Promise<Faq> {
+    const store = requestStore.getStore();
     try {
       return await runInTransaction(async (tx) => {
         const faq = await this.loadFaqOrThrow(id, tx);
         faq.publish(now);
         await this.faqRepo.update(faq, tx);
+        logger.info({ traceId: store?.requestId, faqId: faq.id, action: 'publish_faq' }, `FAQ published: ${faq.id}`);
         return faq;
       });
     } catch (err) {
@@ -104,11 +112,13 @@ export class FaqService {
   }
 
   public async archiveFaq(id: string, now?: Date): Promise<Faq> {
+    const store = requestStore.getStore();
     try {
       return await runInTransaction(async (tx) => {
         const faq = await this.loadFaqOrThrow(id, tx);
         faq.archive(now);
         await this.faqRepo.update(faq, tx);
+        logger.info({ traceId: store?.requestId, faqId: faq.id, action: 'archive_faq' }, `FAQ archived: ${faq.id}`);
         return faq;
       });
     } catch (err) {
@@ -117,11 +127,13 @@ export class FaqService {
   }
 
   public async deleteFaq(id: string, now?: Date): Promise<void> {
+    const store = requestStore.getStore();
     try {
       await runInTransaction(async (tx) => {
         const faq = await this.loadFaqOrThrow(id, tx);
         faq.softDelete(now);
         await this.faqRepo.delete(id, tx);
+        logger.info({ traceId: store?.requestId, faqId: faq.id, action: 'delete_faq' }, `FAQ deleted: ${faq.id}`);
       });
     } catch (err) {
       throw mapDomainError(err as Error);

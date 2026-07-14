@@ -16,20 +16,20 @@ export const AttractionMapper = {
     updatedAt: Date;
     deletedAt: Date | null;
   }): Attraction {
-    return new Attraction(
-      raw.id,
-      raw.regionId,
-      raw.categoryId,
-      raw.name,
-      raw.slug,
-      new GPSLocation(Number(raw.location.lng), Number(raw.location.lat)),
-      raw.description,
-      raw.coverUrl,
-      raw.deletedAt ? 'inactive' : (raw.status as 'active' | 'inactive'),
-      raw.createdAt,
-      raw.updatedAt,
-      raw.deletedAt
-    );
+    return Attraction.rehydrate({
+      id: raw.id,
+      regionId: raw.regionId,
+      categoryId: raw.categoryId,
+      name: raw.name,
+      slug: raw.slug,
+      location: new GPSLocation(Number(raw.location.lng), Number(raw.location.lat)),
+      description: raw.description,
+      coverUrl: raw.coverUrl,
+      status: raw.deletedAt ? 'inactive' : (raw.status as 'active' | 'inactive'),
+      createdAt: raw.createdAt,
+      updatedAt: raw.updatedAt,
+      deletedAt: raw.deletedAt,
+    });
   },
 
   toPersistence(attraction: Attraction) {

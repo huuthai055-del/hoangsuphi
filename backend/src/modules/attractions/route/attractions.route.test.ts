@@ -29,6 +29,11 @@ mock.module('@/modules/regions/repository/regions.repository', () => {
           ? (globalThis as any).mockRegionsList(options)
           : Promise.resolve([]);
       }
+      count(options: any) {
+        return (globalThis as any).mockRegionsCount
+          ? (globalThis as any).mockRegionsCount(options)
+          : Promise.resolve(0);
+      }
       save(region: any) {
         return (globalThis as any).mockRegionsSave
           ? (globalThis as any).mockRegionsSave(region)
@@ -76,6 +81,11 @@ mock.module('@/modules/attractions/repository/attractions.repository', () => {
         return (globalThis as any).mockAttractionsList
           ? (globalThis as any).mockAttractionsList(options)
           : Promise.resolve([]);
+      }
+      count(options: any) {
+        return (globalThis as any).mockAttractionsCount
+          ? (globalThis as any).mockAttractionsCount(options)
+          : Promise.resolve(0);
       }
       findNearby(lng: number, lat: number, radiusMeters: number, limit?: number) {
         return (globalThis as any).mockAttractionsFindNearby
@@ -183,20 +193,20 @@ describe('Attractions API Routing & Controller', () => {
     null
   );
 
-  const mockAttraction = new Attraction(
-    '3a552ef3-40e1-7ca7-8000-000000000002',
-    '3a552ef3-40e1-7ca7-8000-000000000001',
-    '3a552ef3-40e1-7ca7-8000-000000000003',
-    'Chiêu Lầu Thi',
-    'chieu-lau-thi',
-    new GPSLocation(104.5, 22.5),
-    'Mountain peak',
-    'https://example.com/chieu-lau-thi.jpg',
-    'active',
-    new Date(),
-    new Date(),
-    null
-  );
+  const mockAttraction = Attraction.rehydrate({
+    id: '3a552ef3-40e1-7ca7-8000-000000000002',
+    regionId: '3a552ef3-40e1-7ca7-8000-000000000001',
+    categoryId: '3a552ef3-40e1-7ca7-8000-000000000003',
+    name: 'Chiêu Lầu Thi',
+    slug: 'chieu-lau-thi',
+    location: new GPSLocation(104.5, 22.5),
+    description: 'Mountain peak',
+    coverUrl: 'https://example.com/chieu-lau-thi.jpg',
+    status: 'active',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    deletedAt: null
+  });
 
   test('GET /api/v1/attractions - should return empty list with 200', async () => {
     mockListAttractions.mockImplementation(() => Promise.resolve([]));
@@ -319,20 +329,20 @@ describe('Attractions API Routing & Controller', () => {
   });
 
   test('PATCH /api/v1/attractions/:id/activate - should activate attraction and return 200', async () => {
-    const inactiveAttraction = new Attraction(
-      '3a552ef3-40e1-7ca7-8000-000000000002',
-      '3a552ef3-40e1-7ca7-8000-000000000001',
-      '3a552ef3-40e1-7ca7-8000-000000000003',
-      'Chiêu Lầu Thi',
-      'chieu-lau-thi',
-      new GPSLocation(104.5, 22.5),
-      'Mountain peak',
-      'https://example.com/chieu-lau-thi.jpg',
-      'inactive',
-      new Date(),
-      new Date(),
-      null
-    );
+    const inactiveAttraction = Attraction.rehydrate({
+      id: '3a552ef3-40e1-7ca7-8000-000000000002',
+      regionId: '3a552ef3-40e1-7ca7-8000-000000000001',
+      categoryId: '3a552ef3-40e1-7ca7-8000-000000000003',
+      name: 'Chiêu Lầu Thi',
+      slug: 'chieu-lau-thi',
+      location: new GPSLocation(104.5, 22.5),
+      description: 'Mountain peak',
+      coverUrl: 'https://example.com/chieu-lau-thi.jpg',
+      status: 'inactive',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null
+    });
     mockFindAttractionById.mockImplementation(() => Promise.resolve(inactiveAttraction));
 
     const res = await app.request(

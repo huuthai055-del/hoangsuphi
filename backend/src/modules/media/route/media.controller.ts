@@ -5,7 +5,8 @@ import type { IMediaRepository } from '../repository/media-repository.interface'
 import type { IMediaStorage } from '../domain/storage.interface';
 import { MediaPresentationMapper } from './mappers/media.mapper';
 import type { MediaIdParamsDto } from '../dto/media.dto';
-import { ValidationError, NotFoundError } from '@/common/errors/http.errors';
+import { UploadMediaSchema } from '../dto/media.dto';
+import { ValidationError, NotFoundError, AuthenticationError, AuthorizationError } from '@/common/errors/http.errors';
 
 export class MediaController {
   constructor(
@@ -16,14 +17,40 @@ export class MediaController {
   ) {}
 
   public upload = async (c: Context) => {
+    const user = c.get('user');
+    if (!user || !user.id) {
+      throw new AuthenticationError('Authentication required');
+    }
+
     const body = await c.req.parseBody();
     const file = body.file;
     if (!file || !(file instanceof File)) {
       throw new ValidationError('File payload is required in multipart form data');
     }
 
-    const ownerType = typeof body.ownerType === 'string' ? body.ownerType : null;
-    const ownerId = typeof body.ownerId === 'string' ? body.ownerId : null;
+    // Validate ownerType and ownerId with Zod schema (enum check + UUID format)
+    const ownerFieldsResult = UploadMediaSchema.safeParse({
+      ownerType: typeof body.ownerType === 'string' ? body.ownerType : undefined,
+      ownerId: typeof body.ownerId === 'string' ? body.ownerId : undefined,
+    });
+    if (!ownerFieldsResult.success) {
+      const details: Record<string, string> = {};
+      for (const issue of ownerFieldsResult.error.issues) {
+        details[issue.path.join('.')] = issue.message;
+      }
+      throw new ValidationError('Validation failed', details);
+    }
+    const { ownerType, ownerId } = ownerFieldsResult.data;
+
+    // When ownerType is 'USER', the ownerId must refer to the caller themselves.
+    // Allowing any user to set ownerId to another user's ID would let them
+    // forge ownership and bypass future user-scoped access checks.
+    if (ownerType === 'USER' && ownerId !== user.id) {
+      throw new ValidationError(
+        'Validation failed',
+        { ownerId: 'When ownerType is USER, ownerId must match your own user ID' }
+      );
+    }
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
@@ -32,8 +59,9 @@ export class MediaController {
       fileName: file.name,
       mimeType: file.type,
       fileBuffer: buffer,
-      ownerType,
-      ownerId,
+      ownerType: ownerType ?? null,
+      ownerId: ownerId ?? null,
+      uploadedBy: user.id,
     });
 
     // Kích hoạt image processing pipeline để tạo variants và trích xuất EXIF
@@ -76,10 +104,22 @@ export class MediaController {
   };
 
   public delete = async (c: Context) => {
+    const user = c.get('user');
+    if (!user || !user.id) {
+      throw new AuthenticationError('Authentication required');
+    }
+
     const params = c.get('validParams') as MediaIdParamsDto;
     const media = await this.mediaRepo.findById(params.id);
     if (!media) {
       throw new NotFoundError(`Media not found with ID: ${params.id}`);
+    }
+
+    // Access control: check the actual uploader identity, not the content-owner.
+    // media.ownerId is the ID of the content entity (article, business, etc.) —
+    // it is NOT the uploader. media.uploadedBy is set at upload time to user.id.
+    if (media.uploadedBy !== user.id && !user.roles.includes('admin')) {
+      throw new AuthorizationError('You do not have permission to delete this media');
     }
 
     // Soft delete

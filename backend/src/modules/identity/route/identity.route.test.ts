@@ -47,6 +47,7 @@ describe('Identity API Routing & Controller', () => {
   const mockTokenRevokeAllSession = mock((_sessionId: string) => Promise.resolve());
 
   const mockPermissionFindByUserId = mock((_userId: string) => Promise.resolve<string[]>([]));
+  const mockPermissionFindRolesByUserId = mock((_userId: string) => Promise.resolve<string[]>([]));
 
   beforeEach(async () => {
     // Reset global repository mocks
@@ -67,6 +68,7 @@ describe('Identity API Routing & Controller', () => {
     mockTokenRevokeAllUser.mockReset();
     mockTokenRevokeAllSession.mockReset();
     mockPermissionFindByUserId.mockReset();
+    mockPermissionFindRolesByUserId.mockReset();
 
     spyOn(DrizzleUserRepository.prototype, 'findById').mockImplementation(mockUserFindById);
     spyOn(DrizzleUserRepository.prototype, 'findByEmail').mockImplementation(mockUserFindByEmail);
@@ -103,6 +105,9 @@ describe('Identity API Routing & Controller', () => {
 
     spyOn(DrizzlePermissionRepository.prototype, 'findByUserId').mockImplementation(
       mockPermissionFindByUserId
+    );
+    spyOn(DrizzlePermissionRepository.prototype, 'findRolesByUserId').mockImplementation(
+      mockPermissionFindRolesByUserId
     );
 
     testUserProps = {
@@ -370,8 +375,8 @@ describe('Identity API Routing & Controller', () => {
       });
 
       expect(res.status).toBe(401);
-      expect(mockTokenRevokeFamily).toHaveBeenCalledWith('family-id');
-      expect(mockTokenRevokeAllSession).toHaveBeenCalledWith(sessionId);
+      expect(mockTokenRevokeFamily).toHaveBeenCalledWith('family-id', expect.anything());
+      expect(mockTokenRevokeAllSession).toHaveBeenCalledWith(sessionId, expect.anything());
       expect(mockSessionUpdate).toHaveBeenCalled();
     });
 

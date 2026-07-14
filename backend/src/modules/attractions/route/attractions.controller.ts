@@ -47,7 +47,7 @@ export class AttractionsController {
   public list = async (c: Context) => {
     const query = c.get('validQuery') as ListAttractionsQueryDto;
 
-    const results = await this.service.listAttractions({
+    const { items, total } = await this.service.listAttractions({
       page: query.page,
       limit: query.limit,
       regionId: query.regionId,
@@ -55,7 +55,7 @@ export class AttractionsController {
       status: query.status,
     });
 
-    const mapped = results.map((r) => this.mapToSummary(r));
+    const mapped = items.map((r) => this.mapToSummary(r));
 
     return c.json(
       {
@@ -63,7 +63,7 @@ export class AttractionsController {
         meta: {
           page: query.page,
           limit: query.limit,
-          total: mapped.length,
+          total,
         },
       },
       200

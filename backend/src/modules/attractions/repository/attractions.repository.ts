@@ -81,6 +81,27 @@ export class DrizzleAttractionsRepository implements IAttractionsRepository {
     return results.map((row) => AttractionMapper.toDomain(row));
   }
 
+  public async count(options: ListAttractionsOptions): Promise<number> {
+    const conditions = [isNull(attractions.deletedAt)];
+
+    if (options.regionId) {
+      conditions.push(eq(attractions.regionId, options.regionId));
+    }
+    if (options.categoryId) {
+      conditions.push(eq(attractions.categoryId, options.categoryId));
+    }
+    if (options.status) {
+      conditions.push(eq(attractions.status, options.status));
+    }
+
+    const [result] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(attractions)
+      .where(and(...conditions));
+
+    return result ? Number(result.count) : 0;
+  }
+
   public async findNearby(
     lng: number,
     lat: number,

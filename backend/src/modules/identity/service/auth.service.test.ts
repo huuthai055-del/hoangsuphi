@@ -196,7 +196,8 @@ describe('AuthService', () => {
       expect(createSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           email: 'test@gmail.com',
-        })
+        }),
+        expect.anything()
       );
     });
 
@@ -242,7 +243,8 @@ describe('AuthService', () => {
       expect(storeRefreshSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           tokenHash: hashToken('mock.refresh.token'),
-        })
+        }),
+        expect.anything()
       );
     });
 
@@ -276,7 +278,7 @@ describe('AuthService', () => {
 
       await service.login('  TEST@Gmail.com  ', password, '127.0.0.1', null, null);
 
-      expect(findSpy).toHaveBeenCalledWith('test@gmail.com');
+      expect(findSpy).toHaveBeenCalledWith('test@gmail.com', expect.anything());
     });
 
     test('should throw AuthenticationError if user is not found', async () => {
@@ -484,9 +486,10 @@ describe('AuthService', () => {
         expect.objectContaining({
           oldTokenHash: hashToken('mock.refresh.token'),
           newTokenHash: hashToken('mock.refresh.token'),
-        })
+        }),
+        expect.anything()
       );
-      expect(touchSpy).toHaveBeenCalledWith(sessionId);
+      expect(touchSpy).toHaveBeenCalledWith(sessionId, expect.anything());
       expect(genAccessSpy).toHaveBeenCalled();
       expect(genRefreshSpy).toHaveBeenCalled();
     });
@@ -534,7 +537,7 @@ describe('AuthService', () => {
     test('should successfully revoke session', async () => {
       const revokeSpy = spyOn(mockSessionService, 'revokeSession');
       await service.logout(sessionId);
-      expect(revokeSpy).toHaveBeenCalledWith(sessionId, 'logout');
+      expect(revokeSpy).toHaveBeenCalledWith(sessionId, 'logout', expect.anything());
     });
 
     test('should throw ValidationError if sessionId is empty', async () => {
@@ -560,7 +563,7 @@ describe('AuthService', () => {
     test('should successfully revoke all sessions for user', async () => {
       const revokeAllSpy = spyOn(mockSessionService, 'revokeAllSessions');
       await service.logoutAllDevices(userId);
-      expect(revokeAllSpy).toHaveBeenCalledWith(userId, 'logout_all');
+      expect(revokeAllSpy).toHaveBeenCalledWith(userId, 'logout_all', expect.anything());
     });
 
     test('should throw ValidationError if userId is empty', async () => {
@@ -591,8 +594,8 @@ describe('AuthService', () => {
       expect(testUser.permissionsVersion).toBe(oldVersion + 1);
       expect(validatePolicySpy).toHaveBeenCalledWith('NewSecurePassword123!');
       expect(hashSpy).toHaveBeenCalledWith('NewSecurePassword123!');
-      expect(updateRepoSpy).toHaveBeenCalledWith(testUser);
-      expect(revokeAllSessionsSpy).toHaveBeenCalledWith(userId, 'password_change');
+      expect(updateRepoSpy).toHaveBeenCalledWith(testUser, expect.anything());
+      expect(revokeAllSessionsSpy).toHaveBeenCalledWith(userId, 'password_change', expect.anything());
     });
 
     test('should throw ValidationError if fields are missing', async () => {

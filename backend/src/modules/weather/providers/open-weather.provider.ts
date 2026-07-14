@@ -1,6 +1,19 @@
 import type { IWeatherProvider } from '../interfaces/weather-provider.interface';
 import type { CurrentWeather, Forecast } from '../dto/weather.dto';
 
+/**
+ * @stub MOCK IMPLEMENTATION — NOT PRODUCTION READY
+ *
+ * This class returns deterministic synthetic data computed from coordinate
+ * arithmetic. It makes NO HTTP calls and uses NO real API key.
+ *
+ * Before deploying to production you must replace this class with a real
+ * IWeatherProvider implementation (e.g. actual OpenWeather API client) and
+ * update the binding in src/common/di/container.ts.
+ *
+ * DO NOT expose this stub to real users without disclosing that the data
+ * is fabricated.
+ */
 export class OpenWeatherProvider implements IWeatherProvider {
   public async getCurrentWeather(latitude: number, longitude: number): Promise<CurrentWeather> {
     // Return mock data calculated based on coordinates (deterministic mock)

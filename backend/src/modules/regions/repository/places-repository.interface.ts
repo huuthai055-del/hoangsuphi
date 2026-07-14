@@ -15,6 +15,7 @@ export interface ITouristPlacesRepository {
     options?: { page?: number; limit?: number }
   ): Promise<TouristPlace[]>;
   list(options: ListPlacesOptions): Promise<TouristPlace[]>;
+  count(options: ListPlacesOptions): Promise<number>;
   findNearby(
     lng: number,
     lat: number,

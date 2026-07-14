@@ -14,6 +14,8 @@ export interface MediaProps {
   status: MediaStatus;
   ownerType: string | null;
   ownerId: string | null;
+  /** The user ID of whoever uploaded this file. Used for delete access control. */
+  uploadedBy: string | null;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
@@ -30,6 +32,7 @@ export class Media {
   private _status: MediaStatus;
   private _ownerType: string | null;
   private _ownerId: string | null;
+  private _uploadedBy: string | null;
   private _createdAt: Date;
   private _updatedAt: Date;
   private _deletedAt: Date | null;
@@ -45,6 +48,7 @@ export class Media {
     this._status = props.status;
     this._ownerType = props.ownerType;
     this._ownerId = props.ownerId;
+    this._uploadedBy = props.uploadedBy;
     this._createdAt = props.createdAt;
     this._updatedAt = props.updatedAt;
     this._deletedAt = props.deletedAt;
@@ -97,6 +101,7 @@ export class Media {
     hash: string;
     ownerType?: string | null;
     ownerId?: string | null;
+    uploadedBy?: string | null;
     now?: Date;
   }): Media {
     Media.validateId(props.id);
@@ -119,6 +124,7 @@ export class Media {
       status: 'UPLOADING',
       ownerType: props.ownerType ?? null,
       ownerId: props.ownerId ?? null,
+      uploadedBy: props.uploadedBy ?? null,
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
@@ -144,6 +150,7 @@ export class Media {
       status: props.status,
       ownerType: props.ownerType,
       ownerId: props.ownerId,
+      uploadedBy: props.uploadedBy,
       createdAt: props.createdAt,
       updatedAt: props.updatedAt,
       deletedAt: props.deletedAt,
@@ -161,6 +168,7 @@ export class Media {
   public get status(): MediaStatus { return this._status; }
   public get ownerType(): string | null { return this._ownerType; }
   public get ownerId(): string | null { return this._ownerId; }
+  public get uploadedBy(): string | null { return this._uploadedBy; }
   public get createdAt(): Date { return this._createdAt; }
   public get updatedAt(): Date { return this._updatedAt; }
   public get deletedAt(): Date | null { return this._deletedAt; }
@@ -238,6 +246,7 @@ export class Media {
       status: this._status,
       ownerType: this._ownerType,
       ownerId: this._ownerId,
+      uploadedBy: this._uploadedBy,
       createdAt: new Date(this._createdAt.getTime()),
       updatedAt: new Date(this._updatedAt.getTime()),
       deletedAt: this._deletedAt ? new Date(this._deletedAt.getTime()) : null,

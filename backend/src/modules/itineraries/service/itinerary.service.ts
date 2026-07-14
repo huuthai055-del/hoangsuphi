@@ -14,6 +14,8 @@ import {
 import { ItineraryDomainError } from '../domain/itinerary.errors';
 import { runInTransaction } from '@/lib/database/client';
 import type { PaginatedResult, PaginationOptions } from '@/common/types/pagination';
+import { logger } from '@/lib/logger';
+import { requestStore } from '@/lib/logger/context';
 
 function mapDomainError(err: Error): Error {
   if (err instanceof DuplicateKeyRepositoryError) {
@@ -65,8 +67,10 @@ export class ItineraryService {
     createdBy: string;
     now?: Date;
   }): Promise<Itinerary> {
+    const startTime = performance.now();
+    const store = requestStore.getStore();
     try {
-      return await runInTransaction(async (tx) => {
+      const result = await runInTransaction(async (tx) => {
         const itinerary = Itinerary.create({
           id: generateUuidV7(),
           title: props.title,
@@ -79,6 +83,18 @@ export class ItineraryService {
         await this.itineraryRepo.create(itinerary, tx);
         return itinerary;
       });
+
+      const executionTime = Math.round(performance.now() - startTime);
+      logger.info(
+        {
+          traceId: store?.requestId,
+          itineraryId: result.id,
+          executionTime,
+          action: 'create_itinerary',
+        },
+        `Itinerary created successfully: ${result.title} (${result.id})`
+      );
+      return result;
     } catch (err) {
       throw mapDomainError(err as Error);
     }
@@ -93,51 +109,106 @@ export class ItineraryService {
     },
     now?: Date
   ): Promise<Itinerary> {
+    const startTime = performance.now();
+    const store = requestStore.getStore();
     try {
-      return await runInTransaction(async (tx) => {
+      const result = await runInTransaction(async (tx) => {
         const itinerary = await this.loadItineraryOrThrow(id, tx);
         itinerary.updateInfo(props, now);
         await this.itineraryRepo.update(itinerary, tx);
         return itinerary;
       });
+
+      const executionTime = Math.round(performance.now() - startTime);
+      logger.info(
+        {
+          traceId: store?.requestId,
+          itineraryId: result.id,
+          executionTime,
+          action: 'update_itinerary',
+        },
+        `Itinerary info updated: ${result.id}`
+      );
+      return result;
     } catch (err) {
       throw mapDomainError(err as Error);
     }
   }
 
   public async deleteItinerary(id: string, now?: Date): Promise<void> {
+    const startTime = performance.now();
+    const store = requestStore.getStore();
     try {
       await runInTransaction(async (tx) => {
         const itinerary = await this.loadItineraryOrThrow(id, tx);
         itinerary.softDelete(now);
         await this.itineraryRepo.delete(id, tx);
       });
+
+      const executionTime = Math.round(performance.now() - startTime);
+      logger.info(
+        {
+          traceId: store?.requestId,
+          itineraryId: id,
+          executionTime,
+          action: 'delete_itinerary',
+        },
+        `Itinerary soft-deleted: ${id}`
+      );
     } catch (err) {
       throw mapDomainError(err as Error);
     }
   }
 
   public async publishItinerary(id: string, now?: Date): Promise<Itinerary> {
+    const startTime = performance.now();
+    const store = requestStore.getStore();
     try {
-      return await runInTransaction(async (tx) => {
+      const result = await runInTransaction(async (tx) => {
         const itinerary = await this.loadItineraryOrThrow(id, tx);
         itinerary.publish(now);
         await this.itineraryRepo.update(itinerary, tx);
         return itinerary;
       });
+
+      const executionTime = Math.round(performance.now() - startTime);
+      logger.info(
+        {
+          traceId: store?.requestId,
+          itineraryId: result.id,
+          executionTime,
+          action: 'publish_itinerary',
+        },
+        `Itinerary published: ${result.id}`
+      );
+      return result;
     } catch (err) {
       throw mapDomainError(err as Error);
     }
   }
 
   public async archiveItinerary(id: string, now?: Date): Promise<Itinerary> {
+    const startTime = performance.now();
+    const store = requestStore.getStore();
     try {
-      return await runInTransaction(async (tx) => {
+      const result = await runInTransaction(async (tx) => {
         const itinerary = await this.loadItineraryOrThrow(id, tx);
         itinerary.archive(now);
         await this.itineraryRepo.update(itinerary, tx);
         return itinerary;
       });
+
+      const executionTime = Math.round(performance.now() - startTime);
+      logger.info(
+        {
+          traceId: store?.requestId,
+          itineraryId: result.id,
+          executionTime,
+          action: 'archive_itinerary',
+        },
+        `Itinerary archived: ${result.id}`
+      );
+      return result;
     } catch (err) {
       throw mapDomainError(err as Error);
     }
@@ -154,8 +225,10 @@ export class ItineraryService {
     },
     now?: Date
   ): Promise<ItineraryItem> {
+    const startTime = performance.now();
+    const store = requestStore.getStore();
     try {
-      return await runInTransaction(async (tx) => {
+      const result = await runInTransaction(async (tx) => {
         const itinerary = await this.loadItineraryOrThrow(id, tx);
         
         const itemId = props.id || generateUuidV7();
@@ -170,18 +243,43 @@ export class ItineraryService {
         await this.itineraryRepo.update(itinerary, tx);
         return item;
       });
+
+      const executionTime = Math.round(performance.now() - startTime);
+      logger.info(
+        {
+          traceId: store?.requestId,
+          itineraryId: id,
+          executionTime,
+          action: 'add_item_to_itinerary',
+        },
+        `Item ${result.id} added to Itinerary ${id}`
+      );
+      return result;
     } catch (err) {
       throw mapDomainError(err as Error);
     }
   }
 
   public async removeItemFromItinerary(id: string, itemId: string, now?: Date): Promise<void> {
+    const startTime = performance.now();
+    const store = requestStore.getStore();
     try {
       await runInTransaction(async (tx) => {
         const itinerary = await this.loadItineraryOrThrow(id, tx);
         itinerary.removeItem(itemId, now);
         await this.itineraryRepo.update(itinerary, tx);
       });
+
+      const executionTime = Math.round(performance.now() - startTime);
+      logger.info(
+        {
+          traceId: store?.requestId,
+          itineraryId: id,
+          executionTime,
+          action: 'remove_item_from_itinerary',
+        },
+        `Item ${itemId} removed from Itinerary ${id}`
+      );
     } catch (err) {
       throw mapDomainError(err as Error);
     }
@@ -192,12 +290,25 @@ export class ItineraryService {
     itemIdOrders: Array<{ id: string; dayNumber: number; displayOrder: number }>,
     now?: Date
   ): Promise<void> {
+    const startTime = performance.now();
+    const store = requestStore.getStore();
     try {
       await runInTransaction(async (tx) => {
         const itinerary = await this.loadItineraryOrThrow(id, tx);
         itinerary.reorderItems(itemIdOrders, now);
         await this.itineraryRepo.update(itinerary, tx);
       });
+
+      const executionTime = Math.round(performance.now() - startTime);
+      logger.info(
+        {
+          traceId: store?.requestId,
+          itineraryId: id,
+          executionTime,
+          action: 'reorder_itinerary_items',
+        },
+        `Items reordered in Itinerary ${id}`
+      );
     } catch (err) {
       throw mapDomainError(err as Error);
     }

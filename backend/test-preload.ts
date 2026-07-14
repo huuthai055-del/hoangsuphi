@@ -31,6 +31,9 @@ mock.module('@/modules/regions/repository/regions.repository', () => {
       list(options: any) {
         return (globalThis as any).mockRegionsList ? (globalThis as any).mockRegionsList(options) : Promise.resolve([]);
       }
+      count(options: any) {
+        return (globalThis as any).mockRegionsCount ? (globalThis as any).mockRegionsCount(options) : Promise.resolve(0);
+      }
       save(region: any) {
         return (globalThis as any).mockRegionsSave ? (globalThis as any).mockRegionsSave(region) : Promise.resolve();
       }
@@ -61,6 +64,9 @@ mock.module('@/modules/regions/repository/places.repository', () => {
       }
       list(options: any) {
         return (globalThis as any).mockPlacesList ? (globalThis as any).mockPlacesList(options) : Promise.resolve([]);
+      }
+      count(options: any) {
+        return (globalThis as any).mockPlacesCount ? (globalThis as any).mockPlacesCount(options) : Promise.resolve(0);
       }
       findNearby(lng: number, lat: number, radiusMeters: number, limit?: number) {
         return (globalThis as any).mockPlacesFindNearby ? (globalThis as any).mockPlacesFindNearby(lng, lat, radiusMeters, limit) : Promise.resolve([]);
@@ -100,6 +106,9 @@ mock.module('@/modules/businesses/repository/businesses.repository', () => {
       list(options: any) {
         return (globalThis as any).mockBusinessesList ? (globalThis as any).mockBusinessesList(options) : Promise.resolve([]);
       }
+      count(options: any) {
+        return (globalThis as any).mockBusinessesCount ? (globalThis as any).mockBusinessesCount(options) : Promise.resolve(0);
+      }
       findNearby(lng: number, lat: number, radiusMeters: number, limit?: number) {
         return (globalThis as any).mockBusinessesFindNearby ? (globalThis as any).mockBusinessesFindNearby(lng, lat, radiusMeters, limit) : Promise.resolve([]);
       }
@@ -137,6 +146,9 @@ mock.module('@/modules/attractions/repository/attractions.repository', () => {
       }
       list(options: any) {
         return (globalThis as any).mockAttractionsList ? (globalThis as any).mockAttractionsList(options) : Promise.resolve([]);
+      }
+      count(options: any) {
+        return (globalThis as any).mockAttractionsCount ? (globalThis as any).mockAttractionsCount(options) : Promise.resolve(0);
       }
       findNearby(lng: number, lat: number, radiusMeters: number, limit?: number) {
         return (globalThis as any).mockAttractionsFindNearby ? (globalThis as any).mockAttractionsFindNearby(lng, lat, radiusMeters, limit) : Promise.resolve([]);
@@ -259,6 +271,11 @@ mock.module('@/modules/media/repository/media.repository', () => {
       ];
     });
 
+    spyOn(DrizzlePermissionRepository.prototype, 'findRolesByUserId').mockImplementation(async () => {
+      // By default in route integration tests, the mock user is a normal user (no admin role).
+      return [];
+    });
+
     spyOn(DrizzleSessionRepository.prototype, 'findById').mockImplementation(async (id: string) => {
       return {
         id,
@@ -276,7 +293,16 @@ mock.module('@/modules/media/repository/media.repository', () => {
           permissionsVersion: 1,
         };
       }
-      return null;
+      // Fallback to real verification for dynamic tokens generated in identity route tests
+      const { verify } = require('hono/jwt');
+      const { env } = require('@/config/env');
+      try {
+        const cleanToken = token.trim();
+        const verified = await verify(cleanToken, env.JWT_ACCESS_SECRET, 'HS256');
+        return verified as any;
+      } catch {
+        return null;
+      }
     });
 
     spyOn(SessionService.prototype, 'isSessionActive').mockImplementation(async () => {

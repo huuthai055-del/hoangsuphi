@@ -1,7 +1,7 @@
 import { describe, test, expect, mock } from 'bun:test';
 import { WeatherService } from './weather.service';
 import type { IWeatherProvider } from '../interfaces/weather-provider.interface';
-import { ValidationError } from '@/common/errors/http.errors';
+import { ValidationError, ExternalServiceError } from '@/common/errors/http.errors';
 
 describe('WeatherService', () => {
   const mockGetCurrentWeather = mock(() => Promise.resolve(null as any));
@@ -43,10 +43,10 @@ describe('WeatherService', () => {
     expect(mockGetCurrentWeather).toHaveBeenCalledWith(45.5, 100.2);
   });
 
-  test('should wrap provider error into ValidationError in getCurrentWeather', async () => {
+  test('should wrap provider error into ExternalServiceError in getCurrentWeather', async () => {
     mockGetCurrentWeather.mockImplementation(() => Promise.reject(new Error('Network Error')));
 
-    await expect(service.getCurrentWeather(45.5, 100.2)).rejects.toThrow(ValidationError);
+    await expect(service.getCurrentWeather(45.5, 100.2)).rejects.toThrow(ExternalServiceError);
   });
 
   test('should return forecast data from provider', async () => {
@@ -66,9 +66,9 @@ describe('WeatherService', () => {
     expect(mockGetForecast).toHaveBeenCalledWith(45.5, 100.2, 5);
   });
 
-  test('should wrap provider error into ValidationError in getForecast', async () => {
+  test('should wrap provider error into ExternalServiceError in getForecast', async () => {
     mockGetForecast.mockImplementation(() => Promise.reject(new Error('API Failure')));
 
-    await expect(service.getForecast(45.5, 100.2, 3)).rejects.toThrow(ValidationError);
+    await expect(service.getForecast(45.5, 100.2, 3)).rejects.toThrow(ExternalServiceError);
   });
 });

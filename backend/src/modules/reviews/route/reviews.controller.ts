@@ -41,11 +41,12 @@ export class ReviewsController {
   };
 
   public update = async (c: Context) => {
+    const user = requireAuthenticatedUser(c);
     const params = c.get('validParams') as ReviewIdParamsDto;
     const body = c.get('validBody') as UpdateReviewRequestDto;
 
-    const review = await this.service.updateReview(params.id, body);
-    return c.json(mapReviewToResponse(review), 200);
+    const updated = await this.service.updateReview(params.id, user, body);
+    return c.json(mapReviewToResponse(updated), 200);
   };
 
   public getById = async (c: Context) => {
@@ -55,8 +56,10 @@ export class ReviewsController {
   };
 
   public delete = async (c: Context) => {
+    const user = requireAuthenticatedUser(c);
     const params = c.get('validParams') as ReviewIdParamsDto;
-    await this.service.deleteReview(params.id);
+
+    await this.service.deleteReview(params.id, user);
     return c.body(null, 204);
   };
 
@@ -114,10 +117,11 @@ export class ReviewsController {
   };
 
   public listByUser = async (c: Context) => {
+    const user = requireAuthenticatedUser(c);
     const params = c.get('validParams') as { userId: string };
     const pagination = c.get('validQuery') as PaginationQueryDto;
 
-    const reviews = await this.service.listReviewsByUser(params.userId, {
+    const reviews = await this.service.listReviewsByUser(params.userId, user, {
       limit: pagination.limit,
       offset: pagination.offset,
     });

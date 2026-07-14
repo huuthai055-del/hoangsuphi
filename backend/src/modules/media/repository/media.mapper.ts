@@ -11,6 +11,7 @@ export interface RawMedia {
   status: string;
   ownerType: string | null;
   ownerId: string | null;
+  uploadedBy: string | null;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
@@ -29,6 +30,7 @@ export const MediaMapper = {
       status: raw.status as MediaStatus,
       ownerType: raw.ownerType,
       ownerId: raw.ownerId,
+      uploadedBy: raw.uploadedBy,
       createdAt: raw.createdAt,
       updatedAt: raw.updatedAt,
       deletedAt: raw.deletedAt,
@@ -48,6 +50,7 @@ export const MediaMapper = {
       status: props.status,
       ownerType: props.ownerType,
       ownerId: props.ownerId,
+      uploadedBy: props.uploadedBy,
       createdAt: props.createdAt,
       updatedAt: props.updatedAt,
       deletedAt: props.deletedAt,

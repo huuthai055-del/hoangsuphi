@@ -102,8 +102,9 @@ export function authMiddleware(
       throw new AuthenticationError(AUTH_MESSAGES.UNAUTHORIZED);
     }
 
-    // Step 5.5: Load permissions to optimize DB queries (PBAC, no role repo query)
+    // Step 5.5: Load permissions and roles to optimise downstream DB queries
     const permissions = await permissionRepo.findByUserId(user.id);
+    const roles = await permissionRepo.findRolesByUserId(user.id);
 
     // Step 6: Touch session activity (failure should not halt user request but must be logged)
     try {
@@ -118,7 +119,7 @@ export function authMiddleware(
       sessionId,
       permissionsVersion: user.permissionsVersion,
       permissions,
-      roles: [],
+      roles,
     };
 
     c.set('user', authUser);

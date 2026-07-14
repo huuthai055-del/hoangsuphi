@@ -5,6 +5,7 @@ import {
   NotFoundError,
   ConflictError,
   ValidationError,
+  AuthorizationError,
 } from '@/common/errors/http.errors';
 import {
   DuplicateKeyRepositoryError,
@@ -12,6 +13,8 @@ import {
 } from '@/common/errors/repository.errors';
 import { ReviewDomainError } from '../domain/reviews.errors';
 import { runInTransaction } from '@/lib/database/client';
+import { logger } from '@/lib/logger';
+import { requestStore } from '@/lib/logger/context';
 
 function mapDomainError(err: Error): Error {
   if (err instanceof DuplicateKeyRepositoryError) {
@@ -50,6 +53,13 @@ export class ReviewsService {
     return review;
   }
 
+  private assertAccess(review: Review, caller: { id: string; roles: string[] }): void {
+    const roles = caller.roles || [];
+    if (review.userId !== caller.id && !roles.includes('admin')) {
+      throw new AuthorizationError('You do not have permission to access this review');
+    }
+  }
+
   public async createReview(props: {
     userId: string;
     ownerType: OwnerType;
@@ -59,6 +69,8 @@ export class ReviewsService {
     content: string;
     now?: Date;
   }): Promise<Review> {
+    const startTime = performance.now();
+    const store = requestStore.getStore();
     try {
       return await runInTransaction(async (tx) => {
         // Enforce duplicate check inside transaction
@@ -79,6 +91,17 @@ export class ReviewsService {
         });
 
         await this.reviewsRepo.create(review, tx);
+
+        logger.info(
+          {
+            traceId: store?.requestId,
+            reviewId: review.id,
+            executionTime: Math.round(performance.now() - startTime),
+            action: 'create_review',
+          },
+          `Review created: ${review.id}`
+        );
+
         return review;
       });
     } catch (err) {
@@ -88,6 +111,7 @@ export class ReviewsService {
 
   public async updateReview(
     reviewId: string,
+    caller: { id: string; roles: string[] },
     props: {
       title: string;
       content: string;
@@ -95,9 +119,12 @@ export class ReviewsService {
       now?: Date;
     }
   ): Promise<Review> {
+    const startTime = performance.now();
+    const store = requestStore.getStore();
     try {
       return await runInTransaction(async (tx) => {
         const review = await this.loadReviewOrThrow(reviewId, tx);
+        this.assertAccess(review, caller);
 
         // State validation at application layer
         if (review.status !== 'PENDING') {
@@ -106,6 +133,17 @@ export class ReviewsService {
 
         review.updateContent(props);
         await this.reviewsRepo.update(review, tx);
+
+        logger.info(
+          {
+            traceId: store?.requestId,
+            reviewId: review.id,
+            executionTime: Math.round(performance.now() - startTime),
+            action: 'update_review',
+          },
+          `Review updated: ${review.id}`
+        );
+
         return review;
       });
     } catch (err) {
@@ -114,11 +152,13 @@ export class ReviewsService {
   }
 
   public async approveReview(reviewId: string, now?: Date): Promise<Review> {
+    const store = requestStore.getStore();
     try {
       return await runInTransaction(async (tx) => {
         const review = await this.loadReviewOrThrow(reviewId, tx);
         review.approve(now);
         await this.reviewsRepo.update(review, tx);
+        logger.info({ traceId: store?.requestId, reviewId: review.id, action: 'approve_review' }, `Review approved: ${review.id}`);
         return review;
       });
     } catch (err) {
@@ -127,11 +167,13 @@ export class ReviewsService {
   }
 
   public async rejectReview(reviewId: string, now?: Date): Promise<Review> {
+    const store = requestStore.getStore();
     try {
       return await runInTransaction(async (tx) => {
         const review = await this.loadReviewOrThrow(reviewId, tx);
         review.reject(now);
         await this.reviewsRepo.update(review, tx);
+        logger.info({ traceId: store?.requestId, reviewId: review.id, action: 'reject_review' }, `Review rejected: ${review.id}`);
         return review;
       });
     } catch (err) {
@@ -139,12 +181,19 @@ export class ReviewsService {
     }
   }
 
-  public async deleteReview(reviewId: string, now?: Date): Promise<void> {
+  public async deleteReview(
+    reviewId: string,
+    caller: { id: string; roles: string[] },
+    now?: Date
+  ): Promise<void> {
+    const store = requestStore.getStore();
     try {
       await runInTransaction(async (tx) => {
         const review = await this.loadReviewOrThrow(reviewId, tx);
+        this.assertAccess(review, caller);
         review.softDelete(now);
         await this.reviewsRepo.update(review, tx);
+        logger.info({ traceId: store?.requestId, reviewId: review.id, action: 'delete_review' }, `Review soft-deleted: ${review.id}`);
       });
     } catch (err) {
       throw mapDomainError(err as Error);
@@ -172,7 +221,15 @@ export class ReviewsService {
     return this.reviewsRepo.findByOwner(ownerType, ownerId, pagination);
   }
 
-  public async listReviewsByUser(userId: string, pagination?: ReviewPagination): Promise<Review[]> {
+  public async listReviewsByUser(
+    userId: string,
+    caller: { id: string; roles: string[] },
+    pagination?: ReviewPagination
+  ): Promise<Review[]> {
+    const roles = caller.roles || [];
+    if (userId !== caller.id && !roles.includes('admin')) {
+      throw new AuthorizationError('You do not have permission to access these reviews');
+    }
     return this.reviewsRepo.findByUser(userId, pagination);
   }
 

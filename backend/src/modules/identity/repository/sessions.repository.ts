@@ -1,11 +1,15 @@
 import { eq, and } from 'drizzle-orm';
-import { db } from '@/lib/database/client';
+import { db, type TransactionClient } from '@/lib/database/client';
 import { userSessions } from '@/lib/database/schema/users';
 import type { IUserSessionRepository, UserSessionModel } from '../service/session.service';
 
 export class DrizzleSessionRepository implements IUserSessionRepository {
-  public async create(session: UserSessionModel): Promise<void> {
-    await db.insert(userSessions).values({
+  private getClient(tx?: unknown) {
+    return (tx as TransactionClient) ?? db;
+  }
+
+  public async create(session: UserSessionModel, tx?: unknown): Promise<void> {
+    await this.getClient(tx).insert(userSessions).values({
       id: session.id,
       userId: session.userId,
       deviceName: session.deviceName,
@@ -20,8 +24,12 @@ export class DrizzleSessionRepository implements IUserSessionRepository {
     });
   }
 
-  public async findById(id: string): Promise<UserSessionModel | null> {
-    const rows = await db.select().from(userSessions).where(eq(userSessions.id, id)).limit(1);
+  public async findById(id: string, tx?: unknown): Promise<UserSessionModel | null> {
+    const rows = await this.getClient(tx)
+      .select()
+      .from(userSessions)
+      .where(eq(userSessions.id, id))
+      .limit(1);
 
     if (rows.length === 0) return null;
     const raw = rows[0];
@@ -41,8 +49,8 @@ export class DrizzleSessionRepository implements IUserSessionRepository {
     };
   }
 
-  public async update(session: UserSessionModel): Promise<void> {
-    await db
+  public async update(session: UserSessionModel, tx?: unknown): Promise<void> {
+    await this.getClient(tx)
       .update(userSessions)
       .set({
         deviceName: session.deviceName,
@@ -57,8 +65,8 @@ export class DrizzleSessionRepository implements IUserSessionRepository {
       .where(eq(userSessions.id, session.id));
   }
 
-  public async revokeAllUserSessions(userId: string, reason: string): Promise<void> {
-    await db
+  public async revokeAllUserSessions(userId: string, reason: string, tx?: unknown): Promise<void> {
+    await this.getClient(tx)
       .update(userSessions)
       .set({
         isRevoked: true,

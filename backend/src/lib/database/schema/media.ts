@@ -19,9 +19,12 @@ export const media = pgTable(
     hash: varchar('hash', { length: 64 }).notNull(), // SHA-256 file hash for deduplication
     status: varchar('status', { length: 50 }).notNull().default('UPLOADING'), // 'UPLOADING', 'READY', 'PROCESSING', 'FAILED', 'DELETED'
     
-    // Polymorphic owner association
+    // Polymorphic owner association (the content entity this media illustrates)
     ownerType: varchar('owner_type', { length: 50 }), // 'ARTICLE', 'PLACE', 'BUSINESS', 'ATTRACTION', 'USER'
     ownerId: uuid('owner_id'),
+
+    // Uploader identity — set at upload time, used for access control
+    uploadedBy: uuid('uploaded_by'),
     
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true })

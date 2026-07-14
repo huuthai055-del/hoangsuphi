@@ -25,6 +25,7 @@ describe('BusinessesService', () => {
     findById: mockFindRegionById,
     findBySlug: mock(() => Promise.resolve(null)),
     list: mock(() => Promise.resolve([])),
+    count: mock(() => Promise.resolve(0)),
     findChildren: mock(() => Promise.resolve([])),
     findSubtree: mock(() => Promise.resolve([])),
     save: mock(() => Promise.resolve()),
@@ -47,6 +48,7 @@ describe('BusinessesService', () => {
     findBySlug: mockFindBusinessBySlug,
     findByRegionId: mock(() => Promise.resolve([])),
     list: mock(() => Promise.resolve([])),
+    count: mock(() => Promise.resolve(0)),
     findNearby: mock(() => Promise.resolve([])),
     save: mockSaveBusiness,
     update: mockUpdateBusiness,
@@ -84,21 +86,21 @@ describe('BusinessesService', () => {
     null
   );
 
-  const mockBusiness = new Business(
-    'business-id',
-    'region-id',
-    'type-id',
-    'Nam Hong Homestay',
-    'nam-hong-homestay',
-    new GPSLocation(104.5, 22.5),
-    'Homestay view ruộng bậc thang',
-    'https://example.com/cover.jpg',
-    'active',
-    ['wifi-id'],
-    new Date(),
-    new Date(),
-    null
-  );
+  const mockBusiness = Business.rehydrate({
+    id: 'business-id',
+    regionId: 'region-id',
+    businessTypeId: 'type-id',
+    name: 'Nam Hong Homestay',
+    slug: 'nam-hong-homestay',
+    location: new GPSLocation(104.5, 22.5),
+    description: 'Homestay view ruộng bậc thang',
+    coverUrl: 'https://example.com/cover.jpg',
+    status: 'active',
+    amenityIds: ['wifi-id'],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    deletedAt: null
+  });
 
   describe('createBusiness', () => {
     test('should successfully create a valid business with Normalized Slug', async () => {
@@ -270,21 +272,21 @@ describe('BusinessesService', () => {
     });
 
     test('should fail if business is soft-deleted', async () => {
-      const deletedBusiness = new Business(
-        'business-id',
-        'region-id',
-        'type-id',
-        'Place',
-        'place',
-        new GPSLocation(104.5, 22.5),
-        null,
-        null,
-        'inactive',
-        [],
-        new Date(),
-        new Date(),
-        new Date()
-      );
+      const deletedBusiness = Business.rehydrate({
+        id: 'business-id',
+        regionId: 'region-id',
+        businessTypeId: 'type-id',
+        name: 'Place',
+        slug: 'place',
+        location: new GPSLocation(104.5, 22.5),
+        description: null,
+        coverUrl: null,
+        status: 'inactive',
+        amenityIds: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: new Date()
+      });
       mockFindBusinessById.mockImplementation(() => Promise.resolve(deletedBusiness));
 
       expect(
@@ -304,21 +306,21 @@ describe('BusinessesService', () => {
     });
 
     test('should fail if already deleted', async () => {
-      const deletedBusiness = new Business(
-        'business-id',
-        'region-id',
-        'type-id',
-        'Place',
-        'place',
-        new GPSLocation(104.5, 22.5),
-        null,
-        null,
-        'inactive',
-        [],
-        new Date(),
-        new Date(),
-        new Date()
-      );
+      const deletedBusiness = Business.rehydrate({
+        id: 'business-id',
+        regionId: 'region-id',
+        businessTypeId: 'type-id',
+        name: 'Place',
+        slug: 'place',
+        location: new GPSLocation(104.5, 22.5),
+        description: null,
+        coverUrl: null,
+        status: 'inactive',
+        amenityIds: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: new Date()
+      });
       mockFindBusinessById.mockImplementation(() => Promise.resolve(deletedBusiness));
 
       expect(service.deleteBusiness('business-id')).rejects.toThrow(ValidationError);

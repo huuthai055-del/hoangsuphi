@@ -1,10 +1,12 @@
+import { InvalidLtreePathError } from '../region.errors';
+
 export class LtreePath {
   private readonly value: string;
 
   constructor(value: string) {
     const normalized = value.replace(/-/g, '_');
     if (!/^[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)*$/.test(normalized)) {
-      throw new Error(`Invalid ltree format: ${value}`);
+      throw new InvalidLtreePathError(`Invalid ltree format: ${value}`);
     }
     this.value = normalized;
   }

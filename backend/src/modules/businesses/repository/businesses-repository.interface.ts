@@ -17,6 +17,7 @@ export interface IBusinessesRepository {
     options?: { page?: number; limit?: number }
   ): Promise<Business[]>;
   list(options: ListBusinessesOptions): Promise<Business[]>;
+  count(options: ListBusinessesOptions): Promise<number>;
   findNearby(lng: number, lat: number, radiusMeters: number, limit?: number): Promise<Business[]>;
   save(business: Business, tx?: TransactionClient): Promise<void>;
   update(business: Business, tx?: TransactionClient): Promise<void>;

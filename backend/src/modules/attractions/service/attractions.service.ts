@@ -55,8 +55,12 @@ export class AttractionsService {
     return attraction;
   }
 
-  public async listAttractions(options: ListAttractionsOptions): Promise<Attraction[]> {
-    return this.attractionsRepo.list(options);
+  public async listAttractions(options: ListAttractionsOptions): Promise<{ items: Attraction[]; total: number }> {
+    const [items, total] = await Promise.all([
+      this.attractionsRepo.list(options),
+      this.attractionsRepo.count(options),
+    ]);
+    return { items, total };
   }
 
   public async listAttractionsByRegion(
@@ -88,22 +92,18 @@ export class AttractionsService {
     const location = this.parseLocation(command.location);
 
     const id = command.id ?? generateUuidV7();
-    const now = new Date();
 
-    const attraction = new Attraction(
+    const attraction = Attraction.create({
       id,
-      command.regionId,
-      command.categoryId,
-      command.name.trim(),
+      regionId: command.regionId,
+      categoryId: command.categoryId,
+      name: command.name.trim(),
       slug,
       location,
-      command.description ?? null,
-      command.coverUrl ?? null,
-      'active',
-      now,
-      now,
-      null
-    );
+      description: command.description ?? null,
+      coverUrl: command.coverUrl ?? null,
+      status: 'active',
+    });
 
     await this.attractionsRepo.save(attraction);
 
@@ -135,45 +135,47 @@ export class AttractionsService {
       throw new ValidationError('Cannot update a soft-deleted attraction');
     }
 
+    const updateProps: any = {};
+
     if (command.regionId !== undefined && command.regionId !== attraction.regionId) {
       await this.verifyRegionExists(command.regionId);
-      attraction.regionId = command.regionId;
+      updateProps.regionId = command.regionId;
     }
 
     if (command.categoryId !== undefined && command.categoryId !== attraction.categoryId) {
       await this.verifyCategoryExists(command.categoryId);
-      attraction.categoryId = command.categoryId;
+      updateProps.categoryId = command.categoryId;
     }
 
     if (command.name !== undefined) {
-      attraction.name = command.name.trim();
+      updateProps.name = command.name.trim();
     }
 
     if (command.slug !== undefined) {
       const slug = this.resolveSlug(command.slug);
       if (slug !== attraction.slug) {
         await this.verifySlugUnique(slug);
-        attraction.slug = slug;
+        updateProps.slug = slug;
       }
     }
 
     if (command.location !== undefined) {
-      attraction.location = this.parseLocation(command.location);
+      updateProps.location = this.parseLocation(command.location);
     }
 
     if (command.description !== undefined) {
-      attraction.description = command.description;
+      updateProps.description = command.description;
     }
 
     if (command.coverUrl !== undefined) {
-      attraction.coverUrl = command.coverUrl;
+      updateProps.coverUrl = command.coverUrl;
     }
 
     if (command.status !== undefined) {
-      attraction.status = command.status;
+      updateProps.status = command.status;
     }
 
-    attraction.updatedAt = new Date();
+    attraction.update(updateProps);
 
     await this.attractionsRepo.update(attraction);
 

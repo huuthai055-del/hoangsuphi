@@ -54,33 +54,33 @@ export interface RotateTokenInput {
 }
 
 export interface IUserSessionRepository {
-  create(session: UserSessionModel): Promise<void>;
-  findById(id: string): Promise<UserSessionModel | null>;
-  update(session: UserSessionModel): Promise<void>;
-  revokeAllUserSessions(userId: string, reason: string): Promise<void>;
+  create(session: UserSessionModel, tx?: unknown): Promise<void>;
+  findById(id: string, tx?: unknown): Promise<UserSessionModel | null>;
+  update(session: UserSessionModel, tx?: unknown): Promise<void>;
+  revokeAllUserSessions(userId: string, reason: string, tx?: unknown): Promise<void>;
 }
 
 export interface IRefreshTokenRepository {
-  create(token: RefreshTokenModel): Promise<void>;
-  findById(id: string): Promise<RefreshTokenModel | null>;
+  create(token: RefreshTokenModel, tx?: unknown): Promise<void>;
+  findById(id: string, tx?: unknown): Promise<RefreshTokenModel | null>;
   // Expects a unique hash constraint (enforced by unique index on `token_hash` in DB schema).
   // CRITICAL PRODUCTION REQUIREMENT: The implementation MUST use row locking (e.g. `SELECT ... FOR UPDATE`)
   // to prevent race conditions when concurrent refresh requests arrive.
-  findByHash(hash: string): Promise<RefreshTokenModel | null>;
-  update(token: RefreshTokenModel): Promise<void>;
-  revokeFamily(familyId: string): Promise<void>;
-  revokeAllUserTokens(userId: string): Promise<void>;
-  revokeAllSessionTokens(sessionId: string): Promise<void>;
+  findByHash(hash: string, tx?: unknown): Promise<RefreshTokenModel | null>;
+  update(token: RefreshTokenModel, tx?: unknown): Promise<void>;
+  revokeFamily(familyId: string, tx?: unknown): Promise<void>;
+  revokeAllUserTokens(userId: string, tx?: unknown): Promise<void>;
+  revokeAllSessionTokens(sessionId: string, tx?: unknown): Promise<void>;
 }
 
 export interface ISessionService {
-  createSession(input: CreateSessionInput): Promise<UserSessionModel>;
-  createRefreshToken(input: CreateRefreshTokenInput): Promise<RefreshTokenModel>;
-  rotateRefreshToken(input: RotateTokenInput): Promise<RefreshTokenModel>;
-  revokeSession(sessionId: string, reason?: string): Promise<void>;
-  revokeAllSessions(userId: string, reason?: string): Promise<void>;
+  createSession(input: CreateSessionInput, tx?: unknown): Promise<UserSessionModel>;
+  createRefreshToken(input: CreateRefreshTokenInput, tx?: unknown): Promise<RefreshTokenModel>;
+  rotateRefreshToken(input: RotateTokenInput, tx?: unknown): Promise<RefreshTokenModel>;
+  revokeSession(sessionId: string, reason?: string, tx?: unknown): Promise<void>;
+  revokeAllSessions(userId: string, reason?: string, tx?: unknown): Promise<void>;
   isSessionActive(sessionId: string): Promise<boolean>;
-  touchSession(sessionId: string): Promise<void>;
+  touchSession(sessionId: string, tx?: unknown): Promise<void>;
 }
 
 export class SessionService implements ISessionService {
@@ -104,7 +104,7 @@ export class SessionService implements ISessionService {
     return new Date(Date.now() + parseDurationToSeconds(this.refreshExpiresIn) * 1000);
   }
 
-  public async createSession(input: CreateSessionInput): Promise<UserSessionModel> {
+  public async createSession(input: CreateSessionInput, tx?: unknown): Promise<UserSessionModel> {
     if (!input.userId) {
       throw new ValidationError('UserId is required');
     }
@@ -130,11 +130,11 @@ export class SessionService implements ISessionService {
       updatedAt: now,
     };
 
-    await this.sessionRepo.create(session);
+    await this.sessionRepo.create(session, tx);
     return session;
   }
 
-  public async createRefreshToken(input: CreateRefreshTokenInput): Promise<RefreshTokenModel> {
+  public async createRefreshToken(input: CreateRefreshTokenInput, tx?: unknown): Promise<RefreshTokenModel> {
     if (!input.userId || !input.sessionId || !input.tokenHash || !input.jwtId || !input.familyId) {
       throw new ValidationError('Missing required properties for refresh token creation');
     }
@@ -161,7 +161,7 @@ export class SessionService implements ISessionService {
       updatedAt: now,
     };
 
-    await this.tokenRepo.create(token);
+    await this.tokenRepo.create(token, tx);
     return token;
   }
 
@@ -178,13 +178,13 @@ export class SessionService implements ISessionService {
    * The transaction boundary and error handling/rollback logic must be
    * managed at the caller level (AuthService layer) that coordinates database transactions.
    */
-  public async rotateRefreshToken(input: RotateTokenInput): Promise<RefreshTokenModel> {
+  public async rotateRefreshToken(input: RotateTokenInput, tx?: unknown): Promise<RefreshTokenModel> {
     if (!input.oldTokenHash || !input.newTokenHash || !input.newJwtId) {
       throw new ValidationError('Missing required parameters for token rotation');
     }
     this.validateUuid(input.newJwtId, 'newJwtId');
 
-    const oldToken = await this.tokenRepo.findByHash(input.oldTokenHash);
+    const oldToken = await this.tokenRepo.findByHash(input.oldTokenHash, tx);
     if (!oldToken) {
       throw new AuthenticationError('Invalid refresh token');
     }
@@ -197,26 +197,26 @@ export class SessionService implements ISessionService {
     // Replay Attack Detection: If token is already used or revoked
     if (oldToken.isUsed || oldToken.isRevoked) {
       // 1. Revoke the entire token family
-      await this.tokenRepo.revokeFamily(oldToken.familyId);
+      await this.tokenRepo.revokeFamily(oldToken.familyId, tx);
 
       // 2. Revoke all active tokens of the parent session for maximum consistency
-      await this.tokenRepo.revokeAllSessionTokens(oldToken.sessionId);
+      await this.tokenRepo.revokeAllSessionTokens(oldToken.sessionId, tx);
 
       // 3. Revoke the corresponding session
-      const session = await this.sessionRepo.findById(oldToken.sessionId);
+      const session = await this.sessionRepo.findById(oldToken.sessionId, tx);
       if (session) {
         const now = new Date();
         session.isRevoked = true;
         session.revokedReason = 'replay_attack';
         session.updatedAt = now;
-        await this.sessionRepo.update(session);
+        await this.sessionRepo.update(session, tx);
       }
 
       throw new AuthenticationError('Token reuse detected. Session revoked.');
     }
 
     // Check if parent session is active
-    const session = await this.sessionRepo.findById(oldToken.sessionId);
+    const session = await this.sessionRepo.findById(oldToken.sessionId, tx);
     if (!session || session.isRevoked || session.expiresAt.getTime() < Date.now()) {
       throw new AuthenticationError('Session is no longer active');
     }
@@ -224,7 +224,7 @@ export class SessionService implements ISessionService {
     const now = new Date();
     oldToken.isUsed = true;
     oldToken.updatedAt = now;
-    await this.tokenRepo.update(oldToken);
+    await this.tokenRepo.update(oldToken, tx);
 
     const expiresAt = this.getRefreshExpiry();
     const newToken: RefreshTokenModel = {
@@ -242,17 +242,17 @@ export class SessionService implements ISessionService {
       updatedAt: now,
     };
 
-    await this.tokenRepo.create(newToken);
+    await this.tokenRepo.create(newToken, tx);
     return newToken;
   }
 
-  public async revokeSession(sessionId: string, reason = 'logout'): Promise<void> {
+  public async revokeSession(sessionId: string, reason = 'logout', tx?: unknown): Promise<void> {
     if (!sessionId) {
       throw new ValidationError('SessionId is required');
     }
     this.validateUuid(sessionId, 'sessionId');
 
-    const session = await this.sessionRepo.findById(sessionId);
+    const session = await this.sessionRepo.findById(sessionId, tx);
     if (!session) {
       throw new NotFoundError('Session not found');
     }
@@ -262,23 +262,23 @@ export class SessionService implements ISessionService {
       session.isRevoked = true;
       session.revokedReason = reason;
       session.updatedAt = now;
-      await this.sessionRepo.update(session);
+      await this.sessionRepo.update(session, tx);
     }
 
     // Single Device Logout Consistency: Also revoke all refresh tokens of this session
-    await this.tokenRepo.revokeAllSessionTokens(sessionId);
+    await this.tokenRepo.revokeAllSessionTokens(sessionId, tx);
   }
 
-  public async revokeAllSessions(userId: string, reason = 'logout_all'): Promise<void> {
+  public async revokeAllSessions(userId: string, reason = 'logout_all', tx?: unknown): Promise<void> {
     if (!userId) {
       throw new ValidationError('UserId is required');
     }
     this.validateUuid(userId, 'userId');
 
     // Revoke all sessions in database
-    await this.sessionRepo.revokeAllUserSessions(userId, reason);
+    await this.sessionRepo.revokeAllUserSessions(userId, reason, tx);
     // Revoke all refresh tokens in database
-    await this.tokenRepo.revokeAllUserTokens(userId);
+    await this.tokenRepo.revokeAllUserTokens(userId, tx);
   }
 
   public async isSessionActive(sessionId: string): Promise<boolean> {
@@ -299,13 +299,13 @@ export class SessionService implements ISessionService {
     }
   }
 
-  public async touchSession(sessionId: string): Promise<void> {
+  public async touchSession(sessionId: string, tx?: unknown): Promise<void> {
     if (!sessionId) {
       throw new ValidationError('SessionId is required');
     }
     this.validateUuid(sessionId, 'sessionId');
 
-    const session = await this.sessionRepo.findById(sessionId);
+    const session = await this.sessionRepo.findById(sessionId, tx);
     if (!session) {
       throw new NotFoundError('Session not found');
     }
@@ -324,6 +324,6 @@ export class SessionService implements ISessionService {
     const nowTime = new Date();
     session.lastActivityAt = nowTime;
     session.updatedAt = nowTime;
-    await this.sessionRepo.update(session);
+    await this.sessionRepo.update(session, tx);
   }
 }

@@ -29,6 +29,11 @@ mock.module('@/modules/regions/repository/regions.repository', () => {
           ? (globalThis as any).mockRegionsList(options)
           : Promise.resolve([]);
       }
+      count(options: any) {
+        return (globalThis as any).mockRegionsCount
+          ? (globalThis as any).mockRegionsCount(options)
+          : Promise.resolve(0);
+      }
       save(region: any) {
         return (globalThis as any).mockRegionsSave
           ? (globalThis as any).mockRegionsSave(region)
@@ -77,6 +82,11 @@ mock.module('@/modules/regions/repository/places.repository', () => {
           ? (globalThis as any).mockPlacesList(options)
           : Promise.resolve([]);
       }
+      count(options: any) {
+        return (globalThis as any).mockPlacesCount
+          ? (globalThis as any).mockPlacesCount(options)
+          : Promise.resolve(0);
+      }
       findNearby(lng: number, lat: number, radiusMeters: number, limit?: number) {
         return (globalThis as any).mockPlacesFindNearby
           ? (globalThis as any).mockPlacesFindNearby(lng, lat, radiusMeters, limit)
@@ -124,6 +134,11 @@ mock.module('@/modules/businesses/repository/businesses.repository', () => {
           ? (globalThis as any).mockBusinessesList(options)
           : Promise.resolve([]);
       }
+      count(options: any) {
+        return (globalThis as any).mockBusinessesCount
+          ? (globalThis as any).mockBusinessesCount(options)
+          : Promise.resolve(0);
+      }
       findNearby(lng: number, lat: number, radiusMeters: number, limit?: number) {
         return (globalThis as any).mockBusinessesFindNearby
           ? (globalThis as any).mockBusinessesFindNearby(lng, lat, radiusMeters, limit)
@@ -170,6 +185,9 @@ mock.module('@/modules/attractions/repository/attractions.repository', () => {
       }
       list() {
         return Promise.resolve([]);
+      }
+      count() {
+        return Promise.resolve(0);
       }
       findNearby() {
         return Promise.resolve([]);

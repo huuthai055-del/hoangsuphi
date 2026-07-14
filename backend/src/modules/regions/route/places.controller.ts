@@ -45,14 +45,14 @@ export class PlacesController {
   public list = async (c: Context) => {
     const query = c.get('validQuery') as ListPlacesQueryDto;
 
-    const results = await this.placesService.listPlaces({
+    const { items, total } = await this.placesService.listPlaces({
       page: query.page,
       limit: query.limit,
       regionId: query.regionId,
       status: query.status,
     });
 
-    const mapped = results.map((r) => this.mapToSummary(r));
+    const mapped = items.map((r) => this.mapToSummary(r));
 
     return c.json(
       {
@@ -60,7 +60,7 @@ export class PlacesController {
         meta: {
           page: query.page,
           limit: query.limit,
-          total: mapped.length,
+          total,
         },
       },
       200

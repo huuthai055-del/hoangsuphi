@@ -115,6 +115,7 @@ describe('Identity Middlewares', () => {
 
     mockPermissionRepo = {
       findByUserId: async () => ['regions:create', 'regions:update'],
+      findRolesByUserId: async () => ['user'],
     };
   });
 

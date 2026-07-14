@@ -46,6 +46,7 @@ export function optionalAuthMiddleware(
       } catch {}
 
       const permissions = await permissionRepo.findByUserId(user.id);
+      const roles = await permissionRepo.findRolesByUserId(user.id);
 
       const authUser: AuthenticatedUser = {
         id: user.id,
@@ -53,7 +54,7 @@ export function optionalAuthMiddleware(
         sessionId,
         permissionsVersion: user.permissionsVersion,
         permissions,
-        roles: [],
+        roles,
       };
 
       c.set('user', authUser);

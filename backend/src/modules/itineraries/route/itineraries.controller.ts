@@ -167,7 +167,7 @@ export class ItinerariesController {
 
     // Filters: if not admin, can only list public itineraries OR user's own itineraries
     const filters: ItineraryFilters = {
-      userId: query.userId,
+      createdBy: query.userId,
       visibility: query.visibility,
       status: query.status,
       search: query.search,
@@ -175,17 +175,14 @@ export class ItinerariesController {
 
     if (!user.roles.includes('admin')) {
       // Non-admin can only query their own itineraries or public ones.
-      // If they filter by another userId, they should only see PUBLIC ones.
       if (query.userId && query.userId !== user.id) {
+        // Viewing another user's list: restrict to PUBLIC only
         filters.visibility = 'PUBLIC';
       } else if (!query.userId) {
-        // No filter by user: show user's own or public ones.
-        // For simple filtering in the repository, we let the repository handle it, or we enforce here.
-        // Wait, the repository findMany query already takes filters.
-        // Let's filter by visibility PUBLIC if user is not asking for their own.
-        // Wait, let's keep it simple: if userId is not requested, we can show public ones, or if they ask for list, we default to their own + public.
-        // Let's see how our repository findMany handles it.
+        // No userId filter: default scope to the caller's own itineraries
+        filters.createdBy = user.id;
       }
+      // If query.userId === user.id: already set above, no extra restriction needed
     }
 
     const result = await this.service.listItineraries({

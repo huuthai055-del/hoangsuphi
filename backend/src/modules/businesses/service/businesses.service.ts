@@ -9,8 +9,8 @@ import { generateUuidV7 } from '@/common/utils/uuid';
 import { slugify } from '@/common/utils/slug';
 import { logger } from '@/lib/logger';
 import { requestStore } from '@/lib/logger/context';
-import { db } from '@/lib/database/client';
 import { NotFoundError, ConflictError, ValidationError } from '@/common/errors/http.errors';
+import { runInTransaction } from '@/lib/database/client';
 
 export interface CreateBusinessCommand {
   id?: string;
@@ -58,8 +58,12 @@ export class BusinessesService {
     return business;
   }
 
-  public async listBusinesses(options: ListBusinessesOptions): Promise<Business[]> {
-    return this.businessesRepo.list(options);
+  public async listBusinesses(options: ListBusinessesOptions): Promise<{ items: Business[]; total: number }> {
+    const [items, total] = await Promise.all([
+      this.businessesRepo.list(options),
+      this.businessesRepo.count(options),
+    ]);
+    return { items, total };
   }
 
   public async listBusinessesByRegion(
@@ -128,24 +132,21 @@ export class BusinessesService {
     }
 
     const id = command.id ?? generateUuidV7();
-    const business = new Business(
+    const business = Business.create({
       id,
-      command.regionId,
-      command.businessTypeId,
-      command.name.trim(),
+      regionId: command.regionId,
+      businessTypeId: command.businessTypeId,
+      name: command.name.trim(),
       slug,
       location,
-      command.description ?? null,
-      command.coverUrl ?? null,
-      'active',
-      command.amenityIds,
-      new Date(),
-      new Date(),
-      null
-    );
+      description: command.description ?? null,
+      coverUrl: command.coverUrl ?? null,
+      status: 'active',
+      amenityIds: command.amenityIds,
+    });
 
     // Save in transaction since it writes to both businesses and business_amenities
-    await db.transaction(async (tx) => {
+    await runInTransaction(async (tx) => {
       await this.businessesRepo.save(business, tx);
     });
 
@@ -176,6 +177,8 @@ export class BusinessesService {
       throw new ValidationError('Cannot update a soft-deleted business');
     }
 
+    const updateProps: any = {};
+
     // 1. Verify Region if changing
     if (command.regionId !== undefined && command.regionId !== business.regionId) {
       const region = await this.regionsRepo.findById(command.regionId);
@@ -185,7 +188,7 @@ export class BusinessesService {
       if (region.deletedAt) {
         throw new ValidationError(`Region has been soft-deleted: ${command.regionId}`);
       }
-      business.regionId = command.regionId;
+      updateProps.regionId = command.regionId;
     }
 
     // 2. Verify Business Type if changing
@@ -200,7 +203,7 @@ export class BusinessesService {
       if (!bType.isActive) {
         throw new ValidationError(`Business Type is inactive: ${command.businessTypeId}`);
       }
-      business.businessTypeId = command.businessTypeId;
+      updateProps.businessTypeId = command.businessTypeId;
     }
 
     // 3. Verify Amenities if changing
@@ -211,11 +214,11 @@ export class BusinessesService {
           throw new ValidationError('One or more amenity IDs are invalid');
         }
       }
-      business.amenityIds = command.amenityIds;
+      updateProps.amenityIds = command.amenityIds;
     }
 
     if (command.name !== undefined) {
-      business.name = command.name.trim();
+      updateProps.name = command.name.trim();
     }
 
     // 4. Slug check if changing
@@ -229,35 +232,35 @@ export class BusinessesService {
         if (existingSlug) {
           throw new ConflictError(`Slug already exists: ${slug}`);
         }
-        business.slug = slug;
+        updateProps.slug = slug;
       }
     }
 
     // 5. GPS check if changing
     if (command.location !== undefined) {
       try {
-        business.location = new GPSLocation(command.location.lng, command.location.lat);
+        updateProps.location = new GPSLocation(command.location.lng, command.location.lat);
       } catch (err) {
         throw new ValidationError(err instanceof Error ? err.message : 'Invalid GPS coordinates');
       }
     }
 
     if (command.description !== undefined) {
-      business.description = command.description;
+      updateProps.description = command.description;
     }
 
     if (command.coverUrl !== undefined) {
-      business.coverUrl = command.coverUrl;
+      updateProps.coverUrl = command.coverUrl;
     }
 
     if (command.status !== undefined) {
-      business.status = command.status;
+      updateProps.status = command.status;
     }
 
-    business.updatedAt = new Date();
+    business.update(updateProps);
 
     // Save update in transaction
-    await db.transaction(async (tx) => {
+    await runInTransaction(async (tx) => {
       await this.businessesRepo.update(business, tx);
     });
 
@@ -288,7 +291,8 @@ export class BusinessesService {
       throw new ValidationError('Business is already deleted');
     }
 
-    await db.transaction(async (tx) => {
+    // Save delete in transaction
+    await runInTransaction(async (tx) => {
       await this.businessesRepo.softDelete(id, tx);
     });
 
@@ -318,7 +322,7 @@ export class BusinessesService {
     }
 
     business.activate();
-    await db.transaction(async (tx) => {
+    await runInTransaction(async (tx) => {
       await this.businessesRepo.update(business, tx);
     });
 
@@ -350,7 +354,7 @@ export class BusinessesService {
     }
 
     business.deactivate();
-    await db.transaction(async (tx) => {
+    await runInTransaction(async (tx) => {
       await this.businessesRepo.update(business, tx);
     });
 

@@ -1,4 +1,4 @@
-import { db } from '@/lib/database/client';
+import { runInTransaction } from '@/lib/database/client';
 import type {
   IRegionsRepository,
   ListRegionsOptions,
@@ -118,9 +118,6 @@ export class RegionsService {
   public async updateRegion(id: string, command: UpdateRegionCommand): Promise<Region> {
     const store = requestStore.getStore();
 
-    // TODO: Prevent Concurrency Issues (Lost Update)
-    // Coi trọng tính đồng nhất dữ liệu: cân nhắc sử dụng Optimistic Lock qua cột `version`
-    // hoặc Pessimistic Lock (SELECT FOR UPDATE) khi cập nhật cây địa giới hành chính.
     const region = await this.regionsRepo.findById(id);
     if (!region) {
       throw new NotFoundError(`Region not found: ${id}`);
@@ -183,9 +180,11 @@ export class RegionsService {
       const newPath = newPathValue;
       const oldLevel = region.level;
 
-      const descendants = await this.regionsRepo.findSubtree(oldPath);
+      await runInTransaction(async (tx) => {
+        // Read subtree INSIDE the transaction with FOR UPDATE lock so concurrent
+        // moves of overlapping subtrees serialize rather than racing (lost-update fix).
+        const descendants = await this.regionsRepo.findSubtree(oldPath, tx);
 
-      await db.transaction(async (tx) => {
         region.move(command.parentId ?? null, new LtreePath(newPath), newLevel);
 
         await this.regionsRepo.update(region, tx);
@@ -321,7 +320,11 @@ export class RegionsService {
     return region;
   }
 
-  public async listRegions(options: ListRegionsOptions): Promise<Region[]> {
-    return this.regionsRepo.list(options);
+  public async listRegions(options: ListRegionsOptions): Promise<{ items: Region[]; total: number }> {
+    const [items, total] = await Promise.all([
+      this.regionsRepo.list(options),
+      this.regionsRepo.count(options),
+    ]);
+    return { items, total };
   }
 }

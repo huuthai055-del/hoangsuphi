@@ -29,6 +29,11 @@ mock.module('@/modules/regions/repository/regions.repository', () => {
           ? (globalThis as any).mockRegionsList(options)
           : Promise.resolve([]);
       }
+      count(options: any) {
+        return (globalThis as any).mockRegionsCount
+          ? (globalThis as any).mockRegionsCount(options)
+          : Promise.resolve(0);
+      }
       save(region: any) {
         return (globalThis as any).mockRegionsSave
           ? (globalThis as any).mockRegionsSave(region)
@@ -77,6 +82,11 @@ mock.module('@/modules/regions/repository/places.repository', () => {
           ? (globalThis as any).mockPlacesList(options)
           : Promise.resolve([]);
       }
+      count(options: any) {
+        return (globalThis as any).mockPlacesCount
+          ? (globalThis as any).mockPlacesCount(options)
+          : Promise.resolve(0);
+      }
       findNearby(lng: number, lat: number, radiusMeters: number, limit?: number) {
         return (globalThis as any).mockPlacesFindNearby
           ? (globalThis as any).mockPlacesFindNearby(lng, lat, radiusMeters, limit)
@@ -124,6 +134,11 @@ mock.module('@/modules/businesses/repository/businesses.repository', () => {
           ? (globalThis as any).mockBusinessesList(options)
           : Promise.resolve([]);
       }
+      count(options: any) {
+        return (globalThis as any).mockBusinessesCount
+          ? (globalThis as any).mockBusinessesCount(options)
+          : Promise.resolve(0);
+      }
       findNearby(lng: number, lat: number, radiusMeters: number, limit?: number) {
         return (globalThis as any).mockBusinessesFindNearby
           ? (globalThis as any).mockBusinessesFindNearby(lng, lat, radiusMeters, limit)
@@ -170,6 +185,9 @@ mock.module('@/modules/attractions/repository/attractions.repository', () => {
       }
       list() {
         return Promise.resolve([]);
+      }
+      count() {
+        return Promise.resolve(0);
       }
       findNearby() {
         return Promise.resolve([]);
@@ -265,21 +283,21 @@ describe('Businesses API Routing & Controller', () => {
     null
   );
 
-  const mockBusiness = new Business(
-    '3a552ef3-40e1-7ca7-8000-000000000002',
-    '3a552ef3-40e1-7ca7-8000-000000000001',
-    '3a552ef3-40e1-7ca7-8000-000000000003',
-    'Homestay',
-    'homestay',
-    new GPSLocation(104.5, 22.5),
-    'Nice homestay',
-    'https://example.com/cover.jpg',
-    'active',
-    [],
-    new Date(),
-    new Date(),
-    null
-  );
+  const mockBusiness = Business.rehydrate({
+    id: '3a552ef3-40e1-7ca7-8000-000000000002',
+    regionId: '3a552ef3-40e1-7ca7-8000-000000000001',
+    businessTypeId: '3a552ef3-40e1-7ca7-8000-000000000003',
+    name: 'Homestay',
+    slug: 'homestay',
+    location: new GPSLocation(104.5, 22.5),
+    description: 'Nice homestay',
+    coverUrl: 'https://example.com/cover.jpg',
+    status: 'active',
+    amenityIds: [],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    deletedAt: null
+  });
 
   test('GET /api/v1/businesses - should return empty list with 200', async () => {
     mockListBusinesses.mockImplementation(() => Promise.resolve([]));

@@ -5,6 +5,7 @@ import { Media } from '../domain/media.entity';
 import { StorageUploadError } from '../domain/media-errors';
 import { MediaValidationPolicy } from './media-validation.policy';
 import { StorageKeyGenerator } from './storage-key.generator';
+import { logger } from '@/lib/logger';
 
 export class MediaUploadService {
   constructor(
@@ -18,6 +19,7 @@ export class MediaUploadService {
     fileBuffer: Buffer;
     ownerType?: string | null;
     ownerId?: string | null;
+    uploadedBy?: string | null;
   }): Promise<Media> {
     // 1. Delegate validation policies
     const sanitizedName = MediaValidationPolicy.validateFileName(props.fileName);
@@ -55,6 +57,7 @@ export class MediaUploadService {
       hash,
       ownerType: props.ownerType,
       ownerId: props.ownerId,
+      uploadedBy: props.uploadedBy ?? null,
       now,
     });
 
@@ -65,8 +68,13 @@ export class MediaUploadService {
       // We wrap storage delete inside try/catch to protect the original DB exception context
       try {
         await this.storage.delete(storageKey);
-      } catch {
-        // Suppress storage delete exceptions to preserve the primary DB error context
+      } catch (cleanupErr) {
+        // Log storage cleanup failure: the DB error will still be rethrown, but now
+        // we have visibility that the orphaned storage file may need manual cleanup.
+        logger.error(
+          { err: cleanupErr, mediaId: id, storageKey },
+          'Failed to delete orphaned storage file after DB save failure'
+        );
       }
       throw dbErr;
     }
@@ -79,13 +87,19 @@ export class MediaUploadService {
       // Cleanup both storage file and db record if confirmation fails
       try {
         await this.storage.delete(storageKey);
-      } catch {
-        // Suppress storage cleanup exceptions
+      } catch (cleanupErr) {
+        logger.error(
+          { err: cleanupErr, mediaId: media.id, storageKey },
+          'Failed to delete orphaned storage file after markReady failure'
+        );
       }
       try {
         await this.mediaRepo.delete(media.id);
-      } catch {
-        // Suppress nested DB cleanup errors to preserve original exception context
+      } catch (cleanupErr) {
+        logger.error(
+          { err: cleanupErr, mediaId: media.id },
+          'Failed to delete orphaned DB record after markReady failure'
+        );
       }
       throw updateErr;
     }

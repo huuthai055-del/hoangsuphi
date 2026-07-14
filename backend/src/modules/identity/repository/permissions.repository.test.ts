@@ -73,4 +73,26 @@ describe('DrizzlePermissionRepository', () => {
       expect(result).toEqual([]);
     });
   });
+
+  describe('findRolesByUserId()', () => {
+    test('should query user roles and return string array of codes', async () => {
+      mockResolveValue = [{ code: 'admin' }, { code: 'editor' }];
+
+      const result = await repository.findRolesByUserId('user-id-123');
+
+      expect(result).toEqual(['admin', 'editor']);
+      expect(selectSpy).toHaveBeenCalled();
+      expect(fromSpy).toHaveBeenCalled();
+      expect(innerJoinSpy).toHaveBeenCalled();
+      expect(whereSpy).toHaveBeenCalled();
+    });
+
+    test('should return empty array if user has no roles', async () => {
+      mockResolveValue = [];
+
+      const result = await repository.findRolesByUserId('user-id-123');
+
+      expect(result).toEqual([]);
+    });
+  });
 });

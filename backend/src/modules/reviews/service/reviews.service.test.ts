@@ -8,6 +8,7 @@ import {
   NotFoundError,
   ConflictError,
   ValidationError,
+  AuthorizationError,
 } from '@/common/errors/http.errors';
 import {
   DuplicateKeyRepositoryError,
@@ -174,7 +175,7 @@ describe('Reviews & Favorites Services', () => {
         const activeReview = generateTestReview('PENDING');
         mockReviewFindById.mockImplementation(() => Promise.resolve(activeReview));
         
-        const updated = await reviewsService.updateReview('rev-01', {
+        const updated = await reviewsService.updateReview('rev-01', { id: 'user-01', roles: [] }, {
           title: 'New Title',
           content: 'New content is long enough.',
           rating: 2,
@@ -190,7 +191,7 @@ describe('Reviews & Favorites Services', () => {
         mockReviewFindById.mockImplementation(() => Promise.resolve(approvedReview));
 
         await expect(
-          reviewsService.updateReview('rev-01', {
+          reviewsService.updateReview('rev-01', { id: 'user-01', roles: [] }, {
             title: 'New Title',
             content: 'New content.',
             rating: 3,
@@ -200,7 +201,7 @@ describe('Reviews & Favorites Services', () => {
 
       test('should throw NotFoundError if review does not exist', async () => {
         await expect(
-          reviewsService.updateReview('rev-missing', {
+          reviewsService.updateReview('rev-missing', { id: 'user-01', roles: [] }, {
             title: 'New',
             content: 'New',
             rating: 3,
@@ -214,7 +215,7 @@ describe('Reviews & Favorites Services', () => {
         mockReviewUpdate.mockImplementation(() => Promise.reject(new EntityNotFoundRepositoryError('Not found')));
 
         await expect(
-          reviewsService.updateReview('rev-01', {
+          reviewsService.updateReview('rev-01', { id: 'user-01', roles: [] }, {
             title: 'New',
             content: 'New',
             rating: 3,
@@ -227,12 +228,25 @@ describe('Reviews & Favorites Services', () => {
         mockReviewFindById.mockImplementation(() => Promise.resolve(activeReview));
         
         await expect(
-          reviewsService.updateReview('rev-01', {
+          reviewsService.updateReview('rev-01', { id: 'user-01', roles: [] }, {
             title: 'New',
             content: 'New',
             rating: 99,
           })
         ).rejects.toThrow(ValidationError);
+      });
+
+      test('should throw AuthorizationError if caller is not the owner or admin', async () => {
+        const activeReview = generateTestReview('PENDING');
+        mockReviewFindById.mockImplementation(() => Promise.resolve(activeReview));
+
+        await expect(
+          reviewsService.updateReview('rev-01', { id: 'user-hacker', roles: [] }, {
+            title: 'Hacked Title',
+            content: 'Attempted hack content here.',
+            rating: 1,
+          })
+        ).rejects.toThrow(AuthorizationError);
       });
     });
 
@@ -268,15 +282,24 @@ describe('Reviews & Favorites Services', () => {
         const activeReview = generateTestReview('PENDING');
         mockReviewFindById.mockImplementation(() => Promise.resolve(activeReview));
         
-        await reviewsService.deleteReview('rev-01');
+        await reviewsService.deleteReview('rev-01', { id: 'user-01', roles: [] });
         expect(activeReview.deletedAt).toBeDefined();
         expect(mockReviewUpdate).toHaveBeenCalled();
+      });
+
+      test('should throw AuthorizationError on delete if caller is not the owner or admin', async () => {
+        const activeReview = generateTestReview('PENDING');
+        mockReviewFindById.mockImplementation(() => Promise.resolve(activeReview));
+
+        await expect(
+          reviewsService.deleteReview('rev-01', { id: 'user-hacker', roles: [] })
+        ).rejects.toThrow(AuthorizationError);
       });
 
       test('should throw NotFoundError if state transition target not found', async () => {
         await expect(reviewsService.approveReview('missing')).rejects.toThrow(NotFoundError);
         await expect(reviewsService.rejectReview('missing')).rejects.toThrow(NotFoundError);
-        await expect(reviewsService.deleteReview('missing')).rejects.toThrow(NotFoundError);
+        await expect(reviewsService.deleteReview('missing', { id: 'user-01', roles: [] })).rejects.toThrow(NotFoundError);
       });
     });
 
@@ -301,16 +324,31 @@ describe('Reviews & Favorites Services', () => {
         expect(list.length).toBe(1);
       });
 
-      test('should list reviews by owner or user', async () => {
+      test('should list reviews by owner', async () => {
         const activeReview = generateTestReview('PENDING');
-        
         mockReviewFindByOwner.mockImplementation(() => Promise.resolve([activeReview]));
         const ownerList = await reviewsService.listReviewsByOwner('PLACE', 'place-01');
         expect(ownerList.length).toBe(1);
+      });
 
+      test('should allow listing reviews by user for the owner themselves', async () => {
+        const activeReview = generateTestReview('PENDING');
         mockReviewFindByUser.mockImplementation(() => Promise.resolve([activeReview]));
-        const userList = await reviewsService.listReviewsByUser('user-01');
+        const userList = await reviewsService.listReviewsByUser('user-01', { id: 'user-01', roles: [] });
         expect(userList.length).toBe(1);
+      });
+
+      test('should allow listing reviews by user for an admin', async () => {
+        const activeReview = generateTestReview('PENDING');
+        mockReviewFindByUser.mockImplementation(() => Promise.resolve([activeReview]));
+        const userList = await reviewsService.listReviewsByUser('user-01', { id: 'admin-01', roles: ['admin'] });
+        expect(userList.length).toBe(1);
+      });
+
+      test('should throw AuthorizationError when listing reviews by user for a non-owner non-admin caller', async () => {
+        await expect(
+          reviewsService.listReviewsByUser('user-01', { id: 'user-hacker', roles: [] })
+        ).rejects.toThrow(AuthorizationError);
       });
 
       test('should calculate average rating correctly', async () => {

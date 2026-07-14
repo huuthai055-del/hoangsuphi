@@ -71,8 +71,8 @@ export class AuthService implements IAuthService {
 
     this.validateEmail(trimmedEmail);
 
-    return runInTransaction(async (_tx) => {
-      const exists = await this.userRepo.existsByEmail(trimmedEmail);
+    return runInTransaction(async (tx) => {
+      const exists = await this.userRepo.existsByEmail(trimmedEmail, tx);
       if (exists) {
         throw new ConflictError('Email already exists');
       }
@@ -87,7 +87,7 @@ export class AuthService implements IAuthService {
         passwordHash,
       });
 
-      await this.userRepo.create(user);
+      await this.userRepo.create(user, tx);
       return user;
     });
   }
@@ -109,8 +109,8 @@ export class AuthService implements IAuthService {
 
     this.validateEmail(trimmedEmail);
 
-    return runInTransaction(async (_tx) => {
-      const user = await this.userRepo.findByEmail(trimmedEmail);
+    return runInTransaction(async (tx) => {
+      const user = await this.userRepo.findByEmail(trimmedEmail, tx);
       if (!user) {
         throw new AuthenticationError('Invalid email or password');
       }
@@ -123,7 +123,7 @@ export class AuthService implements IAuthService {
       // Auto-unlock if account was locked but lockout timer expired
       if (user.status === 'locked' && !user.isLocked()) {
         user.unlock();
-        await this.userRepo.update(user);
+        await this.userRepo.update(user, tx);
       }
 
       // Verify other account status restrictions
@@ -137,20 +137,20 @@ export class AuthService implements IAuthService {
         if (user.failedLoginAttempts >= 5) {
           user.lock(new Date(Date.now() + 15 * 60 * 1000)); // Lockout for 15 minutes
         }
-        await this.userRepo.update(user);
+        await this.userRepo.update(user, tx);
         throw new AuthenticationError('Invalid email or password');
       }
 
       // Record successful login (resets failedLoginAttempts & updates lastLoginAt)
       user.recordLogin();
-      await this.userRepo.update(user);
+      await this.userRepo.update(user, tx);
 
       const session = await this.sessionService.createSession({
         userId: user.id,
         ipAddress: trimmedIp,
         userAgent,
         deviceName,
-      });
+      }, tx);
 
       const jwtId = generateUuidV7();
       const familyId = generateUuidV7();
@@ -176,7 +176,7 @@ export class AuthService implements IAuthService {
         tokenHash,
         jwtId,
         familyId,
-      });
+      }, tx);
 
       return {
         accessToken,
@@ -202,7 +202,7 @@ export class AuthService implements IAuthService {
       throw new AuthenticationError('Invalid refresh token');
     }
 
-    return runInTransaction(async (_tx) => {
+    return runInTransaction(async (tx) => {
       const oldTokenHash = hashToken(trimmedToken);
       const newJwtId = generateUuidV7();
 
@@ -218,12 +218,12 @@ export class AuthService implements IAuthService {
         oldTokenHash,
         newTokenHash,
         newJwtId,
-      });
+      }, tx);
 
       // Update session activity on token rotation
-      await this.sessionService.touchSession(payload.sid);
+      await this.sessionService.touchSession(payload.sid, tx);
 
-      const user = await this.userRepo.findById(payload.sub);
+      const user = await this.userRepo.findById(payload.sub, tx);
       if (!user) {
         throw new AuthenticationError('User not found');
       }
@@ -248,8 +248,8 @@ export class AuthService implements IAuthService {
       throw new ValidationError('SessionId is required');
     }
 
-    await runInTransaction(async (_tx) => {
-      await this.sessionService.revokeSession(trimmedSessionId, 'logout');
+    await runInTransaction(async (tx) => {
+      await this.sessionService.revokeSession(trimmedSessionId, 'logout', tx);
     });
   }
 
@@ -259,8 +259,8 @@ export class AuthService implements IAuthService {
       throw new ValidationError('UserId is required');
     }
 
-    await runInTransaction(async (_tx) => {
-      await this.sessionService.revokeAllSessions(trimmedUserId, 'logout_all');
+    await runInTransaction(async (tx) => {
+      await this.sessionService.revokeAllSessions(trimmedUserId, 'logout_all', tx);
     });
   }
 
@@ -273,8 +273,8 @@ export class AuthService implements IAuthService {
       throw new ValidationError('All fields are required');
     }
 
-    return runInTransaction(async (_tx) => {
-      const user = await this.userRepo.findById(trimmedUserId);
+    return runInTransaction(async (tx) => {
+      const user = await this.userRepo.findById(trimmedUserId, tx);
       if (!user) {
         throw new NotFoundError('User not found');
       }
@@ -288,9 +288,9 @@ export class AuthService implements IAuthService {
       const newPasswordHash = await this.passwordService.hash(trimmedNew);
 
       user.changePassword(newPasswordHash);
-      await this.userRepo.update(user);
+      await this.userRepo.update(user, tx);
 
-      await this.sessionService.revokeAllSessions(trimmedUserId, 'password_change');
+      await this.sessionService.revokeAllSessions(trimmedUserId, 'password_change', tx);
     });
   }
 }

@@ -19,13 +19,33 @@ import type { IRegionsRepository } from '@/modules/regions/repository/regions-re
 import type { IAttractionsRepository } from '../repository/attractions-repository.interface';
 import { Region } from '@/modules/regions/domain/region.aggregate';
 import { LtreePath } from '@/modules/regions/domain/value-objects/ltree-path.vo';
-import { Attraction } from '../domain/attraction.entity';
+import { Attraction, type AttractionProps } from '../domain/attraction.entity';
 import { GPSLocation } from '@/modules/regions/domain/value-objects/gps-location.vo';
 
+const createTestAttraction = (props: Partial<AttractionProps> = {}) => {
+  return Attraction.rehydrate({
+    id: props.id ?? 'id',
+    regionId: props.regionId ?? 'region-id',
+    categoryId: props.categoryId ?? 'category-id',
+    name: props.name ?? 'Name',
+    slug: props.slug ?? 'slug',
+    location: props.location ?? new GPSLocation(104.5, 22.5),
+    description: props.description === undefined ? 'Desc' : props.description,
+    coverUrl: props.coverUrl === undefined ? 'Cover' : props.coverUrl,
+    status: props.status ?? 'active',
+    createdAt: props.createdAt ?? new Date(),
+    updatedAt: props.updatedAt ?? new Date(),
+    deletedAt: props.deletedAt ?? null,
+  });
+};
+
 describe('AttractionsService', () => {
+  let regionsRepo: IRegionsRepository;
+  let attractionsRepo: IAttractionsRepository;
+  let service: AttractionsService;
+
   let findRegionByIdMock: ReturnType<typeof mock>;
   let findRegionBySlugMock: ReturnType<typeof mock>;
-
   let findAttractionByIdMock: ReturnType<typeof mock>;
   let findAttractionBySlugMock: ReturnType<typeof mock>;
   let findAttractionByRegionIdMock: ReturnType<typeof mock>;
@@ -36,14 +56,9 @@ describe('AttractionsService', () => {
   let softDeleteAttractionMock: ReturnType<typeof mock>;
   let findCategoryByIdMock: ReturnType<typeof mock>;
 
-  let regionsRepo: IRegionsRepository;
-  let attractionsRepo: IAttractionsRepository;
-  let service: AttractionsService;
-
   beforeEach(() => {
     findRegionByIdMock = mock(() => Promise.resolve(null));
     findRegionBySlugMock = mock(() => Promise.resolve(null));
-
     findAttractionByIdMock = mock(() => Promise.resolve(null));
     findAttractionBySlugMock = mock(() => Promise.resolve(null));
     findAttractionByRegionIdMock = mock(() => Promise.resolve([]));
@@ -60,6 +75,7 @@ describe('AttractionsService', () => {
       findChildren: mock(() => Promise.resolve([])),
       findSubtree: mock(() => Promise.resolve([])),
       list: mock(() => Promise.resolve([])),
+      count: mock(() => Promise.resolve(0)),
       save: mock(() => Promise.resolve()),
       update: mock(() => Promise.resolve()),
       softDelete: mock(() => Promise.resolve()),
@@ -70,6 +86,7 @@ describe('AttractionsService', () => {
       findBySlug: findAttractionBySlugMock,
       findByRegionId: findAttractionByRegionIdMock,
       list: listAttractionsMock,
+      count: mock(() => Promise.resolve(0)),
       findNearby: findAttractionsNearbyMock,
       save: saveAttractionMock,
       update: updateAttractionMock,
@@ -165,20 +182,20 @@ describe('AttractionsService', () => {
     findRegionByIdMock.mockImplementation(() => Promise.resolve(mockRegion));
     findCategoryByIdMock.mockImplementation(() => Promise.resolve(mockCategory));
 
-    const mockAttraction = new Attraction(
-      'id',
-      'region-id',
-      'category-id',
-      'Existing',
-      'existing',
-      new GPSLocation(104.5, 22.6),
-      null,
-      null,
-      'active',
-      new Date(),
-      new Date(),
-      null
-    );
+    const mockAttraction = createTestAttraction({
+      id: 'id',
+      regionId: 'region-id',
+      categoryId: 'category-id',
+      name: 'Existing',
+      slug: 'existing',
+      location: new GPSLocation(104.5, 22.6),
+      description: null,
+      coverUrl: null,
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null
+    });
     findAttractionBySlugMock.mockImplementation((_slug, includeDeleted) => {
       expect(includeDeleted).toBe(true);
       return Promise.resolve(mockAttraction);
@@ -219,20 +236,20 @@ describe('AttractionsService', () => {
   });
 
   test('should successfully update an attraction', async () => {
-    const existing = new Attraction(
-      'id',
-      'region-id',
-      'category-id',
-      'Old Name',
-      'old-name',
-      new GPSLocation(104.5, 22.6),
-      null,
-      null,
-      'active',
-      new Date(),
-      new Date(),
-      null
-    );
+    const existing = createTestAttraction({
+      id: 'id',
+      regionId: 'region-id',
+      categoryId: 'category-id',
+      name: 'Old Name',
+      slug: 'old-name',
+      location: new GPSLocation(104.5, 22.6),
+      description: null,
+      coverUrl: null,
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null
+    });
     findAttractionByIdMock.mockImplementation(() => Promise.resolve(existing));
 
     const cmd: UpdateAttractionCommand = {
@@ -249,20 +266,20 @@ describe('AttractionsService', () => {
   });
 
   test('should successfully soft-delete an attraction', async () => {
-    const existing = new Attraction(
-      'id',
-      'region-id',
-      'category-id',
-      'Name',
-      'name',
-      new GPSLocation(104.5, 22.6),
-      null,
-      null,
-      'active',
-      new Date(),
-      new Date(),
-      null
-    );
+    const existing = createTestAttraction({
+      id: 'id',
+      regionId: 'region-id',
+      categoryId: 'category-id',
+      name: 'Name',
+      slug: 'name',
+      location: new GPSLocation(104.5, 22.6),
+      description: null,
+      coverUrl: null,
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null
+    });
     findAttractionByIdMock.mockImplementation(() => Promise.resolve(existing));
 
     await service.deleteAttraction('id');
@@ -270,40 +287,40 @@ describe('AttractionsService', () => {
   });
 
   test('should fail to soft-delete if attraction is already deleted', async () => {
-    const deleted = new Attraction(
-      'id',
-      'region-id',
-      'category-id',
-      'Name',
-      'name',
-      new GPSLocation(104.5, 22.6),
-      null,
-      null,
-      'active',
-      new Date(),
-      new Date(),
-      new Date()
-    );
+    const deleted = createTestAttraction({
+      id: 'id',
+      regionId: 'region-id',
+      categoryId: 'category-id',
+      name: 'Name',
+      slug: 'name',
+      location: new GPSLocation(104.5, 22.6),
+      description: null,
+      coverUrl: null,
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: new Date()
+    });
     findAttractionByIdMock.mockImplementation(() => Promise.resolve(deleted));
 
     await expect(service.deleteAttraction('id')).rejects.toThrow('Attraction is already deleted');
   });
 
   test('should successfully activate an attraction', async () => {
-    const existing = new Attraction(
-      'id',
-      'region-id',
-      'category-id',
-      'Name',
-      'name',
-      new GPSLocation(104.5, 22.6),
-      null,
-      null,
-      'inactive',
-      new Date(),
-      new Date(),
-      null
-    );
+    const existing = createTestAttraction({
+      id: 'id',
+      regionId: 'region-id',
+      categoryId: 'category-id',
+      name: 'Name',
+      slug: 'name',
+      location: new GPSLocation(104.5, 22.6),
+      description: null,
+      coverUrl: null,
+      status: 'inactive',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null
+    });
     findAttractionByIdMock.mockImplementation(() => Promise.resolve(existing));
 
     const result = await service.activateAttraction('id');
@@ -312,20 +329,20 @@ describe('AttractionsService', () => {
   });
 
   test('should fail to activate a soft-deleted attraction', async () => {
-    const deleted = new Attraction(
-      'id',
-      'region-id',
-      'category-id',
-      'Name',
-      'name',
-      new GPSLocation(104.5, 22.6),
-      null,
-      null,
-      'inactive',
-      new Date(),
-      new Date(),
-      new Date()
-    );
+    const deleted = createTestAttraction({
+      id: 'id',
+      regionId: 'region-id',
+      categoryId: 'category-id',
+      name: 'Name',
+      slug: 'name',
+      location: new GPSLocation(104.5, 22.6),
+      description: null,
+      coverUrl: null,
+      status: 'inactive',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: new Date()
+    });
     findAttractionByIdMock.mockImplementation(() => Promise.resolve(deleted));
 
     await expect(service.activateAttraction('id')).rejects.toThrow(
@@ -334,20 +351,20 @@ describe('AttractionsService', () => {
   });
 
   test('should successfully deactivate an attraction', async () => {
-    const existing = new Attraction(
-      'id',
-      'region-id',
-      'category-id',
-      'Name',
-      'name',
-      new GPSLocation(104.5, 22.6),
-      null,
-      null,
-      'active',
-      new Date(),
-      new Date(),
-      null
-    );
+    const existing = createTestAttraction({
+      id: 'id',
+      regionId: 'region-id',
+      categoryId: 'category-id',
+      name: 'Name',
+      slug: 'name',
+      location: new GPSLocation(104.5, 22.6),
+      description: null,
+      coverUrl: null,
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null
+    });
     findAttractionByIdMock.mockImplementation(() => Promise.resolve(existing));
 
     const result = await service.deactivateAttraction('id');
@@ -356,20 +373,20 @@ describe('AttractionsService', () => {
   });
 
   test('should fail to deactivate a soft-deleted attraction', async () => {
-    const deleted = new Attraction(
-      'id',
-      'region-id',
-      'category-id',
-      'Name',
-      'name',
-      new GPSLocation(104.5, 22.6),
-      null,
-      null,
-      'active',
-      new Date(),
-      new Date(),
-      new Date()
-    );
+    const deleted = createTestAttraction({
+      id: 'id',
+      regionId: 'region-id',
+      categoryId: 'category-id',
+      name: 'Name',
+      slug: 'name',
+      location: new GPSLocation(104.5, 22.6),
+      description: null,
+      coverUrl: null,
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: new Date()
+    });
     findAttractionByIdMock.mockImplementation(() => Promise.resolve(deleted));
 
     await expect(service.deactivateAttraction('id')).rejects.toThrow(
@@ -379,20 +396,20 @@ describe('AttractionsService', () => {
 
   test('should successfully list attractions by region', async () => {
     const mockAttractionsList = [
-      new Attraction(
-        'id1',
-        'region-id',
-        'cat-id',
-        'Peak 1',
-        'peak-1',
-        new GPSLocation(104.5, 22.6),
-        null,
-        null,
-        'active',
-        new Date(),
-        new Date(),
-        null
-      ),
+      createTestAttraction({
+        id: 'id1',
+        regionId: 'region-id',
+        categoryId: 'cat-id',
+        name: 'Peak 1',
+        slug: 'peak-1',
+        location: new GPSLocation(104.5, 22.6),
+        description: null,
+        coverUrl: null,
+        status: 'active',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null
+      }),
     ];
     findAttractionByRegionIdMock.mockImplementation(() => Promise.resolve(mockAttractionsList));
 
@@ -404,20 +421,20 @@ describe('AttractionsService', () => {
 
   describe('Attraction Entity Methods', () => {
     test('should manage active and deleted state correctly', () => {
-      const attraction = new Attraction(
-        'id',
-        'region-id',
-        'category-id',
-        'Name',
-        'name',
-        new GPSLocation(104.5, 22.6),
-        null,
-        null,
-        'inactive',
-        new Date(),
-        new Date(),
-        null
-      );
+      const attraction = createTestAttraction({
+        id: 'id',
+        regionId: 'region-id',
+        categoryId: 'category-id',
+        name: 'Name',
+        slug: 'name',
+        location: new GPSLocation(104.5, 22.6),
+        description: null,
+        coverUrl: null,
+        status: 'inactive',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null
+      });
 
       expect(attraction.isActive).toBe(false);
       expect(attraction.isDeleted).toBe(false);

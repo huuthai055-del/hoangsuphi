@@ -8,6 +8,7 @@ import {
   VariantGenerationError,
   MediaDomainError,
 } from '../domain/media-errors';
+import { logger } from '@/lib/logger';
 
 export class MediaProcessingService {
   constructor(
@@ -126,8 +127,12 @@ export class MediaProcessingService {
       try {
         media.markFailed();
         await this.mediaRepo.update(media);
-      } catch {
-        // Suppress nested DB status update failures
+      } catch (statusErr) {
+        // Log separately: if we can't mark FAILED the DB row will be stuck in PROCESSING.
+        logger.error(
+          { err: statusErr, mediaId: media.id },
+          'Failed to mark media as FAILED after processing crash — row may be stuck in PROCESSING'
+        );
       }
 
       // Cleanup generated variant files safely using settled promises

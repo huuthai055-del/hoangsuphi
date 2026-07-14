@@ -46,3 +46,18 @@ export class InvalidRegionStatusTransitionError extends RegionDomainError {
     this.name = 'InvalidRegionStatusTransitionError';
   }
 }
+
+export class InvalidGPSLocationError extends RegionDomainError {
+  constructor(message: string) {
+    super(message);
+    this.name = 'InvalidGPSLocationError';
+  }
+}
+
+export class InvalidLtreePathError extends RegionDomainError {
+  constructor(message: string) {
+    super(message);
+    this.name = 'InvalidLtreePathError';
+  }
+}
+

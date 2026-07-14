@@ -34,14 +34,14 @@ export class RegionsController {
   public list = async (c: Context) => {
     const query = c.get('validQuery') as ListRegionsQueryDto;
 
-    const results = await this.regionsService.listRegions({
+    const { items, total } = await this.regionsService.listRegions({
       page: query.page,
       limit: query.limit,
       parentId: query.parentId,
       level: query.level,
     });
 
-    const mapped = results.map((r) => this.mapToResponse(r));
+    const mapped = items.map((r) => this.mapToResponse(r));
 
     return c.json(
       {
@@ -49,7 +49,7 @@ export class RegionsController {
         meta: {
           page: query.page,
           limit: query.limit,
-          total: mapped.length,
+          total,
         },
       },
       200

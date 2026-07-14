@@ -49,7 +49,7 @@ export class BusinessesController {
   public list = async (c: Context) => {
     const query = c.get('validQuery') as ListBusinessesQueryDto;
 
-    const results = await this.service.listBusinesses({
+    const { items, total } = await this.service.listBusinesses({
       page: query.page,
       limit: query.limit,
       regionId: query.regionId,
@@ -57,7 +57,7 @@ export class BusinessesController {
       status: query.status,
     });
 
-    const mapped = results.map((r) => this.mapToSummary(r));
+    const mapped = items.map((r) => this.mapToSummary(r));
 
     return c.json(
       {
@@ -65,7 +65,7 @@ export class BusinessesController {
         meta: {
           page: query.page,
           limit: query.limit,
-          total: mapped.length,
+          total,
         },
       },
       200

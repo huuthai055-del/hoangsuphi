@@ -65,6 +65,21 @@ export class DrizzleTouristPlacesRepository implements ITouristPlacesRepository 
     return results.map((row) => TouristPlaceMapper.toDomain(row));
   }
 
+  public async count(options: ListPlacesOptions): Promise<number> {
+    const conditions = [isNull(touristPlaces.deletedAt)];
+
+    if (options.regionId) {
+      conditions.push(eq(touristPlaces.regionId, options.regionId));
+    }
+
+    const [result] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(touristPlaces)
+      .where(and(...conditions));
+
+    return result ? Number(result.count) : 0;
+  }
+
   public async findNearby(
     lng: number,
     lat: number,

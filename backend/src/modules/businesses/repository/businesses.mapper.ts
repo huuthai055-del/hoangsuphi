@@ -19,21 +19,21 @@ export const BusinessMapper = {
     },
     amenityIds: string[]
   ): Business {
-    return new Business(
-      raw.id,
-      raw.regionId,
-      raw.businessTypeId,
-      raw.name,
-      raw.slug,
-      new GPSLocation(Number(raw.location.lng), Number(raw.location.lat)),
-      raw.description,
-      raw.coverUrl,
-      raw.deletedAt ? 'inactive' : (raw.status as 'active' | 'inactive'),
+    return Business.rehydrate({
+      id: raw.id,
+      regionId: raw.regionId,
+      businessTypeId: raw.businessTypeId,
+      name: raw.name,
+      slug: raw.slug,
+      location: new GPSLocation(Number(raw.location.lng), Number(raw.location.lat)),
+      description: raw.description,
+      coverUrl: raw.coverUrl,
+      status: raw.deletedAt ? 'inactive' : (raw.status as 'active' | 'inactive'),
       amenityIds,
-      raw.createdAt,
-      raw.updatedAt,
-      raw.deletedAt
-    );
+      createdAt: raw.createdAt,
+      updatedAt: raw.updatedAt,
+      deletedAt: raw.deletedAt,
+    });
   },
 
   toPersistence(business: Business) {

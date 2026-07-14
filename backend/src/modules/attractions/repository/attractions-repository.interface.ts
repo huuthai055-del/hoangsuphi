@@ -17,6 +17,7 @@ export interface IAttractionsRepository {
     options?: { page?: number; limit?: number }
   ): Promise<Attraction[]>;
   list(options: ListAttractionsOptions): Promise<Attraction[]>;
+  count(options: ListAttractionsOptions): Promise<number>;
   findNearby(lng: number, lat: number, radiusMeters: number, limit?: number): Promise<Attraction[]>;
   save(attraction: Attraction, tx?: TransactionClient): Promise<void>;
   update(attraction: Attraction, tx?: TransactionClient): Promise<void>;

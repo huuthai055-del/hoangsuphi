@@ -1,6 +1,14 @@
 import type { IWeatherProvider } from '../interfaces/weather-provider.interface';
 import type { CurrentWeather, Forecast } from '../dto/weather.dto';
-import { ValidationError } from '@/common/errors/http.errors';
+import { ValidationError, ExternalServiceError } from '@/common/errors/http.errors';
+import { logger } from '@/lib/logger';
+import { requestStore } from '@/lib/logger/context';
+
+/** Maximum time (ms) to wait for the upstream weather provider. */
+const PROVIDER_TIMEOUT_MS = 5_000;
+
+/** Number of retries for transient failures (network / timeout errors only). */
+const MAX_RETRIES = 1;
 
 export class WeatherService {
   constructor(private readonly provider: IWeatherProvider) {}
@@ -14,15 +22,74 @@ export class WeatherService {
     }
   }
 
+  /**
+   * Runs `fn` with a timeout of PROVIDER_TIMEOUT_MS.
+   * Retries up to MAX_RETRIES times on transient errors (network / timeout).
+   * Does NOT retry on structured provider errors (e.g. 4xx from upstream).
+   */
+  private async callWithResiliency<T>(
+    fn: () => Promise<T>,
+    coords?: { lat: number; lng: number }
+  ): Promise<T> {
+    let lastErr: unknown;
+    const store = requestStore.getStore();
+
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Weather provider request timed out')), PROVIDER_TIMEOUT_MS)
+        );
+        return await Promise.race([fn(), timeoutPromise]);
+      } catch (err) {
+        lastErr = err;
+        // Only retry on network / timeout errors, not on structured provider responses.
+        const isTransient =
+          err instanceof Error &&
+          (err.message.includes('timed out') ||
+            err.message.includes('ECONNREFUSED') ||
+            err.message.includes('ENOTFOUND') ||
+            err.message.includes('network'));
+
+        if (isTransient && attempt < MAX_RETRIES) {
+          logger.warn(
+            {
+              traceId: store?.requestId,
+              attempt: attempt + 1,
+              coordinates: coords,
+              error: err instanceof Error ? err.message : String(err),
+            },
+            `Weather provider request failed. Retrying...`
+          );
+          // Small backoff before retry (100ms * attempt).
+          await new Promise((r) => setTimeout(r, 100 * (attempt + 1)));
+        } else {
+          break;
+        }
+      }
+    }
+
+    logger.error(
+      {
+        traceId: store?.requestId,
+        coordinates: coords,
+        error: lastErr instanceof Error ? lastErr.message : String(lastErr),
+      },
+      `Weather provider request failed after all attempts.`
+    );
+
+    throw new ExternalServiceError(
+      `Weather provider unavailable: ${lastErr instanceof Error ? lastErr.message : String(lastErr)}`,
+      undefined,
+      lastErr instanceof Error ? lastErr : undefined
+    );
+  }
+
   public async getCurrentWeather(latitude: number, longitude: number): Promise<CurrentWeather> {
     this.validateCoordinates(latitude, longitude);
-    try {
-      return await this.provider.getCurrentWeather(latitude, longitude);
-    } catch (error) {
-      throw new ValidationError(
-        `Failed to fetch current weather: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
+    return this.callWithResiliency(
+      () => this.provider.getCurrentWeather(latitude, longitude),
+      { lat: latitude, lng: longitude }
+    );
   }
 
   public async getForecast(
@@ -34,12 +101,9 @@ export class WeatherService {
     if (days < 1 || days > 16) {
       throw new ValidationError('Forecast days must be between 1 and 16 days');
     }
-    try {
-      return await this.provider.getForecast(latitude, longitude, days);
-    } catch (error) {
-      throw new ValidationError(
-        `Failed to fetch weather forecast: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
+    return this.callWithResiliency(
+      () => this.provider.getForecast(latitude, longitude, days),
+      { lat: latitude, lng: longitude }
+    );
   }
 }

@@ -251,5 +251,39 @@ describe('Itineraries API Routing & Controller', () => {
 
       expect(res.status).toBe(200);
     });
+    test('GET /api/v1/itineraries - non-admin without userId scopes to own itineraries', async () => {
+      mockListItineraries.mockImplementation(() =>
+        Promise.resolve({ items: [], total: 0, page: 1, pageSize: 10, totalPages: 0, hasNext: false, hasPrevious: false })
+      );
+
+      const res = await app.request('/api/v1/itineraries', {
+        method: 'GET',
+        headers: { Authorization: 'Bearer valid-token' },
+      });
+
+      expect(res.status).toBe(200);
+      const [callArgs] = mockListItineraries.mock.calls;
+      // Must scope to caller's own createdBy — not leave it undefined
+      expect(callArgs[0].filters?.createdBy).toBe('00000000-0000-0000-0000-000000000001');
+      expect(callArgs[0].filters?.visibility).toBeUndefined();
+    });
+
+    test('GET /api/v1/itineraries?userId=other - non-admin viewing another user must see PUBLIC only', async () => {
+      mockListItineraries.mockImplementation(() =>
+        Promise.resolve({ items: [], total: 0, page: 1, pageSize: 10, totalPages: 0, hasNext: false, hasPrevious: false })
+      );
+
+      const otherId = '00000000-0000-0000-0000-000000000099';
+      const res = await app.request(`/api/v1/itineraries?userId=${otherId}`, {
+        method: 'GET',
+        headers: { Authorization: 'Bearer valid-token' },
+      });
+
+      expect(res.status).toBe(200);
+      const [callArgs] = mockListItineraries.mock.calls;
+      expect(callArgs[0].filters?.createdBy).toBe(otherId);
+      expect(callArgs[0].filters?.visibility).toBe('PUBLIC');
+    });
   });
 });
+

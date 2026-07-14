@@ -235,8 +235,8 @@ describe('SessionService', () => {
         })
       ).rejects.toThrow(AuthenticationError);
 
-      expect(revokeFamilySpy).toHaveBeenCalledWith(familyId);
-      expect(revokeAllSessionTokensSpy).toHaveBeenCalledWith(sessionId);
+      expect(revokeFamilySpy).toHaveBeenCalledWith(familyId, undefined);
+      expect(revokeAllSessionTokensSpy).toHaveBeenCalledWith(sessionId, undefined);
       expect(updateSessionSpy).toHaveBeenCalled();
       expect(currentSession.isRevoked).toBe(true);
       expect(currentSession.revokedReason).toBe('replay_attack');
@@ -258,7 +258,7 @@ describe('SessionService', () => {
         })
       ).rejects.toThrow(AuthenticationError);
 
-      expect(revokeFamilySpy).toHaveBeenCalledWith(familyId);
+      expect(revokeFamilySpy).toHaveBeenCalledWith(familyId, undefined);
       expect(updateSessionSpy).toHaveBeenCalled();
     });
 
@@ -305,7 +305,7 @@ describe('SessionService', () => {
       expect(currentSession.isRevoked).toBe(true);
       expect(currentSession.revokedReason).toBe('logout');
       expect(updateSpy).toHaveBeenCalled();
-      expect(revokeTokensSpy).toHaveBeenCalledWith(sessionId);
+      expect(revokeTokensSpy).toHaveBeenCalledWith(sessionId, undefined);
     });
 
     test('should not call session update if already revoked but still call token revoke', async () => {
@@ -317,7 +317,7 @@ describe('SessionService', () => {
       await service.revokeSession(sessionId, 'logout');
 
       expect(updateSpy).not.toHaveBeenCalled();
-      expect(revokeTokensSpy).toHaveBeenCalledWith(sessionId);
+      expect(revokeTokensSpy).toHaveBeenCalledWith(sessionId, undefined);
     });
 
     test('should throw ValidationError if sessionId is empty', async () => {
@@ -338,8 +338,9 @@ describe('SessionService', () => {
 
       await service.revokeAllSessions(userId, 'logout_all');
 
-      expect(revokeSessionsSpy).toHaveBeenCalledWith(userId, 'logout_all');
-      expect(revokeTokensSpy).toHaveBeenCalledWith(userId);
+      // tx is undefined when revokeAllSessions is called without a transaction context
+      expect(revokeSessionsSpy).toHaveBeenCalledWith(userId, 'logout_all', undefined);
+      expect(revokeTokensSpy).toHaveBeenCalledWith(userId, undefined);
     });
 
     test('should throw ValidationError if userId is empty', async () => {
