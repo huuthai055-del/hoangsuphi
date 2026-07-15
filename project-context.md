@@ -15,7 +15,7 @@
 
 # 📋 PROJECT CONTEXT — CỔNG THÔNG TIN DU LỊCH HOÀNG SU PHÌ
 
-> **Cập nhật lần cuối:** 2026-07-14T12:35:00+07:00 | **Phiên:** #018 | **Trạng thái:** 🟢 Phase 3 - Hoàn thành (Sub-phase 3.1 đến 3.9 🔒 LOCKED)
+> **Cập nhật lần cuối:** 2026-07-16 | **Phiên:** #032 | **Trạng thái:** 🔒 Phase 4.2 Nearby Search — LOCKED
 
 ---
 
@@ -30,7 +30,7 @@
 | **Ngôn ngữ chính** | Tiếng Việt (Ưu tiên) — Hỗ trợ: EN, ZH, KO, JA (Phase sau) |
 | **Thị trường mục tiêu** | Du khách nội địa Việt Nam + khách nước ngoài (backpacker) |
 | **Tạo dự án** | 2026-07-06 |
-| **Trạng thái hiện tại** | 🟢 Phase 3 — Hoàn thành (Sub-phase 3.1 đến 3.9 🔒 LOCKED) |
+| **Trạng thái hiện tại** | 🚧 Phase 4 — Phase 4.1 và Phase 4.2 đã LOCK; Phase 4.3 chưa bắt đầu |
 
 ### Mục tiêu chiến lược
 
@@ -221,7 +221,7 @@ scope: api | db | frontend | infra | auth | search | media
 
 ## 6. API STATUS
 
-> **Trạng thái tổng thể:** ⬜ Chưa bắt đầu triển khai
+> **Trạng thái tổng thể:** Phase 3 core APIs 🔒 LOCKED; Phase 4.1 Search và Phase 4.2 Nearby Search 🔒 LOCKED
 
 | Endpoint | Priority | Trạng thái |
 | :--- | :--- | :--- |
@@ -231,7 +231,8 @@ scope: api | db | frontend | infra | auth | search | media
 | `GET /api/v1/articles` | P1 | ⬜ |
 | `GET /api/v1/articles/:slug` | P1 | ⬜ |
 | `GET /api/v1/regions` | P1 | ⬜ |
-| `GET /api/v1/search` | P1 | ⬜ |
+| `GET /api/v1/search` | P1 | 🔒 Locked — Phase 4.1 |
+| `GET /api/v1/nearby` | P1 | 🔒 Locked — Phase 4.2 |
 | `GET /api/v1/faqs` | P2 | ⬜ |
 | `GET /api/v1/tags` | P2 | ⬜ |
 | `POST /api/v1/reviews` | P2 | ⬜ |
@@ -259,18 +260,27 @@ scope: api | db | frontend | infra | auth | search | media
 | 13 | Identity & Access Control Module — Domain, Repositories, Services, API Endpoints, Middleware, 100% Tests & Locked | #013 | ✅ |
 | 14 | Articles & Tags Module — Domain, Repositories, Services, DTOs, Controllers, Routes, Tests & Locked | #015 | ✅ |
 | 15 | Weather, Notifications, Itineraries, FAQs & Top Lists Modules — Domain, Repositories, Services, DTOs, Controllers, Routes, DI Container, Integration Tests & Locked | #017 | ✅ |
+| 16 | Search Specification & Vietnamese FTS Strategy (Steps 4.1.0–4.1.1) | #025 | ✅ Phê duyệt |
+| 17 | Search FTS migration/index orchestration và read-only Repository (Steps 4.1.2–4.1.3) | #025 | ✅ |
+| 18 | Search Service, signed cursor, DTO, Controller, Route và DI integration (Steps 4.1.4–4.1.5) | #025 | ✅ |
+| 19 | Search & Advanced Filter Phase 4.1 — Steps 4.1.0–4.1.6, API, Price, tests và benchmark record | #027 | 🔒 LOCKED — SLA exception recorded |
+| 20 | Nearby Search Phase 4.2 — PostGIS projection, signed cursor, API, integration tests và benchmark evidence | #032 | 🔒 LOCKED — 85/85 Nearby tests; 25 km DB p95 89,47 ms |
 
 ---
 
 ## 8. CURRENT TASK
 
-> **Phiên #017 — 2026-07-13 (HOÀN THÀNH)**
+> **Phiên #032 — 2026-07-16 (PHASE 4.2 FINAL RE-AUDIT)**
 
-- [x] Triển khai toàn bộ module Weather, Notifications, Itineraries, FAQs, và Top Lists.
-- [x] Tái cấu trúc sang mô hình Composition Root với DI Container (`container.ts`) giải quyết các phụ thuộc tự động.
-- [x] Tích hợp Middleware xác thực, phân quyền (với Permission Constants & Roles) và chống lỗ hổng bảo mật IDOR.
-- [x] Viết integration tests đầy đủ cho tất cả các Router, đạt 863/863 tests pass, build thành công và Biome linter sạch lỗi.
-- [x] Khóa (LOCKED) toàn bộ Sub-phase 3.9.
+- [x] Hoàn tất Steps 4.2.0–4.2.6 cho `GET /api/v1/nearby`.
+- [x] Giữ read-only projection: `ST_DWithin`, `ST_Distance`, `UNION ALL`, LATERAL review aggregate và stable keyset ordering.
+- [x] Sửa benchmark fail-open; chỉ cho phép database có hậu tố `_benchmark`, không fallback sang `DATABASE_URL`.
+- [x] Sửa public type `place`, empty scenario và page-two DB cursor dùng `rawDistanceMeters` chính xác.
+- [x] EXPLAIN được sinh trực tiếp từ SQL của repository hiện hành; xóa toàn bộ zero-row/obsolete CTE evidence.
+- [x] Chạy 27 scenarios × 30 mẫu, lưu raw DB/HTTP samples; 25 km DB p95 đạt 89,47 ms.
+- [x] Chạy đầy đủ Nearby suite với database PostGIS riêng: 85 pass, 0 fail, 0 skip; full regression 1052 pass, 0 fail.
+- [x] Xác minh GiST, `reviews_owner_idx`, concurrency 100%, security, visibility và API contract.
+- [x] Hoàn tất final audit và khóa Phase 4.2; Phase 4.3 chưa bắt đầu.
 
 ---
 
@@ -280,27 +290,22 @@ scope: api | db | frontend | infra | auth | search | media
 
 | # | Nhiệm vụ |
 | :--- | :--- |
-| N1 | Khởi tạo Next.js 15 + TypeScript + Tailwind |
-| N2 | Khởi tạo Backend (Hono.js) |
-| N3 | Viết SQL Migration từ DB Design V5 |
-| N4 | Seed Data cho Reference Tables (business_types, attraction_categories, amenities, regions) |
-| N5 | Thiết kế API Spec (OpenAPI 3.0) |
+| N1 | Chờ chỉ đạo của người dùng trước khi lập đặc tả Phase 4.3 Media Upload; không tự động bắt đầu |
 
 ### 🟡 Ưu tiên trung bình (sau N1-N5)
 
 | # | Nhiệm vụ | Phụ thuộc |
 | :--- | :--- | :--- |
-| N6 | CRUD API cho `businesses` | N2, N3 |
-| N7 | CRUD API cho `articles` | N2, N3 |
-| N8 | Tích hợp Typesense Full-text Search | N6, N7 |
-| N9 | Upload Media + EXIF extraction pipeline | N2, N3 |
-| N10 | Admin CMS (trang quản trị) | N6, N7 |
+| N6 | Phase 4.3 Cloudinary Media Upload | N5 |
+| N7 | Phase 4.4 SEO | N5 |
+| N8 | Phase 4.5 Email qua Resend | N5 |
+| N9 | Phase 4.6–4.8 Redirect, SQL Recommendation, Harvest Status | N5 |
 
 ### 🟢 Ưu tiên thấp (Phase 2)
 
 | # | Nhiệm vụ |
 | :--- | :--- |
-| N11 | Vector Search (Typesense AI) |
+| N11 | Search engine chuyên dụng/Vector Search chỉ xem xét ở phase mở rộng sau bằng chứng production |
 | N12 | Đa ngôn ngữ i18n (EN, ZH) |
 | N13 | Business Claim Request flow |
 | N14 | Mở rộng sang tỉnh Hà Giang |
@@ -342,6 +347,15 @@ scope: api | db | frontend | infra | auth | search | media
 | D11 | 2026-07-13 | Composition Root / DI Container (`container.ts`) | Tách biệt hoàn toàn việc khởi tạo giữa các Router và Repository/Service/Middleware, hỗ trợ cơ chế ghi đè (override registry) sạch khi kiểm thử tích hợp (integration tests) mà không gây rò rỉ bộ nhớ hoặc sửa đổi mã nguồn production. |
 | D12 | 2026-07-14 | Enforced Article Owner Check & Authorization checks | Chặn đứng lỗ hổng bảo mật IDOR thông qua đối chiếu bắt buộc quyền sở hữu bài viết (article.authorId === caller.id hoặc Admin) trong toàn bộ các mutation của Articles. |
 | D13 | 2026-07-14 | Cấu trúc lại AuthService.register() tuân thủ repository pattern | Chuyển đổi logic truy vấn vai trò người dùng vào IUserRepository.findRoleByCode(), loại bỏ hoàn toàn việc import Schema DB ở Service, chặn đứng race condition bằng cách đối chiếu vai trò viewer được seed sẵn. |
+| D14 | 2026-07-14 | Search là read-only module độc lập | `SearchController → SearchService → ISearchRepository → PostgreSQL`; không hydrate Domain Entity hoặc gọi Service/Repository Phase 3. |
+| D15 | 2026-07-14 | Stored/generated `tsvector` chỉ được duyệt cho benchmark prototype | Production migration chưa được phép cho tới khi performance, write/WAL/rewrite/lock/autovacuum và rollout gates đạt. |
+| D16 | 2026-07-14 | Exact per-entity top-K benchmark là NO-GO production | Correctness/deep keyset đạt, nhưng common/multi-term/phrase/operator vẫn vượt SLA; production ranking/cursor/query shape giữ nguyên. |
+| D17 | 2026-07-14 | Chấp nhận ngoại lệ SLA `<100 ms`; hoãn lock Phase 4.1 | Người dùng yêu cầu hoàn tất Price, thumbnail, production decisions, integration tests và full benchmarks trước khi khóa. |
+| D18 | 2026-07-15 | Price dùng current range nullable trên Business, currency VND | `numeric(12,2)`, cả hai cận cùng null/cùng có giá trị; interval-overlap filter; exact decimal keyset; migration additive 0014. |
+| D19 | 2026-07-15 | Sửa Phase 3 Media schema drift trong migration 0014 | `media.uploaded_by` đã được schema/code ownership checks sử dụng nhưng thiếu trong migration/catalog; thêm nullable column là bản sửa additive tối thiểu đã được người dùng duyệt. |
+| D20 | 2026-07-15 | LOCK Phase 4.1 với một SLA exception được ghi nhận | Mọi contract, Price, thumbnail, production decision, benchmark, integration và final audit gate đã đóng; `<100 ms` vẫn không đạt và không được đánh dấu pass. |
+| D21 | 2026-07-16 | Nearby là read-only PostGIS projection độc lập | Dùng `ST_DWithin`/`ST_Distance`, `UNION ALL`, LATERAL rating, HMAC keyset cursor; không hydrate Domain Entity hoặc sửa Domain Service Phase 3. |
+| D22 | 2026-07-16 | Nearby operational performance target | Warm DB p95 < 150 ms cho bán kính đến 25 km, limit 20, tối thiểu 30 mẫu trên dataset MVP đại diện; đây không phải public network-latency promise. Closeout đạt 89,47 ms. |
 
 ---
 
@@ -571,6 +585,8 @@ scope: api | db | frontend | infra | auth | search | media
 | P2 | UUIDv7 chưa có native support PostgreSQL 16 | 🟡 | ⬜ Cần giải pháp | Dùng extension `pg_uuidv7` hoặc generate ở App layer |
 | P3 | `ltree` label không chứa dấu gạch ngang `-` | 🟡 | ⬜ Cần xử lý | Slug có `-` cần convert sang `_` khi lưu vào ltree path |
 | P4 | Debezium CDC cần Kafka/Redpanda để buffer | 🟡 | ⬜ Cân nhắc | Phase 1 có thể sync thủ công; CDC khi traffic lớn hơn |
+| P5 | Search exact high-cardinality chưa đạt SLA `<100 ms` | 🟡 | 🔓 Ngoại lệ được chấp nhận | Không đánh dấu performance gate là đạt |
+| P6 | Price Search và thumbnail public-safe policy | 🟡 | ✅ Đã giải quyết | Price dùng Business current range; thumbnail fail-closed, không leak Media storage key |
 
 ---
 
@@ -642,5 +658,64 @@ scope: api | db | frontend | infra | auth | search | media
 
 ---
 
+### 📅 Phiên #025 — 2026-07-14 (Tối)
+
+**Việc đã làm:**
+- Đồng bộ trạng thái Phase 4.1 sau khi các tài liệu dự án chưa phản ánh phần Search đã triển khai.
+- Xác nhận Steps 4.1.0–4.1.6 đã hoàn tất/phê duyệt; Phase 4.1 chưa thể đóng vì production performance gate, Price và Thumbnail decisions còn mở.
+- Triển khai benchmark-only exact per-entity top-K query shape: full eligibility/cursor trước local `limit + 1`, `UNION ALL`, global exact merge và late hydration.
+- So sánh với exact stored-vector baseline trong 10 trang của tám scenario (1.600 rows mỗi implementation), gồm fixture đồng hạng Attraction → Place; sequence/projection/rank/`hasMore` khớp và không duplicate/missing.
+- Smoke benchmark vẫn fail SLA: common, multi-term, phrase và operator queries vượt 100 ms; exact high-cardinality ranking tiếp tục là bottleneck.
+- Không thay đổi production query, public API/cursor/ranking, migration hoặc Domain Phase 3; không chạy ba full benchmark do smoke gate fail.
+
+**Kết luận:** Exact per-entity top-K là query-shape optimization đúng về semantics nhưng **NO-GO cho production** ở trạng thái hiện tại. Chờ Architecture Decision tiếp theo.
+
+---
+
+### 📅 Phiên #026 — 2026-07-14 (Tối)
+
+**Việc đã làm:**
+- Người dùng chấp nhận ngoại lệ duy nhất là SLA `<100 ms` chưa đạt; performance gate không được đánh dấu giả là đạt.
+- Chốt punctuation-only/empty tsquery trả `400 VAL_001` theo implementation và tests hiện hữu.
+- Xác nhận Price, thumbnail, production storage/supporting-index decisions, ba full benchmark và bảy PostgreSQL integration tests vẫn phải hoàn tất.
+- Hủy trạng thái khóa tạm; Phase 4.1 trở lại `closeout in progress`.
+- Xác nhận không chuyển bất kỳ backlog nào sang Phase 7 hoặc phase khác.
+- Hoàn tất thumbnail policy, PostgreSQL integration suite và ba full exact stored-vector benchmark run.
+- Đóng production strategy: giữ expression GIN; stored-vector migration và supporting Review index đều NO-GO cho Phase 4.1.
+
+**Kết luận:** `🚧 PHASE 4.1 CLOSEOUT IN PROGRESS — NOT LOCKED`. Chỉ khóa sau khi mọi hạng mục ngoài SLA exception hoàn tất.
+
+---
+
+### 📅 Phiên #027 — 2026-07-15
+
+**Việc đã làm:**
+- Người dùng phê duyệt Price current-range bằng VND và cho phép mở tối thiểu Business schema/write path.
+- Thêm migration 0014 với nullable `price_min`/`price_max`, pair/range constraint và partial price indexes; không backfill giá giả.
+- Hoàn tất Business validation/persistence/API và Search Price validation, interval-overlap, projection, sort cùng exact decimal cursor.
+- Mở rộng dedicated PostgreSQL Search integration suite lên 7/7, gồm Price filter/projection/sort/keyset.
+- Phát hiện và sửa additive schema drift nghiêm trọng `media.uploaded_by`; catalog local/test đã được xác minh.
+- Đồng bộ Search Contract, FTS Strategy và Performance Closeout; Price không tham gia FTS document/ranking.
+
+**Final audit:** Biome lint 316 files; strict TypeScript; production build; full suite `1002 pass / 0 fail` với 9 conditional integration entries skip đúng khi thiếu test URL; dedicated PostgreSQL integration `7 pass / 0 fail`; FTS check 4/4 READY; Price/Media catalog và indexes valid/ready; diff checks sạch.
+
+**Kết luận:** `🔒 PHASE 4.1 SEARCH & ADVANCED FILTER — LOCKED`. SLA `<100 ms` giữ nguyên là ngoại lệ đã chấp nhận, không phải gate đạt. Phase 4.2 chưa bắt đầu.
+
+---
+
+### 📅 Phiên #032 — 2026-07-16
+
+**Việc đã làm:**
+- Re-audit toàn bộ Step 4.2.6 và phát hiện bằng chứng EXPLAIN cũ không còn khớp repository LATERAL hiện hành, zero-row plans, benchmark HTTP fail-open và database isolation chưa an toàn.
+- Khóa benchmark vào `NEARBY_BENCHMARK_DATABASE_URL` có hậu tố `_benchmark`; lỗi status/envelope/scenario/EXPLAIN/SLA/concurrency đều làm command thất bại.
+- Sinh EXPLAIN từ chính SQL của `DrizzleNearbyRepository`, thay chín artifact cũ bằng chín current-query plans có non-zero rows, GiST spatial scans và `reviews_owner_idx`.
+- Chạy lại benchmark 27 scenarios × 30 mẫu trên 9.700 spatial entities + 9.700 reviews; raw samples được lưu; 25 km DB p95 = 89,47 ms.
+- Chạy dedicated PostgreSQL/PostGIS Nearby suite: 85 pass, 0 fail, 0 skip; full regression 1052 pass, 0 fail; pagination traversal không duplicate/missing.
+- Đồng bộ contract decision AD-NEARBY-006, closeout, roadmap và project context.
+
+**Kết luận:** `🔒 PHASE 4.2 NEARBY SEARCH — LOCKED`. Phase 4.3 chưa bắt đầu.
+
+---
+
 *Tài liệu được tạo và bảo trì bởi AI Agent Antigravity (Google DeepMind)*
-*Cập nhật lần cuối: 2026-07-14T12:35:00+07:00*
+*Cập nhật lần cuối: 2026-07-16*

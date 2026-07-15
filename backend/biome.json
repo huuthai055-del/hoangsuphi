@@ -18,13 +18,21 @@
   },
   "overrides": [
     {
-      "include": [
-        "**/*.test.ts"
-      ],
+      "include": ["**/*.test.ts"],
       "linter": {
         "rules": {
           "suspicious": {
             "noExplicitAny": "off"
+          }
+        }
+      }
+    },
+    {
+      "include": ["**/benchmark/**/*.ts"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsoleLog": "off"
           }
         }
       }

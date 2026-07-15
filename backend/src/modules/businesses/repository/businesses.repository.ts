@@ -1,11 +1,11 @@
+import { type TransactionClient, db } from '@/lib/database/client';
+import { amenities, businessAmenities, businessTypes, businesses } from '@/lib/database/schema';
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
+import type { Business } from '../domain/business.entity';
 import type {
   IBusinessesRepository,
   ListBusinessesOptions,
 } from './businesses-repository.interface';
-import type { Business } from '../domain/business.entity';
-import { db, type TransactionClient } from '@/lib/database/client';
-import { businesses, businessAmenities, amenities } from '@/lib/database/schema';
-import { eq, and, isNull, sql, inArray } from 'drizzle-orm';
 import { BusinessMapper } from './businesses.mapper';
 
 export class DrizzleBusinessesRepository implements IBusinessesRepository {
@@ -168,6 +168,8 @@ export class DrizzleBusinessesRepository implements IBusinessesRepository {
         location: data.location,
         description: data.description,
         coverUrl: data.coverUrl,
+        priceMin: data.priceMin,
+        priceMax: data.priceMax,
         status: data.status,
         updatedAt: new Date(),
         deletedAt: data.deletedAt,
@@ -226,8 +228,9 @@ export class DrizzleBusinessesRepository implements IBusinessesRepository {
 
     const relationMap = relations.reduce(
       (acc, rel) => {
-        if (!acc[rel.businessId]) acc[rel.businessId] = [];
-        acc[rel.businessId].push(rel.amenityId);
+        const amenityIds = acc[rel.businessId] ?? [];
+        amenityIds.push(rel.amenityId);
+        acc[rel.businessId] = amenityIds;
         return acc;
       },
       {} as Record<string, string[]>

@@ -1,4 +1,4 @@
-import type { Notification, NotificationProps, NotificationType } from '../domain/notification.entity';
+import type { Notification, NotificationType } from '../domain/notification.entity';
 import { Notification as NotificationClass } from '../domain/notification.entity';
 
 export interface RawNotification {

@@ -9,13 +9,15 @@ import {
 } from '../dto/notifications.dto';
 import { validateBody, validateParams, validateQuery } from '@/middleware/validator';
 import type { NotificationsController } from './notifications.controller';
+import type { AppEnv } from '@/common/types/app-env';
 
 import type { MiddlewareHandler } from 'hono';
 
-const notificationsRouter = new Hono();
+const notificationsRouter = new Hono<AppEnv>();
 
 // Dynamically resolve authGuard and controller from Container
-const authGuard: MiddlewareHandler = (c, next) => container.resolve<MiddlewareHandler>('AuthGuard')(c, next);
+const authGuard: MiddlewareHandler<AppEnv> = (c, next) =>
+  container.resolve<MiddlewareHandler<AppEnv>>('AuthGuard')(c, next);
 const getController = (): NotificationsController => container.resolve<NotificationsController>('NotificationsController');
 
 // Routes

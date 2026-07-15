@@ -415,7 +415,7 @@ describe('AttractionsService', () => {
 
     const result = await service.listAttractionsByRegion('region-id', { page: 1, limit: 10 });
     expect(result).toHaveLength(1);
-    expect(result[0].name).toBe('Peak 1');
+    expect(result[0]?.name).toBe('Peak 1');
     expect(findAttractionByRegionIdMock).toHaveBeenCalledWith('region-id', { page: 1, limit: 10 });
   });
 

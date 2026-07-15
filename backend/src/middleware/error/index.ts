@@ -1,8 +1,8 @@
-import type { ErrorHandler } from 'hono';
-import type { StatusCode } from 'hono/utils/http-status';
+import { AppError } from '@/common/errors/app.error';
 import { isProd } from '@/config/env';
 import { logger } from '@/lib/logger';
-import { AppError } from '@/common/errors/app.error';
+import type { ErrorHandler } from 'hono';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 
 export const errorHandlerMiddleware = (): ErrorHandler => {
   return async (err, c) => {
@@ -30,7 +30,6 @@ export const errorHandlerMiddleware = (): ErrorHandler => {
         logger.error({ ...logPayload, stack: err.stack }, `❌ Server Error: ${err.message}`);
       }
 
-      c.res.headers.set('Content-Type', 'application/problem+json');
       return c.json(
         {
           type: err.typeUri,
@@ -41,15 +40,15 @@ export const errorHandlerMiddleware = (): ErrorHandler => {
           instance,
           traceId,
           retryable: err.retryable,
-          ...(err.details ? { invalidParams: err.details } : {}),
+          ...(err.details ? { invalidParams: formatInvalidParams(err.details) } : {}),
         },
-        err.statusCode as StatusCode
+        err.statusCode as ContentfulStatusCode,
+        { 'Content-Type': 'application/problem+json' }
       );
     }
 
     if (err.name === 'ZodError') {
       logger.warn({ err: err.message, instance, traceId }, '⚠️ Unhandled Zod validation error');
-      c.res.headers.set('Content-Type', 'application/problem+json');
       return c.json(
         {
           type: 'https://hoangsuphi.vn/errors/validation-failed',
@@ -61,7 +60,8 @@ export const errorHandlerMiddleware = (): ErrorHandler => {
           traceId,
           retryable: false,
         },
-        400
+        400,
+        { 'Content-Type': 'application/problem+json' }
       );
     }
 
@@ -69,8 +69,6 @@ export const errorHandlerMiddleware = (): ErrorHandler => {
       { err: err.message, stack: err.stack, instance, traceId },
       '🚨 Unhandled System Exception'
     );
-
-    c.res.headers.set('Content-Type', 'application/problem+json');
 
     const responseDetail = isProd
       ? 'An unexpected system error occurred. Please contact system administrator.'
@@ -87,7 +85,29 @@ export const errorHandlerMiddleware = (): ErrorHandler => {
         traceId,
         retryable: false,
       },
-      500
+      500,
+      { 'Content-Type': 'application/problem+json' }
     );
   };
 };
+
+function formatInvalidParams(
+  details: unknown
+): Array<{ name: string; reason: string }> | undefined {
+  if (!details) return undefined;
+  if (Array.isArray(details)) {
+    return details.map((item) => {
+      if (typeof item === 'object' && item !== null && 'name' in item && 'reason' in item) {
+        return { name: String(item.name), reason: String(item.reason) };
+      }
+      return { name: 'unknown', reason: String(item) };
+    });
+  }
+  if (typeof details === 'object') {
+    return Object.entries(details).map(([name, reason]) => ({
+      name,
+      reason: String(reason),
+    }));
+  }
+  return [{ name: 'unknown', reason: String(details) }];
+}

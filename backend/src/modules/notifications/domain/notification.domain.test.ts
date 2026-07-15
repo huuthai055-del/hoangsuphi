@@ -1,7 +1,6 @@
 import { describe, test, expect } from 'bun:test';
 import { Notification } from './notification.entity';
 import {
-  NotificationDomainError,
   InvalidNotificationStateError,
   ImmutableNotificationError,
   InvalidNotificationTitleError,

@@ -1,10 +1,10 @@
-import { expect, test, describe, beforeEach, mock } from 'bun:test';
-import { BusinessesService } from './businesses.service';
-import { Business } from '../domain/business.entity';
-import { GPSLocation } from '@/modules/regions/domain/value-objects/gps-location.vo';
+import { beforeEach, describe, expect, mock, test } from 'bun:test';
+import { ConflictError, NotFoundError, ValidationError } from '@/common/errors/http.errors';
 import { Region } from '@/modules/regions/domain/region.aggregate';
+import { GPSLocation } from '@/modules/regions/domain/value-objects/gps-location.vo';
 import { LtreePath } from '@/modules/regions/domain/value-objects/ltree-path.vo';
-import { NotFoundError, ConflictError, ValidationError } from '@/common/errors/http.errors';
+import { Business } from '../domain/business.entity';
+import { BusinessesService } from './businesses.service';
 
 // Mock database client transactions
 mock.module('@/lib/database/client', () => {
@@ -95,11 +95,13 @@ describe('BusinessesService', () => {
     location: new GPSLocation(104.5, 22.5),
     description: 'Homestay view ruộng bậc thang',
     coverUrl: 'https://example.com/cover.jpg',
+    priceMin: null,
+    priceMax: null,
     status: 'active',
     amenityIds: ['wifi-id'],
     createdAt: new Date(),
     updatedAt: new Date(),
-    deletedAt: null
+    deletedAt: null,
   });
 
   describe('createBusiness', () => {
@@ -118,6 +120,8 @@ describe('BusinessesService', () => {
         location: { lng: 104.5, lat: 22.5 },
         description: 'Nice view',
         coverUrl: 'https://example.com/cover.jpg',
+        priceMin: '100000',
+        priceMax: '250000.5',
         amenityIds: ['wifi-id'],
       });
 
@@ -125,6 +129,8 @@ describe('BusinessesService', () => {
       expect(result.name).toBe('Nam Hồng Homestay');
       expect(result.slug).toBe('nam-hong-homestay');
       expect(result.status).toBe('active');
+      expect(result.priceMin).toBe('100000');
+      expect(result.priceMax).toBe('250000.5');
       expect(mockSaveBusiness).toHaveBeenCalled();
     });
 
@@ -265,9 +271,13 @@ describe('BusinessesService', () => {
 
       const updated = await service.updateBusiness('business-id', {
         name: 'New Homestay Name',
+        priceMin: '125000',
+        priceMax: '275000',
       });
 
       expect(updated.name).toBe('New Homestay Name');
+      expect(updated.priceMin).toBe('125000');
+      expect(updated.priceMax).toBe('275000');
       expect(mockUpdateBusiness).toHaveBeenCalled();
     });
 
@@ -281,11 +291,13 @@ describe('BusinessesService', () => {
         location: new GPSLocation(104.5, 22.5),
         description: null,
         coverUrl: null,
+        priceMin: null,
+        priceMax: null,
         status: 'inactive',
         amenityIds: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-        deletedAt: new Date()
+        deletedAt: new Date(),
       });
       mockFindBusinessById.mockImplementation(() => Promise.resolve(deletedBusiness));
 
@@ -315,11 +327,13 @@ describe('BusinessesService', () => {
         location: new GPSLocation(104.5, 22.5),
         description: null,
         coverUrl: null,
+        priceMin: null,
+        priceMax: null,
         status: 'inactive',
         amenityIds: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-        deletedAt: new Date()
+        deletedAt: new Date(),
       });
       mockFindBusinessById.mockImplementation(() => Promise.resolve(deletedBusiness));
 

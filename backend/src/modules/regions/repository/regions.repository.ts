@@ -59,9 +59,9 @@ export class DrizzleRegionsRepository implements IRegionsRepository {
       .from(regions)
       .where(and(sql`${regions.path} <@ ${parentPath}::ltree`, isNull(regions.deletedAt)));
 
-    const results = tx ? await (query as any).for('update') : await query;
+    const results = tx ? await query.for('update') : await query;
 
-    return results.map((row: any) => RegionMapper.toDomain(row));
+    return results.map((row) => RegionMapper.toDomain(row));
   }
 
   public async list(options: ListRegionsOptions): Promise<Region[]> {

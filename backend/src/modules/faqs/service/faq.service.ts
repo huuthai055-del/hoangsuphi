@@ -1,5 +1,4 @@
 import type { Faq } from '../domain/faq.entity';
-import type { FaqStatus } from '../domain/faq.entity';
 import type { IFaqRepository, FaqFilters } from '../repository/faq-repository.interface';
 import { generateUuidV7 } from '@/common/utils/uuid';
 import { NotFoundError, ConflictError, ValidationError } from '@/common/errors/http.errors';
@@ -22,11 +21,19 @@ function mapDomainError(err: Error): Error {
   }
   if (err instanceof FaqDomainError) {
     const msg = err.message.toLowerCase();
-    if (msg.includes('question')) return new ValidationError({ question: err.message });
-    if (msg.includes('answer')) return new ValidationError({ answer: err.message });
-    if (msg.includes('display order')) return new ValidationError({ displayOrder: err.message });
-    if (msg.includes('status')) return new ValidationError({ status: err.message });
-    return new ValidationError({ faq: err.message });
+    if (msg.includes('question')) {
+      return new ValidationError('Validation failed', { question: err.message });
+    }
+    if (msg.includes('answer')) {
+      return new ValidationError('Validation failed', { answer: err.message });
+    }
+    if (msg.includes('display order')) {
+      return new ValidationError('Validation failed', { displayOrder: err.message });
+    }
+    if (msg.includes('status')) {
+      return new ValidationError('Validation failed', { status: err.message });
+    }
+    return new ValidationError('Validation failed', { faq: err.message });
   }
   return err;
 }

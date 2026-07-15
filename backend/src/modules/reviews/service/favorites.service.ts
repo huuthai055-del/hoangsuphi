@@ -30,8 +30,9 @@ export class FavoritesService {
           },
         }, tx);
 
-        if (existing && existing.length > 0) {
-          return existing[0];
+        const [existingFavorite] = existing;
+        if (existingFavorite) {
+          return existingFavorite;
         }
 
         const favorite = Favorite.create({
@@ -47,7 +48,7 @@ export class FavoritesService {
       });
     } catch (err) {
       if (err instanceof FavoriteDomainError) {
-        throw new ValidationError({ fields: err.message });
+        throw new ValidationError('Validation failed', { fields: err.message });
       }
       throw err;
     }
@@ -64,11 +65,12 @@ export class FavoritesService {
         },
       }, tx);
 
-      if (!existing || existing.length === 0) {
+      const [favorite] = existing;
+      if (!favorite) {
         return;
       }
 
-      await this.favoritesRepo.delete(existing[0].id, tx);
+      await this.favoritesRepo.delete(favorite.id, tx);
     });
   }
 

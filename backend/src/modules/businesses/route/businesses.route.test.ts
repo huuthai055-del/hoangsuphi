@@ -208,12 +208,12 @@ mock.module('@/modules/attractions/repository/attractions.repository', () => {
   };
 });
 
-import { expect, test, describe, beforeEach } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'bun:test';
+import { Region } from '@/modules/regions/domain/region.aggregate';
+import { GPSLocation } from '@/modules/regions/domain/value-objects/gps-location.vo';
+import { LtreePath } from '@/modules/regions/domain/value-objects/ltree-path.vo';
 import type { Hono } from 'hono';
 import { Business } from '../domain/business.entity';
-import { GPSLocation } from '@/modules/regions/domain/value-objects/gps-location.vo';
-import { Region } from '@/modules/regions/domain/region.aggregate';
-import { LtreePath } from '@/modules/regions/domain/value-objects/ltree-path.vo';
 
 describe('Businesses API Routing & Controller', () => {
   let app: Hono;
@@ -292,11 +292,13 @@ describe('Businesses API Routing & Controller', () => {
     location: new GPSLocation(104.5, 22.5),
     description: 'Nice homestay',
     coverUrl: 'https://example.com/cover.jpg',
+    priceMin: null,
+    priceMax: null,
     status: 'active',
     amenityIds: [],
     createdAt: new Date(),
     updatedAt: new Date(),
-    deletedAt: null
+    deletedAt: null,
   });
 
   test('GET /api/v1/businesses - should return empty list with 200', async () => {
@@ -353,9 +355,9 @@ describe('Businesses API Routing & Controller', () => {
 
     const res = await app.request('/api/v1/businesses', {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer valid-token'
+        Authorization: 'Bearer valid-token',
       },
       body: JSON.stringify({
         regionId: '3a552ef3-40e1-7ca7-8000-000000000001',
@@ -364,6 +366,8 @@ describe('Businesses API Routing & Controller', () => {
         location: { lng: 104.5, lat: 22.5 },
         description: 'New view',
         coverUrl: 'https://example.com/cover.jpg',
+        priceMin: '100000',
+        priceMax: '250000',
         amenityIds: [],
       }),
     });
@@ -371,6 +375,8 @@ describe('Businesses API Routing & Controller', () => {
     expect(res.status).toBe(201);
     const body = await res.json();
     expect(body.name).toBe('New Homestay');
+    expect(body.priceMin).toBe('100000');
+    expect(body.priceMax).toBe('250000');
     expect(mockSaveBusiness).toHaveBeenCalled();
   });
 
@@ -379,18 +385,22 @@ describe('Businesses API Routing & Controller', () => {
 
     const res = await app.request('/api/v1/businesses/3a552ef3-40e1-7ca7-8000-000000000002', {
       method: 'PATCH',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer valid-token'
+        Authorization: 'Bearer valid-token',
       },
       body: JSON.stringify({
         name: 'Updated Name',
+        priceMin: '125000',
+        priceMax: '275000',
       }),
     });
 
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.name).toBe('Updated Name');
+    expect(body.priceMin).toBe('125000');
+    expect(body.priceMax).toBe('275000');
     expect(mockUpdateBusiness).toHaveBeenCalled();
   });
 
@@ -400,8 +410,8 @@ describe('Businesses API Routing & Controller', () => {
     const res = await app.request('/api/v1/businesses/3a552ef3-40e1-7ca7-8000-000000000002', {
       method: 'DELETE',
       headers: {
-        'Authorization': 'Bearer valid-token'
-      }
+        Authorization: 'Bearer valid-token',
+      },
     });
 
     expect(res.status).toBe(204);

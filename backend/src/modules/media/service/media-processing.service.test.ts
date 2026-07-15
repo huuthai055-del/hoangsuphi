@@ -6,7 +6,6 @@ import type { IImageProcessor } from '../domain/image-processor.interface';
 import { Media } from '../domain/media.entity';
 import {
   MediaDomainError,
-  ExifExtractionError,
   StorageProcessingError,
   VariantGenerationError,
 } from '../domain/media-errors';

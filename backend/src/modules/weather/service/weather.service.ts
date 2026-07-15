@@ -58,7 +58,7 @@ export class WeatherService {
               coordinates: coords,
               error: err instanceof Error ? err.message : String(err),
             },
-            `Weather provider request failed. Retrying...`
+            'Weather provider request failed. Retrying...'
           );
           // Small backoff before retry (100ms * attempt).
           await new Promise((r) => setTimeout(r, 100 * (attempt + 1)));
@@ -74,7 +74,7 @@ export class WeatherService {
         coordinates: coords,
         error: lastErr instanceof Error ? lastErr.message : String(lastErr),
       },
-      `Weather provider request failed after all attempts.`
+      'Weather provider request failed after all attempts.'
     );
 
     throw new ExternalServiceError(

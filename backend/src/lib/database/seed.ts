@@ -1,4 +1,5 @@
 import { db } from './client';
+import { sql } from 'drizzle-orm';
 import {
   businessTypes,
   attractionCategories,
@@ -13,8 +14,8 @@ function generateUuidV7(): string {
   const timestamp = Date.now();
   const hexTimestamp = timestamp.toString(16).padStart(12, '0');
   const randomBytes = crypto.getRandomValues(new Uint8Array(10));
-  randomBytes[0] = (randomBytes[0] & 0x0f) | 0x70; // version 7
-  randomBytes[2] = (randomBytes[2] & 0x3f) | 0x80; // variant 1
+  randomBytes[0] = ((randomBytes[0] ?? 0) & 0x0f) | 0x70; // version 7
+  randomBytes[2] = ((randomBytes[2] ?? 0) & 0x3f) | 0x80; // variant 1
   const hexRandom = Array.from(randomBytes)
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
@@ -25,6 +26,14 @@ function generateUuidV7(): string {
     hexRandom.slice(4, 8),
     hexRandom.slice(8),
   ].join('-');
+}
+
+function getRequiredMapValue(map: ReadonlyMap<string, string>, key: string): string {
+  const value = map.get(key);
+  if (!value) {
+    throw new Error(`Required seed value is missing: ${key}`);
+  }
+  return value;
 }
 
 async function main() {
@@ -393,8 +402,8 @@ async function main() {
 
     // Link Role Permissions
     // Admin gets all
-    const adminRoleId = roleMap.get('admin')!;
-    for (const [_, pId] of permissionMap.entries()) {
+    const adminRoleId = getRequiredMapValue(roleMap, 'admin');
+    for (const pId of permissionMap.values()) {
       await db.insert(rolePermissions).values({
         roleId: adminRoleId,
         permissionId: pId,
@@ -402,7 +411,7 @@ async function main() {
     }
 
     // Editor permissions
-    const editorRoleId = roleMap.get('editor')!;
+    const editorRoleId = getRequiredMapValue(roleMap, 'editor');
     const editorPermissionCodes = [
       'place:write', 'attraction:write', 'business:write', 'article:write', 'article:publish',
       'review:create', 'review:read', 'review:update', 'review:delete', 'review:approve', 'review:reject',
@@ -422,7 +431,7 @@ async function main() {
     }
 
     // Viewer permissions
-    const viewerRoleId = roleMap.get('viewer')!;
+    const viewerRoleId = getRequiredMapValue(roleMap, 'viewer');
     const viewerPermissionCodes = [
       'review:create', 'review:read', 'review:update', 'review:delete',
       'favorite:create', 'favorite:delete', 'favorite:read', 'media:upload', 'media:read',

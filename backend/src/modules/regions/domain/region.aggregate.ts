@@ -1,4 +1,4 @@
-import { LtreePath } from './value-objects/ltree-path.vo';
+import type { LtreePath } from './value-objects/ltree-path.vo';
 import { GPSLocation } from './value-objects/gps-location.vo';
 import {
   InvalidRegionNameError,

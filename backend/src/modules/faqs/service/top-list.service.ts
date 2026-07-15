@@ -1,4 +1,4 @@
-import type { TopList, TopListStatus } from '../domain/top-list.entity';
+import type { TopList } from '../domain/top-list.entity';
 import type { TopListItemOwnerType } from '../domain/top-list-item.entity';
 import type { TopListItem } from '../domain/top-list-item.entity';
 import type { ITopListRepository, TopListFilters } from '../repository/top-list-repository.interface';
@@ -21,13 +21,25 @@ function mapDomainError(err: Error): Error {
   }
   if (err instanceof TopListDomainError) {
     const msg = err.message.toLowerCase();
-    if (msg.includes('title')) return new ValidationError({ title: err.message });
-    if (msg.includes('slug')) return new ValidationError({ slug: err.message });
-    if (msg.includes('status') || msg.includes('state')) return new ValidationError({ status: err.message });
-    if (msg.includes('empty')) return new ValidationError({ items: err.message });
-    if (msg.includes('duplicate')) return new ValidationError({ duplicate: err.message });
-    if (msg.includes('display order')) return new ValidationError({ displayOrder: err.message });
-    return new ValidationError({ topList: err.message });
+    if (msg.includes('title')) {
+      return new ValidationError('Validation failed', { title: err.message });
+    }
+    if (msg.includes('slug')) {
+      return new ValidationError('Validation failed', { slug: err.message });
+    }
+    if (msg.includes('status') || msg.includes('state')) {
+      return new ValidationError('Validation failed', { status: err.message });
+    }
+    if (msg.includes('empty')) {
+      return new ValidationError('Validation failed', { items: err.message });
+    }
+    if (msg.includes('duplicate')) {
+      return new ValidationError('Validation failed', { duplicate: err.message });
+    }
+    if (msg.includes('display order')) {
+      return new ValidationError('Validation failed', { displayOrder: err.message });
+    }
+    return new ValidationError('Validation failed', { topList: err.message });
   }
   return err;
 }

@@ -537,7 +537,7 @@ describe('PlacesService', () => {
 
     const results = await service.searchNearby(104.5, 22.6, 5000, 10);
     expect(results).toHaveLength(1);
-    expect(results[0].name).toBe('Place 1');
+    expect(results[0]?.name).toBe('Place 1');
     expect(findPlacesNearbyMock).toHaveBeenCalledWith(104.5, 22.6, 5000, 10);
   });
 
@@ -561,7 +561,7 @@ describe('PlacesService', () => {
 
     const results = await service.listPlacesByRegion('region-id', { page: 1, limit: 10 });
     expect(results).toHaveLength(1);
-    expect(results[0].name).toBe('Place 1');
+    expect(results[0]?.name).toBe('Place 1');
     expect(findPlaceByRegionIdMock).toHaveBeenCalledWith('region-id', { page: 1, limit: 10 });
   });
 });

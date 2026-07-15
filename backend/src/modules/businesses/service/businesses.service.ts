@@ -1,16 +1,16 @@
+import { ConflictError, NotFoundError, ValidationError } from '@/common/errors/http.errors';
+import { slugify } from '@/common/utils/slug';
+import { generateUuidV7 } from '@/common/utils/uuid';
+import { runInTransaction } from '@/lib/database/client';
+import { logger } from '@/lib/logger';
+import { requestStore } from '@/lib/logger/context';
+import { GPSLocation } from '@/modules/regions/domain/value-objects/gps-location.vo';
 import type { IRegionsRepository } from '@/modules/regions/repository/regions-repository.interface';
+import { Business } from '../domain/business.entity';
 import type {
   IBusinessesRepository,
   ListBusinessesOptions,
 } from '../repository/businesses-repository.interface';
-import { Business } from '../domain/business.entity';
-import { GPSLocation } from '@/modules/regions/domain/value-objects/gps-location.vo';
-import { generateUuidV7 } from '@/common/utils/uuid';
-import { slugify } from '@/common/utils/slug';
-import { logger } from '@/lib/logger';
-import { requestStore } from '@/lib/logger/context';
-import { NotFoundError, ConflictError, ValidationError } from '@/common/errors/http.errors';
-import { runInTransaction } from '@/lib/database/client';
 
 export interface CreateBusinessCommand {
   id?: string;
@@ -21,6 +21,8 @@ export interface CreateBusinessCommand {
   location: { lng: number; lat: number };
   description?: string | null;
   coverUrl?: string | null;
+  priceMin?: string | null;
+  priceMax?: string | null;
   amenityIds: string[];
 }
 
@@ -32,6 +34,8 @@ export interface UpdateBusinessCommand {
   location?: { lng: number; lat: number };
   description?: string | null;
   coverUrl?: string | null;
+  priceMin?: string | null;
+  priceMax?: string | null;
   amenityIds?: string[];
   status?: 'active' | 'inactive';
 }
@@ -58,7 +62,9 @@ export class BusinessesService {
     return business;
   }
 
-  public async listBusinesses(options: ListBusinessesOptions): Promise<{ items: Business[]; total: number }> {
+  public async listBusinesses(
+    options: ListBusinessesOptions
+  ): Promise<{ items: Business[]; total: number }> {
     const [items, total] = await Promise.all([
       this.businessesRepo.list(options),
       this.businessesRepo.count(options),
@@ -141,6 +147,8 @@ export class BusinessesService {
       location,
       description: command.description ?? null,
       coverUrl: command.coverUrl ?? null,
+      priceMin: command.priceMin ?? null,
+      priceMax: command.priceMax ?? null,
       status: 'active',
       amenityIds: command.amenityIds,
     });
@@ -177,7 +185,7 @@ export class BusinessesService {
       throw new ValidationError('Cannot update a soft-deleted business');
     }
 
-    const updateProps: any = {};
+    const updateProps: Parameters<Business['update']>[0] = {};
 
     // 1. Verify Region if changing
     if (command.regionId !== undefined && command.regionId !== business.regionId) {
@@ -251,6 +259,11 @@ export class BusinessesService {
 
     if (command.coverUrl !== undefined) {
       updateProps.coverUrl = command.coverUrl;
+    }
+
+    if (command.priceMin !== undefined || command.priceMax !== undefined) {
+      updateProps.priceMin = command.priceMin;
+      updateProps.priceMax = command.priceMax;
     }
 
     if (command.status !== undefined) {

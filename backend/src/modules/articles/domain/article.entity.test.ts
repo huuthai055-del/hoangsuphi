@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test';
-import { Article, type ArticleProps } from './article.entity';
+import { Article } from './article.entity';
 import { ArticleDomainError } from './article-errors';
 
 describe('Article Domain Entity', () => {

@@ -1,0 +1,55 @@
+Limit  (cost=50803.45..50828.48 rows=1 width=320) (actual time=23.169..23.179 rows=21 loops=1)
+  Output: 'BUSINESS'::text, 3, businesses.id, ((businesses.name)::text), ((businesses.slug)::text), (st_y((businesses.location)::geometry)), (st_x((businesses.location)::geometry)), (((st_distance(businesses.location, '0101000020E610000098DD9387852A5A407FFB3A70CEC83640'::geography, true)))::text), (st_distance(businesses.location, '0101000020E610000098DD9387852A5A407FFB3A70CEC83640'::geography, true)), regions.id, ((regions.name)::text), ((regions.slug)::text), ((businesses.cover_url)::text), (((avg((reviews.rating)::numeric)))::text), (COALESCE(((count(reviews.id))::integer), 0))
+  Buffers: shared hit=16035
+  ->  Result  (cost=50803.45..50828.48 rows=1 width=320) (actual time=23.164..23.172 rows=21 loops=1)
+        Output: 'BUSINESS'::text, (3), businesses.id, ((businesses.name)::text), ((businesses.slug)::text), (st_y((businesses.location)::geometry)), (st_x((businesses.location)::geometry)), ((st_distance(businesses.location, '0101000020E610000098DD9387852A5A407FFB3A70CEC83640'::geography, true)))::text, (st_distance(businesses.location, '0101000020E610000098DD9387852A5A407FFB3A70CEC83640'::geography, true)), regions.id, ((regions.name)::text), ((regions.slug)::text), ((businesses.cover_url)::text), (((avg((reviews.rating)::numeric)))::text), (COALESCE(((count(reviews.id))::integer), 0))
+        Buffers: shared hit=16035
+        ->  Sort  (cost=50803.45..50803.45 rows=1 width=320) (actual time=23.159..23.162 rows=21 loops=1)
+              Output: 'BUSINESS'::text, 3, businesses.id, ((businesses.name)::text), ((businesses.slug)::text), (st_y((businesses.location)::geometry)), (st_x((businesses.location)::geometry)), (st_distance(businesses.location, '0101000020E610000098DD9387852A5A407FFB3A70CEC83640'::geography, true)), regions.id, ((regions.name)::text), ((regions.slug)::text), ((businesses.cover_url)::text), (((avg((reviews.rating)::numeric)))::text), (COALESCE(((count(reviews.id))::integer), 0)), businesses.location
+              Sort Key: (st_distance(businesses.location, '0101000020E610000098DD9387852A5A407FFB3A70CEC83640'::geography, true)), businesses.id
+              Sort Method: top-N heapsort  Memory: 33kB
+              Buffers: shared hit=16035
+              ->  Nested Loop Left Join  (cost=8.59..50803.44 rows=1 width=320) (actual time=0.285..22.313 rows=2160 loops=1)
+                    Output: 'BUSINESS'::text, 3, businesses.id, (businesses.name)::text, (businesses.slug)::text, st_y((businesses.location)::geometry), st_x((businesses.location)::geometry), st_distance(businesses.location, '0101000020E610000098DD9387852A5A407FFB3A70CEC83640'::geography, true), regions.id, (regions.name)::text, (regions.slug)::text, (businesses.cover_url)::text, ((avg((reviews.rating)::numeric)))::text, COALESCE(((count(reviews.id))::integer), 0), businesses.location
+                    Buffers: shared hit=16035
+                    ->  Nested Loop  (cost=0.27..50782.58 rows=1 width=664) (actual time=0.113..12.777 rows=2160 loops=1)
+                          Output: businesses.id, businesses.name, businesses.slug, businesses.location, businesses.cover_url, regions.id, regions.name, regions.slug
+                          Inner Unique: true
+                          Join Filter: (business_types.id = businesses.business_type_id)
+                          Rows Removed by Join Filter: 7200
+                          Buffers: shared hit=9555
+                          ->  Nested Loop  (cost=0.27..50781.50 rows=1 width=680) (actual time=0.108..9.385 rows=3760 loops=1)
+                                Output: businesses.id, businesses.name, businesses.slug, businesses.location, businesses.cover_url, businesses.business_type_id, regions.id, regions.name, regions.slug
+                                Inner Unique: true
+                                Join Filter: (regions.id = businesses.region_id)
+                                Rows Removed by Join Filter: 17794
+                                Buffers: shared hit=5795
+                                ->  Index Scan using businesses_location_gist_idx on public.businesses  (cost=0.27..50780.27 rows=1 width=642) (actual time=0.092..3.945 rows=3760 loops=1)
+                                      Output: businesses.id, businesses.region_id, businesses.business_type_id, businesses.name, businesses.slug, businesses.location, businesses.description, businesses.cover_url, businesses.status, businesses.created_at, businesses.updated_at, businesses.deleted_at, businesses.price_min, businesses.price_max
+                                      Index Cond: (businesses.location && _st_expand('0101000020E610000098DD9387852A5A407FFB3A70CEC83640'::geography, '5000'::double precision))
+                                      Filter: ((businesses.deleted_at IS NULL) AND ((businesses.status)::text = 'active'::text) AND st_dwithin(businesses.location, '0101000020E610000098DD9387852A5A407FFB3A70CEC83640'::geography, '5000'::double precision, true))
+                                      Rows Removed by Filter: 240
+                                      Buffers: shared hit=2035
+                                ->  Seq Scan on public.regions  (cost=0.00..1.10 rows=10 width=54) (actual time=0.000..0.001 rows=6 loops=3760)
+                                      Output: regions.id, regions.parent_id, regions.name, regions.slug, regions.level, regions.path, regions.description, regions.latitude, regions.longitude, regions.geom, regions.created_at, regions.updated_at, regions.deleted_at
+                                      Filter: (regions.deleted_at IS NULL)
+                                      Buffers: shared hit=3760
+                          ->  Seq Scan on public.business_types  (cost=0.00..1.05 rows=3 width=16) (actual time=0.000..0.000 rows=2 loops=3760)
+                                Output: business_types.id, business_types.code, business_types.name, business_types.icon, business_types.map_color, business_types.sort_order, business_types.is_active, business_types.created_at, business_types.updated_at
+                                Filter: business_types.is_active
+                                Rows Removed by Filter: 1
+                                Buffers: shared hit=3760
+                    ->  Aggregate  (cost=8.32..8.33 rows=1 width=36) (actual time=0.002..0.002 rows=1 loops=2160)
+                          Output: avg((reviews.rating)::numeric), (count(reviews.id))::integer
+                          Buffers: shared hit=6480
+                          ->  Index Scan using reviews_owner_idx on public.reviews  (cost=0.29..8.31 rows=1 width=20) (actual time=0.002..0.002 rows=1 loops=2160)
+                                Output: reviews.id, reviews.user_id, reviews.owner_type, reviews.owner_id, reviews.rating, reviews.title, reviews.content, reviews.status, reviews.created_at, reviews.updated_at, reviews.deleted_at
+                                Index Cond: ((reviews.owner_type = 'BUSINESS'::owner_type) AND (reviews.owner_id = businesses.id))
+                                Filter: ((reviews.deleted_at IS NULL) AND (reviews.status = 'APPROVED'::review_status))
+                                Rows Removed by Filter: 0
+                                Buffers: shared hit=6480
+Settings: search_path = 'public, topology, tiger, drizzle'
+Planning:
+  Buffers: shared hit=78
+Planning Time: 2.657 ms
+Execution Time: 23.339 ms

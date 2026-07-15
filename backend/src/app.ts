@@ -17,7 +17,6 @@ export function createApp() {
 
   // Global 404 Route
   app.notFound((c) => {
-    c.res.headers.set('Content-Type', 'application/problem+json');
     return c.json(
       {
         type: 'https://hoangsuphi.vn/errors/not-found',
@@ -27,7 +26,8 @@ export function createApp() {
         detail: `The requested path [${c.req.path}] does not exist on this server.`,
         instance: c.req.path,
       },
-      404
+      404,
+      { 'Content-Type': 'application/problem+json' }
     );
   });
 

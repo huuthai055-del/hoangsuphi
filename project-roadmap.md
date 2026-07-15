@@ -1,6 +1,6 @@
 # 🗺️ PROJECT ROADMAP — CỔNG THÔNG TIN DU LỊCH HOÀNG SU PHÌ
  
-> **Cập nhật lần cuối:** 2026-07-14T00:05:00+07:00 | **Phiên:** #023
+> **Cập nhật lần cuối:** 2026-07-16 | **Phiên:** #032
 > **Mục đích:** Theo dõi tiến độ toàn bộ vòng đời dự án từ ý tưởng đến vận hành.
  
 ---
@@ -12,7 +12,7 @@ Phase  0  Planning                ██████████  ✅ HOÀN THÀ
 Phase  1  Database Design         ██████████  ✅ HOÀN THÀNH
 Phase  2  Backend Foundation      ██████████  ✅ HOÀN THÀNH (V1.0 Code & Docs Locked)
 Phase  3  Core Modules            ██████████  ✅ PHASE COMPLETED (3.1 - 3.9 🔒 Locked)
-Phase  4  Advanced Features       ░░░░░░░░░░  ⬜ Chưa bắt đầu
+Phase  4  Production Features (MVP Stable) ██░░░░░░░░  🚧 Đang thực hiện — 4.1 🔒; 4.2 🔒; 4.3–4.8 chưa bắt đầu
 Phase  5  Frontend                ░░░░░░░░░░  ⬜ Chưa bắt đầu
 Phase  6  Admin CMS               ░░░░░░░░░░  ⬜ Chưa bắt đầu
 Phase  7  Performance             ░░░░░░░░░░  ⬜ Chưa bắt đầu
@@ -34,8 +34,8 @@ Planning    →    Database    →    Backend     →    Core
 ✅ Done          ✅ Done          ✅ Done          ✅ Phase Completed (3.1 - 3.9 🔒 Locked)
     ↓
 Phase 4          Phase 5          Phase 6          Phase 7
-Advanced    →    Frontend    →    Admin CMS   →    Performance
-⬜               ⬜               ⬜               ⬜
+Prod (MVP)  →    Frontend    →    Admin CMS   →    Performance
+🔒 4.1 Search     ⬜               ⬜               ⬜
     ↓
 Phase 8          Phase 9          Phase 10         Phase 11
 Security    →    Testing     →    Deployment  →    Content
@@ -160,29 +160,80 @@ Launch      →    Maintenance & Expansion
 
 ---
 
-### ⬜ PHASE 4 — ADVANCED FEATURES (Tính năng nâng cao) `CHƯA BẮT ĐẦU`
+### 🚧 PHASE 4 — PRODUCTION FEATURES (MVP STABLE) `ĐANG THỰC HIỆN`
 
-> **Mục tiêu:** Thêm các tính năng tạo nên sự khác biệt của sản phẩm.
+> **Mục tiêu:** Hoàn thiện các tính năng giúp website vận hành ổn định ở quy mô cấp huyện, ưu tiên đơn giản, dễ bảo trì và có thể triển khai thực tế nhanh. Không tối ưu quá mức hay bổ sung hạ tầng phức tạp khi chưa cần thiết.
 
-| Tính năng | Trạng thái | Ghi chú |
-| :--- | :--- | :--- |
-| Full-text Search (Typesense) | ⬜ | Tích hợp + CDC sync |
-| PostGIS Nearby Search | ⬜ | Tìm địa điểm gần đây theo bán kính |
-| Bộ lọc nâng cao (Amenities, Price, Rating) | ⬜ | |
-| SEO Sitemap generator | ⬜ | Dynamic sitemap.xml |
-| Redirect management | ⬜ | 301/302 từ bảng `redirects` |
-| Schema.org JSON-LD injection | ⬜ | LocalBusiness, Article, FAQPage |
-| Queue & Background Jobs (BullMQ) | ⬜ | Email, image processing... |
-| Email notifications (Resend) | ⬜ | |
-| Image upload pipeline | ⬜ | EXIF extract, compress, WebP, Cloudinary |
-| Cloudinary / S3 integration | ⬜ | |
-| AI Recommendation (Phase 2) | ⬜ | Vector Search — Typesense |
-| Live Harvest Status (Đặc thù HSP) | ⬜ | Bảng trạng thái lúa theo bản |
+| Sub-phase | Tính năng | Trạng thái | Ghi chú |
+| :--- | :--- | :--- | :--- |
+| **4.1** | **Search & Advanced Filter** | 🔒 LOCKED | Steps 4.1.0–4.1.6, Price và final audit hoàn tất. SLA `<100 ms` được ghi nhận là ngoại lệ, không đánh dấu pass. |
+| **4.2** | **Nearby Search** | 🔒 LOCKED | PostGIS (`ST_DWithin`, `ST_Distance`) tìm địa điểm theo bán kính và sắp xếp theo khoảng cách. Warm DB p95 tại 25 km = 89,47 ms trong 30 mẫu. |
+| **4.3** | **Media Upload** | ⬜ | Upload → Validate → Resize → WebP → Cloudinary → Lưu metadata. |
+| **4.4** | **SEO** | ⬜ | Dynamic Sitemap, robots.txt, Canonical URL, OpenGraph, Schema.org JSON-LD. |
+| **4.5** | **Email** | ⬜ | Resend: Verify Email, Forgot Password, Contact Form. |
+| **4.6** | **Redirect Management** | ⬜ | CRUD Redirects, hỗ trợ HTTP 301/302. |
+| **4.7** | **Recommendation** | ⬜ | Gợi ý bằng SQL (Nearby, Top Rated, Newest, Same Region), chưa sử dụng AI. |
+| **4.8** | **Live Harvest Status** | ⬜ | Module đặc thù HSP: CRUD, Timeline, Ảnh, Thông báo trạng thái mùa vụ. |
 
-**Điều kiện hoàn thành:**
-- [ ] Search trả kết quả < 100ms
-- [ ] Sitemap được generate tự động
-- [ ] Image upload → Cloudinary hoạt động end-to-end
+#### Tiến độ chi tiết Phase 4.1
+
+| Step | Hạng mục | Trạng thái | Ghi chú |
+| :--- | :--- | :--- | :--- |
+| **4.1.0** | Search Specification & API Contract | ✅ Phê duyệt | `GET /api/v1/search`, filter/sort/keyset/error contract. |
+| **4.1.1** | Vietnamese FTS & Index Strategy | ✅ Phê duyệt | `public.hsp_vietnamese`, weighted FTS, `websearch_to_tsquery`, `ts_rank_cd`; AD-FTS-017 cho stored-vector benchmark prototype. |
+| **4.1.2** | FTS Configuration & Index Migration | ✅ Hoàn thành | Migration 0013, catalog/index drift check và bốn expression GIN indexes. |
+| **4.1.3** | Search Read Projection & Repository | ✅ Hoàn thành | Unified read-only repository, filters, rating, stable keyset, không OFFSET/N+1. |
+| **4.1.4** | Search Application Service & Cursor | ✅ Hoàn thành | Validation, signed cursor, DTO mapping; Price exact-decimal keyset đã kích hoạt sau amendment. |
+| **4.1.5** | Search HTTP/API Integration | ✅ Hoàn thành | Controller, route, DI, public response/error contract và tests. |
+| **4.1.6** | Performance Verification & Hardening | ✅ Phê duyệt — SLA exception accepted | Benchmark harness/prototypes hoàn tất; `<100 ms` không đạt nhưng được người dùng chấp nhận, không đánh dấu gate là pass. |
+
+**Closeout Phase 4.1:** hoàn tất và LOCK ngày 2026-07-15. Price (`PD-FTS-001`), thumbnail, production storage/supporting Review index decisions, PostgreSQL integration suite 7/7, ba full benchmark runs và final audit đều đã đóng. Không hạng mục nào được chuyển sang phase khác.
+
+#### Tiến độ chi tiết Phase 4.2
+
+Chi tiết thiết kế và quy tắc lập trình xem tại tài liệu đặc tả: [04.02.00-nearby-search-specification.md](file:///c:/Users/tony/Desktop/youtube/hoangsuphi/backend/docs/04.02.00-nearby-search-specification.md).
+
+| Step | Hạng mục | Trạng thái | Ghi chú |
+| :--- | :--- | :--- | :--- |
+| **4.2.0** | Nearby Specification & API Contract | ✅ Phê duyệt | Chốt endpoint, query, response, giới hạn bán kính và cursor contract. |
+| **4.2.1** | Spatial Data & Index Readiness | ✅ Phê duyệt | Kiểm tra dữ liệu tọa độ, kiểu `geography(Point,4326)` và GiST indexes. |
+| **4.2.2** | Nearby Read Projection & Repository | ✅ Hoàn thành | Repository truy vấn `ST_DWithin`, `ST_Distance`, `UNION ALL` và global ordering. |
+| **4.2.3** | Application Service & Cursor | ✅ Hoàn thành | Validation, signed HMAC cursor, filter fingerprint, DTO mapping, unit and integration tests. |
+| **4.2.4** | HTTP/API Integration | ✅ Hoàn thành | Controller, route, DI, public error contract, 12/12 tests pass. |
+| **4.2.5** | PostgreSQL Integration Tests | ✅ Hoàn thành | Radius, distance, ordering, pagination, visibility, cursor completeness bao phủ đầy đủ. |
+| **4.2.6** | Performance Verification & Final Audit | ✅ Phê duyệt — SLA PASS | Benchmark 27 scenarios × 30 mẫu, 25 km DB p95 = 89,47 ms; 85/85 tests trên PostGIS thật; 9 current-query EXPLAIN plans; LOCK. |
+
+**Closeout Phase 4.2:** Hoàn thành và LOCK ngày 2026-07-16. Endpoint hoạt động chính xác theo bán kính, global distance ordering, signed HMAC keyset pagination và read-only LATERAL projection. Dedicated PostGIS suite đạt 85/85; benchmark 27 scenarios × 30 mẫu trên 9.700 spatial entities + 9.700 reviews; raw samples và 9 EXPLAIN plans lấy trực tiếp từ repository đã được lưu. Warm DB p95 tại 25 km = 89,47 ms < 150 ms ✅.
+
+### Không triển khai trong Phase 4
+- ❌ Typesense
+- ❌ BullMQ / Queue
+- ❌ Event Bus
+- ❌ Elasticsearch
+- ❌ AI Recommendation
+- ❌ Image Processing Pipeline nâng cao
+- ❌ Microservices
+
+(Các hạng mục trên sẽ được xem xét ở Phase 5 khi có nhu cầu thực tế.)
+
+### Điều kiện hoàn thành
+- [ ] Search & Filter phản hồi < 100ms với dữ liệu thực tế.
+- [x] Nearby Search hoạt động chính xác theo bán kính.
+- [ ] Upload ảnh → Cloudinary hoạt động end-to-end.
+- [ ] Ảnh tự động chuyển WebP và resize.
+- [ ] Email Verify & Forgot Password hoạt động ổn định.
+- [ ] Sitemap.xml và robots.txt được tạo tự động.
+- [ ] Schema.org JSON-LD hiển thị đúng trên các trang chính.
+- [ ] Redirect 301/302 hoạt động đúng.
+- [ ] Recommendation trả kết quả phù hợp bằng SQL.
+- [ ] Harvest Status hoàn chỉnh và sẵn sàng sử dụng thực tế.
+
+> **Ngoại lệ được phê duyệt cho 4.1:** Điều kiện Search `<100 ms` không đạt nhưng được người dùng chấp nhận ngày 2026-07-14. Ô trên giữ nguyên chưa đạt để bảo toàn bằng chứng; ngoại lệ này không miễn các hạng mục closeout khác.
+
+### Mục tiêu cuối Phase 4
+- Website đủ ổn định để triển khai và kinh doanh ở quy mô cấp huyện.
+- Dễ bảo trì bởi một lập trình viên.
+- Có thể mở rộng lên Queue, Typesense hoặc AI trong tương lai mà không phải thay đổi kiến trúc Phase 3.
 
 ---
 
@@ -455,6 +506,14 @@ Launch      →    Maintenance & Expansion
 | 2026-07-13 | Hoàn thành toàn bộ Reviews & Favorites (Sub-phase 3.8) và Operational Utilities (Sub-phase 3.9) | Phiên #022 — Triển khai CRUD, Repo, Service, API, DI Container, và chạy pass 100% tests cho Weather, Notifications, Itineraries, FAQs, Top Lists |
 | 2026-07-14 | Thực hiện Audit toàn diện Phase 3, viết báo cáo audit và đề xuất kế hoạch khắc phục | Phiên #023 — Hoàn tất Audit 10 levels, phát hiện các lỗi Critical/High (lọt transaction ở Identity, leak data ở Itineraries, roles rỗng) |
 | 2026-07-14 | Hoàn thành toàn bộ Remediation sửa lỗi bảo mật (Articles IDOR, Default Role Assignment) & DI Container | Phiên #024 — Hoàn tất sửa lỗi IDOR trong Articles, sửa default role registry logic trong AuthService, hợp nhất DI container tự động, pass 883/883 tests, build & lint sạch |
+| 2026-07-14 | Đồng bộ Phase 4.1 Steps 4.1.0–4.1.6 và kết quả benchmark prototypes | Phiên #025 — Search API đã triển khai end-to-end; Step 4.1.6 được phê duyệt ở trạng thái NO-GO production. Stored vector, bounded ranking và exact per-entity top-K chưa đạt đủ production performance gate. |
+| 2026-07-14 | Chấp nhận ngoại lệ SLA `<100 ms`, tiếp tục closeout Phase 4.1 | Phiên #026 — Chưa LOCK; phải đóng Price, thumbnail, production decisions, integration tests, ba full benchmarks và final audit. Không chuyển backlog sang phase khác. |
+| 2026-07-15 | Hoàn tất Price Architecture Decision và implementation | Phiên #027 — Thêm migration 0014, Business current price range VND, Search interval-overlap/price sort/exact cursor và PostgreSQL integration coverage; đồng thời sửa additive Media `uploaded_by` schema drift đã được duyệt. |
+| 2026-07-15 | 🔒 LOCK Phase 4.1 Search & Advanced Filter | Phiên #027 — Full suite 1002 pass/0 fail (9 conditional integration entries skip), dedicated PostgreSQL integration 7/7, build/lint/typecheck/catalog/FTS/diff sạch. SLA `<100 ms` là ngoại lệ được chấp nhận và vẫn ghi là không đạt. Phase 4.2 chưa bắt đầu. |
+| 2026-07-15 | Lập & hiệu chỉnh đặc tả Nearby Search | Phiên #028 — Thiết kế API Contract, điều kiện cursor, quy tắc làm tròn khoảng cách, spatial indexes, và lập đặc tả chi tiết (Amendment v3) tại [04.02.00-nearby-search-specification.md](file:///c:/Users/tony/Desktop/youtube/hoangsuphi/backend/docs/04.02.00-nearby-search-specification.md). |
+| 2026-07-15 | Xác minh dữ liệu không gian & GiST index | Phiên #029 — Tạo migration 0015 thêm GiST indexes cho tourist_places và businesses, viết bộ integration tests và spatial fixtures cho data readiness, pass 8/8 tests. |
+| 2026-07-15 | Triển khai Steps 4.2.2–4.2.5 Nearby Search | Phiên #030 — NearbyRepository (ST_DWithin + LEFT JOIN LATERAL), NearbySearchService (HMAC cursor, fingerprint), HTTP controller, route, DI, 47 unit tests pass, PostgreSQL integration tests suite hoàn tất. |
+| 2026-07-16 | 🔒 LOCK Phase 4.2 Nearby Search sau final re-audit | Phiên #032 — Sửa benchmark fail-open và database isolation; loại SQL/EXPLAIN cũ; chạy 27 scenarios × 30 mẫu trên 9.700 entities + 9.700 reviews. 25 km DB p95 = 89,47 ms. 9 current-query EXPLAIN plans có non-zero rows, GiST + `reviews_owner_idx`; Nearby suite 85/85, full regression 1052 pass/0 fail, build/typecheck/biome/diff sạch. |
 
 ---
 
@@ -471,41 +530,34 @@ Launch      →    Maintenance & Expansion
   - Sub-phase 3.7 Media Manager: 🔒 **LOCKED**
   - Sub-phase 3.8 Reviews & Favorites: 🔒 **LOCKED**
   - Sub-phase 3.9 Operational Utilities: 🔒 **LOCKED**
+- 🚧 Phase 4 (Production Features) — ĐANG THỰC HIỆN
+  - Sub-phase 4.1 Search & Advanced Filter: 🔒 **LOCKED**; SLA `<100 ms` exception recorded.
+  - Sub-phase 4.2 Nearby Search: 🔒 **LOCKED**; 25 km DB p95 = 89,47 ms, 85/85 Nearby tests.
 
 ## Next Session
 
 ### Objective
-Triển khai Phase 4 (Advanced Features) để tích hợp các tính năng nghiệp vụ và khám phá nâng cao cho Cổng thông tin du lịch, bắt đầu bằng việc tích hợp Typesense Full-text Search và đồng bộ dữ liệu CDC.
+Bắt đầu Phase 4.3 — Media Upload. Upload → Validate → Resize → WebP → Cloudinary → Lưu metadata.
 
 ### Current Position
-- **Current Phase**: Phase 4 (Advanced Features)
-- **Current Session**: SESSION #024
-- **Current Step**: Step 1: Typesense Full-text Search Integration
+- **Current Phase**: Phase 4 (Production Features - MVP Stable)
+- **Current Session**: SESSION #032
+- **Completed**: Phase 4.1 🔒 Search & Advanced Filter; Phase 4.2 🔒 Nearby Search
+- **Next Step**: Phase 4.3 Media Upload
 
-### Priority Tasks
-1. **Tích hợp Typesense Search Engine:** Thiết lập Typesense client, cấu hình schema tìm kiếm cho bài viết (`articles`), điểm đến (`places`), homestay (`businesses`), và điểm tham quan (`attractions`).
-2. **Xây dựng Pipeline đồng bộ dữ liệu CDC:** Triển khai cơ chế lắng nghe sự kiện thay đổi dữ liệu (Insert/Update/Delete/Restore/Soft-delete) từ database và đồng bộ tương ứng sang Typesense để đảm bảo kết quả tìm kiếm tức thì.
-3. **Tìm kiếm địa điểm lân cận (PostGIS Nearby Search):** Triển khai API tìm kiếm và sắp xếp các tiện ích/địa điểm gần nhất theo bán kính xung quanh tọa độ địa lý được truyền lên.
-4. **Tạo Sitemap tự động (SEO Sitemap Generator):** Viết background job để tự động sinh file `sitemap.xml` động dựa trên dữ liệu thật của bài viết và cơ sở kinh doanh.
-
-### Remaining Work
-- Xây dựng cơ chế quản lý chuyển hướng (Redirect Manager) dựa trên bảng `redirects` phục vụ SEO.
-- Tích hợp Queue & Background Jobs (BullMQ + Redis) để gửi email và xử lý nén ảnh không chặn thread chính.
-- Tích hợp Cloudinary / S3 cho môi trường Production.
-- Tích hợp Schema.org JSON-LD tự động.
+### Phase 4.2 Completion Summary
+- Repository: `ST_DWithin` + `ST_Distance` + `UNION ALL` 4 entity types + LEFT JOIN LATERAL reviews
+- Service: HMAC-SHA256 cursor (fingerprint bound to lat/lng/radius/entityTypes)
+- HTTP: Controller, route `/api/v1/nearby`, DI, RFC 7807 errors, lat/lng/cursor log redaction
+- Tests: 85/85 pass, 0 fail, 0 skip với dedicated PostgreSQL/PostGIS database; full regression 1052 pass, 0 fail
+- Performance: 25 km DB p95 = 89,47 ms < 150 ms; 27 scenarios × 30 mẫu; raw samples + 9 current-query EXPLAIN files
+- Security: cursor replay protection, no internal data leak, log redaction clean
 
 ### Important Notes
-- Đảm bảo các chỉ mục PostgreSQL (B-Tree, GIN, GIST) được cấu hình tối ưu phục vụ cho truy vấn vị trí địa lý.
-- Đảm bảo các API tìm kiếm đều được validate chặt chẽ đầu vào bằng Zod.
-
-### Risks
-- Việc đồng bộ dữ liệu CDC sang Typesense cần được thiết kế cẩn thận để tránh mất tin nhắn hoặc không đồng bộ khi dịch vụ bên thứ ba tạm thời mất kết nối.
-
-### Completion Criteria
-- Tìm kiếm Full-text và tìm kiếm lân cận (Nearby Search) hoạt động đúng đắn và có thời gian phản hồi dưới 100ms.
-- Tự động sinh sitemap và tiêm JSON-LD schema thành công.
+- Phase 4.2 architecture is LOCKED. Do not modify nearby module without explicit unlock.
+- Biome override for `**/benchmark/**/*.ts`: `noConsoleLog: off` added to biome.json.
 
 ---
 
 *Tài liệu được tạo và bảo trì bởi AI Agent Antigravity (Google DeepMind)*
-*Cập nhật lần cuối: 2026-07-14T12:35:00+07:00*
+*Cập nhật lần cuối: 2026-07-16T00:30:00+07:00*

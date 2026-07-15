@@ -26,14 +26,13 @@ export class DrizzleRefreshTokenRepository implements IRefreshTokenRepository {
   }
 
   public async findById(id: string, tx?: unknown): Promise<RefreshTokenModel | null> {
-    const rows = await this.getClient(tx)
+    const [raw] = await this.getClient(tx)
       .select()
       .from(refreshTokens)
       .where(eq(refreshTokens.id, id))
       .limit(1);
 
-    if (rows.length === 0) return null;
-    const raw = rows[0];
+    if (!raw) return null;
 
     return {
       id: raw.id,
@@ -58,15 +57,14 @@ export class DrizzleRefreshTokenRepository implements IRefreshTokenRepository {
    * ensuring the entire rotation operation is serialized.
    */
   public async findByHash(hash: string, tx?: unknown): Promise<RefreshTokenModel | null> {
-    const rows = await this.getClient(tx)
+    const [raw] = await this.getClient(tx)
       .select()
       .from(refreshTokens)
       .where(eq(refreshTokens.tokenHash, hash))
       .for('update') // Enforce ROW LOCK FOR UPDATE — must run inside a transaction
       .limit(1);
 
-    if (rows.length === 0) return null;
-    const raw = rows[0];
+    if (!raw) return null;
 
     return {
       id: raw.id,

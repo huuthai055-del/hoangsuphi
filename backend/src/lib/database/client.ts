@@ -16,7 +16,7 @@ const queryClient = postgres(env.DATABASE_URL, {
   max: env.DATABASE_POOL_MAX,
   idle_timeout: env.DATABASE_IDLE_TIMEOUT_MS / 1000,
   connect_timeout: env.DATABASE_CONNECT_TIMEOUT_MS / 1000,
-  max_lifecycle_seconds: 1800,
+  max_lifetime: 1800,
 });
 
 export const db = drizzle(queryClient, {
@@ -34,7 +34,7 @@ export async function dbHealthCheck(): Promise<{
 }> {
   const start = performance.now();
   try {
-    await db.execute(postgres.sql`SELECT 1`);
+    await queryClient`SELECT 1`;
     const latencyMs = Math.round(performance.now() - start);
     return { status: 'healthy', latencyMs };
   } catch (err) {

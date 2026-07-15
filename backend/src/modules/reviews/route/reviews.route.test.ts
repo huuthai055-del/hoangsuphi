@@ -33,7 +33,7 @@ describe('Reviews & Favorites API Routing & Controller', () => {
 
   // Mock Spies for Reviews Service
   const mockCreateReview = mock(() => Promise.resolve({} as any));
-  const mockUpdateReview = mock(async (id: string, caller: any, props: any) => {
+  const mockUpdateReview = mock(async (_id: string, caller: any, props: any) => {
     const review = await mockGetReview();
     if (review && review.userId !== caller.id && !caller.roles?.includes('admin')) {
       return Promise.reject(new AuthorizationError('You do not have permission to access this review'));
@@ -44,7 +44,7 @@ describe('Reviews & Favorites API Routing & Controller', () => {
       rating: props.rating ?? sampleReviewData.rating,
     } as any);
   });
-  const mockDeleteReview = mock(async (id: string, caller: any) => {
+  const mockDeleteReview = mock(async (_id: string, caller: any) => {
     const review = await mockGetReview();
     if (review && review.userId !== caller.id && !caller.roles?.includes('admin')) {
       return Promise.reject(new AuthorizationError('You do not have permission to access this review'));
@@ -54,8 +54,10 @@ describe('Reviews & Favorites API Routing & Controller', () => {
   const mockGetReview = mock(() => Promise.resolve(Review.rehydrate(sampleReviewData)));
   const mockApproveReview = mock(() => Promise.resolve({} as any));
   const mockRejectReview = mock(() => Promise.resolve({} as any));
-  const mockListReviews = mock(() => Promise.resolve({ items: [], total: 0 }));
-  const mockListReviewsByOwner = mock(() => Promise.resolve([]));
+  const mockListReviews = mock(() =>
+    Promise.resolve<{ items: Review[]; total: number }>({ items: [], total: 0 })
+  );
+  const mockListReviewsByOwner = mock(() => Promise.resolve<Review[]>([]));
   const mockListReviewsByUser = mock(async (userId: string, caller: any, _pagination?: any) => {
     if (userId !== caller?.id && !caller?.roles?.includes('admin')) {
       return Promise.reject(new AuthorizationError('You do not have permission to access these reviews'));
@@ -66,7 +68,7 @@ describe('Reviews & Favorites API Routing & Controller', () => {
   // Mock Spies for Favorites Service
   const mockAddFavorite = mock(() => Promise.resolve({} as any));
   const mockRemoveFavoriteById = mock(() => Promise.resolve());
-  const mockListFavorites = mock(() => Promise.resolve([]));
+  const mockListFavorites = mock(() => Promise.resolve<Favorite[]>([]));
   const mockCountFavorites = mock(() => Promise.resolve(0));
 
   const mockReviewsService = {
@@ -106,7 +108,7 @@ describe('Reviews & Favorites API Routing & Controller', () => {
     mockCreateReview.mockImplementation(() => Promise.resolve({} as any));
 
     mockUpdateReview.mockClear();
-    mockUpdateReview.mockImplementation(async (id: string, caller: any, props: any) => {
+    mockUpdateReview.mockImplementation(async (_id: string, caller: any, props: any) => {
       const review = await mockGetReview();
       if (review && review.userId !== caller.id && !caller.roles?.includes('admin')) {
         return Promise.reject(new AuthorizationError('You do not have permission to access this review'));
@@ -119,7 +121,7 @@ describe('Reviews & Favorites API Routing & Controller', () => {
     });
 
     mockDeleteReview.mockClear();
-    mockDeleteReview.mockImplementation(async (id: string, caller: any) => {
+    mockDeleteReview.mockImplementation(async (_id: string, caller: any) => {
       const review = await mockGetReview();
       if (review && review.userId !== caller.id && !caller.roles?.includes('admin')) {
         return Promise.reject(new AuthorizationError('You do not have permission to access this review'));
@@ -137,7 +139,7 @@ describe('Reviews & Favorites API Routing & Controller', () => {
     mockRejectReview.mockImplementation(() => Promise.resolve({} as any));
 
     mockListReviews.mockClear();
-    mockListReviews.mockImplementation(() => Promise.resolve([]));
+    mockListReviews.mockImplementation(() => Promise.resolve({ items: [], total: 0 }));
 
     mockListReviewsByOwner.mockClear();
     mockListReviewsByOwner.mockImplementation(() => Promise.resolve([]));
@@ -277,8 +279,9 @@ describe('Reviews & Favorites API Routing & Controller', () => {
         headers: { Authorization: 'Bearer valid-token' },
       });
       expect(res.status).toBe(204);
-      expect(mockDeleteReview.mock.calls[0][0]).toBe(sampleReviewData.id);
-      expect(mockDeleteReview.mock.calls[0][1].id).toBe('00000000-0000-0000-0000-000000000001');
+      const deleteCall = mockDeleteReview.mock.calls.at(0);
+      expect(deleteCall?.[0]).toBe(sampleReviewData.id);
+      expect(deleteCall?.[1].id).toBe('00000000-0000-0000-0000-000000000001');
     });
 
     test('DELETE /api/v1/reviews/:id - Reject delete if not owner', async () => {

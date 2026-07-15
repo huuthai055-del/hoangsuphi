@@ -199,7 +199,10 @@ describe('Articles API Routing & Controller', () => {
   const mockSave = mock((_article: Article, _tx?: any) => Promise.resolve());
   const mockUpdate = mock((_article: Article, _tx?: any) => Promise.resolve());
   const mockSoftDelete = mock((_id: string, _tx?: any) => Promise.resolve());
-  const mockSearch = mock((_filter: any, _pagination: any, _sort: any) => Promise.resolve({ items: [], total: 0 }));
+  const mockSearch = mock(
+    (_filter: any, _pagination: any, _sort: any) =>
+      Promise.resolve<{ items: Article[]; total: number }>({ items: [], total: 0 })
+  );
   const mockIncrementViewCount = mock((_id: string) => Promise.resolve());
   const mockAddTags = mock((_id: string, _tagIds: string[], _tx?: any) => Promise.resolve());
   const mockRemoveTags = mock((_id: string, _tagIds: string[], _tx?: any) => Promise.resolve());
@@ -293,8 +296,8 @@ describe('Articles API Routing & Controller', () => {
       expect(res.status).toBe(200);
       expect(mockSearch).toHaveBeenCalledWith(
         expect.any(Object),
-        { page: 1, limit: 20 },
-        { sortBy: 'title', sortOrder: 'asc' }
+        { page: 1, pageSize: 20 },
+        { field: 'title', order: 'ASC' }
       );
     });
   });

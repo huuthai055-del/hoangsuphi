@@ -18,7 +18,9 @@ describe('Itineraries API Routing & Controller', () => {
   const mockRemoveItemFromItinerary = mock(() => Promise.resolve());
   const mockReorderItineraryItems = mock(() => Promise.resolve());
   const mockGetItinerary = mock(() => Promise.resolve({} as any));
-  const mockListItineraries = mock(() => Promise.resolve({ items: [], total: 0 } as any));
+  const mockListItineraries = mock((_options: any) =>
+    Promise.resolve({ items: [], total: 0 } as any)
+  );
 
   const mockItineraryService = {
     createItinerary: mockCreateItinerary,
@@ -262,10 +264,10 @@ describe('Itineraries API Routing & Controller', () => {
       });
 
       expect(res.status).toBe(200);
-      const [callArgs] = mockListItineraries.mock.calls;
+      const request = mockListItineraries.mock.calls.at(0)?.[0];
       // Must scope to caller's own createdBy — not leave it undefined
-      expect(callArgs[0].filters?.createdBy).toBe('00000000-0000-0000-0000-000000000001');
-      expect(callArgs[0].filters?.visibility).toBeUndefined();
+      expect(request?.filters?.createdBy).toBe('00000000-0000-0000-0000-000000000001');
+      expect(request?.filters?.visibility).toBeUndefined();
     });
 
     test('GET /api/v1/itineraries?userId=other - non-admin viewing another user must see PUBLIC only', async () => {
@@ -280,10 +282,9 @@ describe('Itineraries API Routing & Controller', () => {
       });
 
       expect(res.status).toBe(200);
-      const [callArgs] = mockListItineraries.mock.calls;
-      expect(callArgs[0].filters?.createdBy).toBe(otherId);
-      expect(callArgs[0].filters?.visibility).toBe('PUBLIC');
+      const request = mockListItineraries.mock.calls.at(0)?.[0];
+      expect(request?.filters?.createdBy).toBe(otherId);
+      expect(request?.filters?.visibility).toBe('PUBLIC');
     });
   });
 });
-

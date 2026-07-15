@@ -93,6 +93,7 @@ describe('TokenService', () => {
     test('should return null for Access Token when payload is modified but signature is unchanged', async () => {
       const token = await service.generateAccessToken(validAccessPayload);
       const [header, payload, signature] = token.split('.');
+      if (!header || !payload || !signature) throw new Error('Expected a three-part JWT');
 
       // Base64 decode payload
       const decodedPayload = JSON.parse(

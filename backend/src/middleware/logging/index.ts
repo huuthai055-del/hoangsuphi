@@ -1,5 +1,5 @@
-import type { MiddlewareHandler } from 'hono';
 import { logger, requestStore } from '@/lib/logger';
+import type { MiddlewareHandler } from 'hono';
 
 export const loggerMiddleware = (): MiddlewareHandler => {
   return async (c, next) => {
@@ -13,17 +13,18 @@ export const loggerMiddleware = (): MiddlewareHandler => {
     return requestStore.run({ requestId }, async () => {
       const start = performance.now();
       const { method, url } = c.req;
+      const redactedUrl = redactSensitiveUrl(url);
 
       logger.info(
         {
           req: {
             method,
-            url,
+            url: redactedUrl,
             headers: c.req.header(),
             correlationId,
           },
         },
-        `📥 HTTP ${method} ${url} started`
+        `📥 HTTP ${method} ${redactedUrl} started`
       );
 
       try {
@@ -38,7 +39,7 @@ export const loggerMiddleware = (): MiddlewareHandler => {
             },
             correlationId,
           },
-          `❌ HTTP ${method} ${url} failed`
+          `❌ HTTP ${method} ${redactedUrl} failed`
         );
         throw err;
       } finally {
@@ -57,9 +58,34 @@ export const loggerMiddleware = (): MiddlewareHandler => {
             },
             correlationId,
           },
-          `📤 HTTP ${method} ${url} finished - ${status} (${durationMs}ms)`
+          `📤 HTTP ${method} ${redactedUrl} finished - ${status} (${durationMs}ms)`
         );
       }
     });
   };
 };
+
+function redactSensitiveUrl(urlString: string): string {
+  try {
+    const url = new URL(urlString);
+    let changed = false;
+    if (url.searchParams.has('lat')) {
+      url.searchParams.set('lat', '[REDACTED]');
+      changed = true;
+    }
+    if (url.searchParams.has('lng')) {
+      url.searchParams.set('lng', '[REDACTED]');
+      changed = true;
+    }
+    if (url.searchParams.has('cursor')) {
+      url.searchParams.set('cursor', '[REDACTED]');
+      changed = true;
+    }
+    return changed ? url.toString() : urlString;
+  } catch {
+    return urlString
+      .replace(/([?&])lat=[^&]*/gi, '$1lat=[REDACTED]')
+      .replace(/([?&])lng=[^&]*/gi, '$1lng=[REDACTED]')
+      .replace(/([?&])cursor=[^&]*/gi, '$1cursor=[REDACTED]');
+  }
+}

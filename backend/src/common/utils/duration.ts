@@ -10,8 +10,12 @@ export function parseDurationToSeconds(duration: string): number {
   if (!match) {
     throw new Error(`Invalid duration format: ${duration}`);
   }
-  const value = Number.parseInt(match[1], 10);
+  const valueText = match[1];
   const unit = match[2];
+  if (!valueText || !unit) {
+    throw new Error(`Invalid duration format: ${duration}`);
+  }
+  const value = Number.parseInt(valueText, 10);
   switch (unit) {
     case 's':
       return value;

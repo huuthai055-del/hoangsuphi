@@ -1,0 +1,171 @@
+Limit  (cost=222.00..222.01 rows=4 width=320) (actual time=11.863..11.878 rows=21 loops=1)
+  Output: ('TOURIST_PLACE'::text), (1), tourist_places.id, ((tourist_places.name)::text), ((tourist_places.slug)::text), (st_y((tourist_places.location)::geometry)), (st_x((tourist_places.location)::geometry)), ((st_distance(tourist_places.location, origin.point, true))::text), (st_distance(tourist_places.location, origin.point, true)), regions.id, ((regions.name)::text), ((regions.slug)::text), ((tourist_places.cover_url)::text), (((avg((reviews.rating)::numeric)))::text), (COALESCE(((count(reviews.id))::integer), 0))
+  Buffers: shared hit=9285
+  CTE origin
+    ->  Result  (cost=0.00..0.01 rows=1 width=32) (actual time=0.001..0.001 rows=1 loops=1)
+          Output: '0101000020E610000098DD9387852A5A407FFB3A70CEC83640'::geography
+  ->  Sort  (cost=221.99..222.00 rows=4 width=320) (actual time=11.862..11.874 rows=21 loops=1)
+        Output: ('TOURIST_PLACE'::text), (1), tourist_places.id, ((tourist_places.name)::text), ((tourist_places.slug)::text), (st_y((tourist_places.location)::geometry)), (st_x((tourist_places.location)::geometry)), ((st_distance(tourist_places.location, origin.point, true))::text), (st_distance(tourist_places.location, origin.point, true)), regions.id, ((regions.name)::text), ((regions.slug)::text), ((tourist_places.cover_url)::text), (((avg((reviews.rating)::numeric)))::text), (COALESCE(((count(reviews.id))::integer), 0))
+        Sort Key: (st_distance(tourist_places.location, origin.point, true)), (1), tourist_places.id
+        Sort Method: top-N heapsort  Memory: 34kB
+        Buffers: shared hit=9285
+        ->  Append  (cost=8.59..221.95 rows=4 width=320) (actual time=0.066..11.561 rows=747 loops=1)
+              Buffers: shared hit=9285
+              ->  Nested Loop Left Join  (cost=8.59..55.32 rows=1 width=320) (actual time=0.066..1.121 rows=126 loops=1)
+                    Output: 'TOURIST_PLACE'::text, 1, tourist_places.id, (tourist_places.name)::text, (tourist_places.slug)::text, st_y((tourist_places.location)::geometry), st_x((tourist_places.location)::geometry), (st_distance(tourist_places.location, origin.point, true))::text, st_distance(tourist_places.location, origin.point, true), regions.id, (regions.name)::text, (regions.slug)::text, (tourist_places.cover_url)::text, ((avg((reviews.rating)::numeric)))::text, COALESCE(((count(reviews.id))::integer), 0)
+                    Buffers: shared hit=669
+                    ->  Nested Loop  (cost=0.27..21.96 rows=1 width=690) (actual time=0.036..0.485 rows=126 loops=1)
+                          Output: tourist_places.id, tourist_places.name, tourist_places.slug, tourist_places.location, tourist_places.cover_url, regions.id, regions.name, regions.slug, origin.point
+                          Buffers: shared hit=291
+                          ->  Nested Loop  (cost=0.27..20.82 rows=1 width=652) (actual time=0.029..0.315 rows=126 loops=1)
+                                Output: tourist_places.id, tourist_places.name, tourist_places.slug, tourist_places.location, tourist_places.cover_url, tourist_places.region_id, origin.point
+                                Buffers: shared hit=165
+                                ->  CTE Scan on origin  (cost=0.00..0.02 rows=1 width=32) (actual time=0.003..0.003 rows=1 loops=1)
+                                      Output: origin.point
+                                ->  Index Scan using tourist_places_location_gist_idx on public.tourist_places  (cost=0.27..20.79 rows=1 width=620) (actual time=0.022..0.294 rows=126 loops=1)
+                                      Output: tourist_places.id, tourist_places.region_id, tourist_places.name, tourist_places.slug, tourist_places.location, tourist_places.description, tourist_places.cover_url, tourist_places.status, tourist_places.created_at, tourist_places.updated_at, tourist_places.deleted_at
+                                      Index Cond: (tourist_places.location && _st_expand(origin.point, '5000'::double precision))
+                                      Filter: ((tourist_places.deleted_at IS NULL) AND (tourist_places.region_id = '3123119d-7298-3e00-2eca-aff0b9ee253d'::uuid) AND ((tourist_places.status)::text = 'active'::text) AND st_dwithin(tourist_places.location, origin.point, '5000'::double precision, true))
+                                      Rows Removed by Filter: 674
+                                      Buffers: shared hit=165
+                          ->  Seq Scan on public.regions  (cost=0.00..1.12 rows=1 width=54) (actual time=0.000..0.001 rows=1 loops=126)
+                                Output: regions.id, regions.parent_id, regions.name, regions.slug, regions.level, regions.path, regions.description, regions.latitude, regions.longitude, regions.geom, regions.created_at, regions.updated_at, regions.deleted_at
+                                Filter: ((regions.deleted_at IS NULL) AND (regions.id = '3123119d-7298-3e00-2eca-aff0b9ee253d'::uuid))
+                                Rows Removed by Filter: 9
+                                Buffers: shared hit=126
+                    ->  Aggregate  (cost=8.32..8.33 rows=1 width=36) (actual time=0.002..0.002 rows=1 loops=126)
+                          Output: avg((reviews.rating)::numeric), (count(reviews.id))::integer
+                          Buffers: shared hit=378
+                          ->  Index Scan using reviews_owner_idx on public.reviews  (cost=0.29..8.31 rows=1 width=20) (actual time=0.001..0.001 rows=1 loops=126)
+                                Output: reviews.id, reviews.user_id, reviews.owner_type, reviews.owner_id, reviews.rating, reviews.title, reviews.content, reviews.status, reviews.created_at, reviews.updated_at, reviews.deleted_at
+                                Index Cond: ((reviews.owner_type = 'PLACE'::owner_type) AND (reviews.owner_id = tourist_places.id))
+                                Filter: ((reviews.deleted_at IS NULL) AND (reviews.status = 'APPROVED'::review_status))
+                                Rows Removed by Filter: 0
+                                Buffers: shared hit=378
+              ->  Nested Loop Left Join  (cost=8.72..55.55 rows=1 width=320) (actual time=0.071..1.750 rows=150 loops=1)
+                    Output: 'ATTRACTION'::text, 2, attractions.id, (attractions.name)::text, (attractions.slug)::text, st_y((attractions.location)::geometry), st_x((attractions.location)::geometry), (st_distance(attractions.location, origin_1.point, true))::text, st_distance(attractions.location, origin_1.point, true), regions_1.id, (regions_1.name)::text, (regions_1.slug)::text, (attractions.cover_url)::text, ((avg((reviews_1.rating)::numeric)))::text, COALESCE(((count(reviews_1.id))::integer), 0)
+                    Buffers: shared hit=1870
+                    ->  Nested Loop  (cost=0.40..22.19 rows=1 width=700) (actual time=0.061..1.048 rows=150 loops=1)
+                          Output: attractions.id, attractions.name, attractions.slug, attractions.location, attractions.cover_url, regions_1.id, regions_1.name, regions_1.slug, origin_1.point
+                          Inner Unique: true
+                          Buffers: shared hit=1420
+                          ->  Nested Loop  (cost=0.27..21.96 rows=1 width=716) (actual time=0.052..0.851 rows=261 loops=1)
+                                Output: attractions.id, attractions.name, attractions.slug, attractions.location, attractions.cover_url, attractions.category_id, regions_1.id, regions_1.name, regions_1.slug, origin_1.point
+                                Buffers: shared hit=898
+                                ->  Nested Loop  (cost=0.27..20.82 rows=1 width=678) (actual time=0.049..0.513 rows=261 loops=1)
+                                      Output: attractions.id, attractions.name, attractions.slug, attractions.location, attractions.cover_url, attractions.region_id, attractions.category_id, origin_1.point
+                                      Buffers: shared hit=637
+                                      ->  CTE Scan on origin origin_1  (cost=0.00..0.02 rows=1 width=32) (actual time=0.000..0.001 rows=1 loops=1)
+                                            Output: origin_1.point
+                                      ->  Index Scan using attractions_location_gist_idx on public.attractions  (cost=0.27..20.79 rows=1 width=646) (actual time=0.047..0.486 rows=261 loops=1)
+                                            Output: attractions.id, attractions.region_id, attractions.category_id, attractions.name, attractions.slug, attractions.location, attractions.description, attractions.cover_url, attractions.status, attractions.created_at, attractions.updated_at, attractions.deleted_at
+                                            Index Cond: (attractions.location && _st_expand(origin_1.point, '5000'::double precision))
+                                            Filter: ((attractions.deleted_at IS NULL) AND (attractions.region_id = '3123119d-7298-3e00-2eca-aff0b9ee253d'::uuid) AND ((attractions.status)::text = 'active'::text) AND st_dwithin(attractions.location, origin_1.point, '5000'::double precision, true))
+                                            Rows Removed by Filter: 1406
+                                            Buffers: shared hit=637
+                                ->  Seq Scan on public.regions regions_1  (cost=0.00..1.12 rows=1 width=54) (actual time=0.000..0.001 rows=1 loops=261)
+                                      Output: regions_1.id, regions_1.parent_id, regions_1.name, regions_1.slug, regions_1.level, regions_1.path, regions_1.description, regions_1.latitude, regions_1.longitude, regions_1.geom, regions_1.created_at, regions_1.updated_at, regions_1.deleted_at
+                                      Filter: ((regions_1.deleted_at IS NULL) AND (regions_1.id = '3123119d-7298-3e00-2eca-aff0b9ee253d'::uuid))
+                                      Rows Removed by Filter: 9
+                                      Buffers: shared hit=261
+                          ->  Index Scan using attraction_categories_pkey on public.attraction_categories  (cost=0.13..0.20 rows=1 width=16) (actual time=0.001..0.001 rows=1 loops=261)
+                                Output: attraction_categories.id, attraction_categories.code, attraction_categories.name, attraction_categories.map_icon, attraction_categories.map_color, attraction_categories.is_utility, attraction_categories.created_at, attraction_categories.updated_at
+                                Index Cond: (attraction_categories.id = attractions.category_id)
+                                Filter: (NOT attraction_categories.is_utility)
+                                Rows Removed by Filter: 0
+                                Buffers: shared hit=522
+                    ->  Aggregate  (cost=8.32..8.33 rows=1 width=36) (actual time=0.002..0.002 rows=1 loops=150)
+                          Output: avg((reviews_1.rating)::numeric), (count(reviews_1.id))::integer
+                          Buffers: shared hit=450
+                          ->  Index Scan using reviews_owner_idx on public.reviews reviews_1  (cost=0.29..8.31 rows=1 width=20) (actual time=0.001..0.001 rows=1 loops=150)
+                                Output: reviews_1.id, reviews_1.user_id, reviews_1.owner_type, reviews_1.owner_id, reviews_1.rating, reviews_1.title, reviews_1.content, reviews_1.status, reviews_1.created_at, reviews_1.updated_at, reviews_1.deleted_at
+                                Index Cond: ((reviews_1.owner_type = 'ATTRACTION'::owner_type) AND (reviews_1.owner_id = attractions.id))
+                                Filter: ((reviews_1.deleted_at IS NULL) AND (reviews_1.status = 'APPROVED'::review_status))
+                                Rows Removed by Filter: 0
+                                Buffers: shared hit=450
+              ->  Nested Loop Left Join  (cost=8.72..55.51 rows=1 width=320) (actual time=0.141..6.212 rows=360 loops=1)
+                    Output: 'BUSINESS'::text, 3, businesses.id, (businesses.name)::text, (businesses.slug)::text, st_y((businesses.location)::geometry), st_x((businesses.location)::geometry), (st_distance(businesses.location, origin_2.point, true))::text, st_distance(businesses.location, origin_2.point, true), regions_2.id, (regions_2.name)::text, (regions_2.slug)::text, (businesses.cover_url)::text, ((avg((reviews_2.rating)::numeric)))::text, COALESCE(((count(reviews_2.id))::integer), 0)
+                    Buffers: shared hit=4993
+                    ->  Nested Loop  (cost=0.40..22.15 rows=1 width=696) (actual time=0.131..3.685 rows=360 loops=1)
+                          Output: businesses.id, businesses.name, businesses.slug, businesses.location, businesses.cover_url, regions_2.id, regions_2.name, regions_2.slug, origin_2.point
+                          Inner Unique: true
+                          Buffers: shared hit=3913
+                          ->  Nested Loop  (cost=0.27..21.96 rows=1 width=712) (actual time=0.124..3.138 rows=626 loops=1)
+                                Output: businesses.id, businesses.name, businesses.slug, businesses.location, businesses.cover_url, businesses.business_type_id, regions_2.id, regions_2.name, regions_2.slug, origin_2.point
+                                Buffers: shared hit=2661
+                                ->  Nested Loop  (cost=0.27..20.83 rows=1 width=674) (actual time=0.121..2.044 rows=626 loops=1)
+                                      Output: businesses.id, businesses.name, businesses.slug, businesses.location, businesses.cover_url, businesses.region_id, businesses.business_type_id, origin_2.point
+                                      Buffers: shared hit=2035
+                                      ->  CTE Scan on origin origin_2  (cost=0.00..0.02 rows=1 width=32) (actual time=0.000..0.001 rows=1 loops=1)
+                                            Output: origin_2.point
+                                      ->  Index Scan using businesses_location_gist_idx on public.businesses  (cost=0.27..20.80 rows=1 width=642) (actual time=0.119..1.972 rows=626 loops=1)
+                                            Output: businesses.id, businesses.region_id, businesses.business_type_id, businesses.name, businesses.slug, businesses.location, businesses.description, businesses.cover_url, businesses.status, businesses.created_at, businesses.updated_at, businesses.deleted_at, businesses.price_min, businesses.price_max
+                                            Index Cond: (businesses.location && _st_expand(origin_2.point, '5000'::double precision))
+                                            Filter: ((businesses.deleted_at IS NULL) AND (businesses.region_id = '3123119d-7298-3e00-2eca-aff0b9ee253d'::uuid) AND ((businesses.status)::text = 'active'::text) AND st_dwithin(businesses.location, origin_2.point, '5000'::double precision, true))
+                                            Rows Removed by Filter: 3374
+                                            Buffers: shared hit=2035
+                                ->  Seq Scan on public.regions regions_2  (cost=0.00..1.12 rows=1 width=54) (actual time=0.000..0.001 rows=1 loops=626)
+                                      Output: regions_2.id, regions_2.parent_id, regions_2.name, regions_2.slug, regions_2.level, regions_2.path, regions_2.description, regions_2.latitude, regions_2.longitude, regions_2.geom, regions_2.created_at, regions_2.updated_at, regions_2.deleted_at
+                                      Filter: ((regions_2.deleted_at IS NULL) AND (regions_2.id = '3123119d-7298-3e00-2eca-aff0b9ee253d'::uuid))
+                                      Rows Removed by Filter: 9
+                                      Buffers: shared hit=626
+                          ->  Index Scan using business_types_pkey on public.business_types  (cost=0.13..0.17 rows=1 width=16) (actual time=0.001..0.001 rows=1 loops=626)
+                                Output: business_types.id, business_types.code, business_types.name, business_types.icon, business_types.map_color, business_types.sort_order, business_types.is_active, business_types.created_at, business_types.updated_at
+                                Index Cond: (business_types.id = businesses.business_type_id)
+                                Filter: business_types.is_active
+                                Rows Removed by Filter: 0
+                                Buffers: shared hit=1252
+                    ->  Aggregate  (cost=8.32..8.33 rows=1 width=36) (actual time=0.003..0.003 rows=1 loops=360)
+                          Output: avg((reviews_2.rating)::numeric), (count(reviews_2.id))::integer
+                          Buffers: shared hit=1080
+                          ->  Index Scan using reviews_owner_idx on public.reviews reviews_2  (cost=0.29..8.31 rows=1 width=20) (actual time=0.002..0.002 rows=1 loops=360)
+                                Output: reviews_2.id, reviews_2.user_id, reviews_2.owner_type, reviews_2.owner_id, reviews_2.rating, reviews_2.title, reviews_2.content, reviews_2.status, reviews_2.created_at, reviews_2.updated_at, reviews_2.deleted_at
+                                Index Cond: ((reviews_2.owner_type = 'BUSINESS'::owner_type) AND (reviews_2.owner_id = businesses.id))
+                                Filter: ((reviews_2.deleted_at IS NULL) AND (reviews_2.status = 'APPROVED'::review_status))
+                                Rows Removed by Filter: 0
+                                Buffers: shared hit=1080
+              ->  Nested Loop Left Join  (cost=8.72..55.56 rows=1 width=320) (actual time=0.078..2.398 rows=111 loops=1)
+                    Output: 'UTILITY'::text, 4, attractions_1.id, (attractions_1.name)::text, (attractions_1.slug)::text, st_y((attractions_1.location)::geometry), st_x((attractions_1.location)::geometry), (st_distance(attractions_1.location, origin_3.point, true))::text, st_distance(attractions_1.location, origin_3.point, true), regions_3.id, (regions_3.name)::text, (regions_3.slug)::text, (attractions_1.cover_url)::text, ((avg((reviews_3.rating)::numeric)))::text, COALESCE(((count(reviews_3.id))::integer), 0)
+                    Buffers: shared hit=1753
+                    ->  Nested Loop  (cost=0.40..22.20 rows=1 width=700) (actual time=0.066..1.382 rows=111 loops=1)
+                          Output: attractions_1.id, attractions_1.name, attractions_1.slug, attractions_1.location, attractions_1.cover_url, regions_3.id, regions_3.name, regions_3.slug, origin_3.point
+                          Inner Unique: true
+                          Buffers: shared hit=1420
+                          ->  Nested Loop  (cost=0.27..21.96 rows=1 width=716) (actual time=0.060..1.128 rows=261 loops=1)
+                                Output: attractions_1.id, attractions_1.name, attractions_1.slug, attractions_1.location, attractions_1.cover_url, attractions_1.category_id, regions_3.id, regions_3.name, regions_3.slug, origin_3.point
+                                Buffers: shared hit=898
+                                ->  Nested Loop  (cost=0.27..20.82 rows=1 width=678) (actual time=0.056..0.670 rows=261 loops=1)
+                                      Output: attractions_1.id, attractions_1.name, attractions_1.slug, attractions_1.location, attractions_1.cover_url, attractions_1.region_id, attractions_1.category_id, origin_3.point
+                                      Buffers: shared hit=637
+                                      ->  CTE Scan on origin origin_3  (cost=0.00..0.02 rows=1 width=32) (actual time=0.000..0.001 rows=1 loops=1)
+                                            Output: origin_3.point
+                                      ->  Index Scan using attractions_location_gist_idx on public.attractions attractions_1  (cost=0.27..20.79 rows=1 width=646) (actual time=0.052..0.636 rows=261 loops=1)
+                                            Output: attractions_1.id, attractions_1.region_id, attractions_1.category_id, attractions_1.name, attractions_1.slug, attractions_1.location, attractions_1.description, attractions_1.cover_url, attractions_1.status, attractions_1.created_at, attractions_1.updated_at, attractions_1.deleted_at
+                                            Index Cond: (attractions_1.location && _st_expand(origin_3.point, '5000'::double precision))
+                                            Filter: ((attractions_1.deleted_at IS NULL) AND (attractions_1.region_id = '3123119d-7298-3e00-2eca-aff0b9ee253d'::uuid) AND ((attractions_1.status)::text = 'active'::text) AND st_dwithin(attractions_1.location, origin_3.point, '5000'::double precision, true))
+                                            Rows Removed by Filter: 1406
+                                            Buffers: shared hit=637
+                                ->  Seq Scan on public.regions regions_3  (cost=0.00..1.12 rows=1 width=54) (actual time=0.001..0.001 rows=1 loops=261)
+                                      Output: regions_3.id, regions_3.parent_id, regions_3.name, regions_3.slug, regions_3.level, regions_3.path, regions_3.description, regions_3.latitude, regions_3.longitude, regions_3.geom, regions_3.created_at, regions_3.updated_at, regions_3.deleted_at
+                                      Filter: ((regions_3.deleted_at IS NULL) AND (regions_3.id = '3123119d-7298-3e00-2eca-aff0b9ee253d'::uuid))
+                                      Rows Removed by Filter: 9
+                                      Buffers: shared hit=261
+                          ->  Index Scan using attraction_categories_pkey on public.attraction_categories attraction_categories_1  (cost=0.13..0.20 rows=1 width=16) (actual time=0.001..0.001 rows=0 loops=261)
+                                Output: attraction_categories_1.id, attraction_categories_1.code, attraction_categories_1.name, attraction_categories_1.map_icon, attraction_categories_1.map_color, attraction_categories_1.is_utility, attraction_categories_1.created_at, attraction_categories_1.updated_at
+                                Index Cond: (attraction_categories_1.id = attractions_1.category_id)
+                                Filter: attraction_categories_1.is_utility
+                                Rows Removed by Filter: 1
+                                Buffers: shared hit=522
+                    ->  Aggregate  (cost=8.32..8.33 rows=1 width=36) (actual time=0.003..0.003 rows=1 loops=111)
+                          Output: avg((reviews_3.rating)::numeric), (count(reviews_3.id))::integer
+                          Buffers: shared hit=333
+                          ->  Index Scan using reviews_owner_idx on public.reviews reviews_3  (cost=0.29..8.31 rows=1 width=20) (actual time=0.002..0.002 rows=1 loops=111)
+                                Output: reviews_3.id, reviews_3.user_id, reviews_3.owner_type, reviews_3.owner_id, reviews_3.rating, reviews_3.title, reviews_3.content, reviews_3.status, reviews_3.created_at, reviews_3.updated_at, reviews_3.deleted_at
+                                Index Cond: ((reviews_3.owner_type = 'ATTRACTION'::owner_type) AND (reviews_3.owner_id = attractions_1.id))
+                                Filter: ((reviews_3.deleted_at IS NULL) AND (reviews_3.status = 'APPROVED'::review_status))
+                                Buffers: shared hit=333
+Settings: search_path = 'public, topology, tiger, drizzle'
+Planning:
+  Buffers: shared hit=14
+Planning Time: 1.132 ms
+Execution Time: 11.981 ms

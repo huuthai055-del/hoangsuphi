@@ -51,24 +51,28 @@ export class TokenService implements ITokenService {
     return Math.floor(Date.now() / 1000);
   }
 
-  private isAccessPayload(payload: Record<string, unknown>): payload is AccessTokenPayload {
+  private isAccessPayload(payload: unknown): payload is AccessTokenPayload {
+    if (typeof payload !== 'object' || payload === null) return false;
+    const candidate = payload as Record<string, unknown>;
     return (
-      typeof payload.sub === 'string' &&
-      typeof payload.email === 'string' &&
-      typeof payload.sid === 'string' &&
-      typeof payload.permissionsVersion === 'number' &&
-      typeof payload.iat === 'number' &&
-      typeof payload.exp === 'number'
+      typeof candidate.sub === 'string' &&
+      typeof candidate.email === 'string' &&
+      typeof candidate.sid === 'string' &&
+      typeof candidate.permissionsVersion === 'number' &&
+      typeof candidate.iat === 'number' &&
+      typeof candidate.exp === 'number'
     );
   }
 
-  private isRefreshPayload(payload: Record<string, unknown>): payload is RefreshTokenPayload {
+  private isRefreshPayload(payload: unknown): payload is RefreshTokenPayload {
+    if (typeof payload !== 'object' || payload === null) return false;
+    const candidate = payload as Record<string, unknown>;
     return (
-      typeof payload.sub === 'string' &&
-      typeof payload.sid === 'string' &&
-      typeof payload.jti === 'string' &&
-      typeof payload.iat === 'number' &&
-      typeof payload.exp === 'number'
+      typeof candidate.sub === 'string' &&
+      typeof candidate.sid === 'string' &&
+      typeof candidate.jti === 'string' &&
+      typeof candidate.iat === 'number' &&
+      typeof candidate.exp === 'number'
     );
   }
 

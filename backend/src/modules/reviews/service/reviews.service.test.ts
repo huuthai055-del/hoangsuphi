@@ -399,7 +399,7 @@ describe('Reviews & Favorites Services', () => {
       test('should successfully delete favorite if exists', async () => {
         mockFavoriteFindMany.mockImplementation(() => Promise.resolve([activeFav]));
         await favoritesService.removeFavorite('user-01', 'ARTICLE', 'article-01');
-        expect(mockFavoriteDelete.mock.calls[0][0]).toBe('fav-01');
+        expect(mockFavoriteDelete.mock.calls.at(0)?.[0]).toBe('fav-01');
       });
 
       test('should do nothing and bypass (idempotent) if not exists', async () => {

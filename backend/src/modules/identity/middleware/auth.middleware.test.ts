@@ -10,12 +10,6 @@ import {
   requireAnyRole,
 } from './permission.middleware';
 import { User } from '../domain/user.entity';
-import {
-  ValidationError,
-  AuthenticationError,
-  AuthorizationError,
-  NotFoundError,
-} from '@/common/errors/http.errors';
 import type { ITokenService, AccessTokenPayload } from '../service/token.service';
 import type { ISessionService } from '../service/session.service';
 import type { IUserRepository } from '../repository/users-repository.interface';
@@ -111,6 +105,7 @@ describe('Identity Middlewares', () => {
       delete: async () => {},
       assignRole: async () => {},
       removeRole: async () => {},
+      findRoleByCode: async () => null,
     };
 
     mockPermissionRepo = {

@@ -4,7 +4,6 @@ import { User } from '../domain/user.entity';
 import { TokenService } from '../service/token.service';
 import {
   ValidationError,
-  AuthenticationError,
   ConflictError,
   NotFoundError,
   AuthorizationError,

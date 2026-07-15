@@ -4,7 +4,7 @@ export interface AuthenticatedUser {
   sessionId: string | null;
   permissionsVersion: number;
   permissions: string[];
-  roles?: string[];
+  roles: string[];
 }
 
 export type IdentityVariables = {

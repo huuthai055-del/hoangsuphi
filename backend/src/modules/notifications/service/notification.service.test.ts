@@ -5,7 +5,6 @@ import { Notification } from '../domain/notification.entity';
 import { NotFoundError, ConflictError, ValidationError, AuthorizationError } from '@/common/errors/http.errors';
 import {
   DuplicateKeyRepositoryError,
-  EntityNotFoundRepositoryError,
 } from '@/common/errors/repository.errors';
 
 describe('NotificationService', () => {

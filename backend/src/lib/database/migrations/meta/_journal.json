@@ -92,6 +92,27 @@
       "when": 1783955819747,
       "tag": "0012_shallow_shiver_man",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1784027975280,
+      "tag": "0013_search_vietnamese_fts_config",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1784048290028,
+      "tag": "0014_business_price_range",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1784118361116,
+      "tag": "0015_lazy_taskmaster",
+      "breakpoints": true
     }
   ]
 }

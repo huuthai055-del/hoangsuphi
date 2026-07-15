@@ -26,18 +26,18 @@ function mapDomainError(err: Error): Error {
   if (err instanceof ReviewDomainError) {
     const msg = err.message.toLowerCase();
     if (msg.includes('rating')) {
-      return new ValidationError({ rating: err.message });
+      return new ValidationError('Validation failed', { rating: err.message });
     }
     if (msg.includes('title')) {
-      return new ValidationError({ title: err.message });
+      return new ValidationError('Validation failed', { title: err.message });
     }
     if (msg.includes('content')) {
-      return new ValidationError({ content: err.message });
+      return new ValidationError('Validation failed', { content: err.message });
     }
     if (msg.includes('status') || msg.includes('transition') || msg.includes('state')) {
-      return new ValidationError({ status: err.message });
+      return new ValidationError('Validation failed', { status: err.message });
     }
-    return new ValidationError({ review: err.message });
+    return new ValidationError('Validation failed', { review: err.message });
   }
   return err;
 }
@@ -113,9 +113,9 @@ export class ReviewsService {
     reviewId: string,
     caller: { id: string; roles: string[] },
     props: {
-      title: string;
-      content: string;
-      rating: number;
+      title?: string;
+      content?: string;
+      rating?: number;
       now?: Date;
     }
   ): Promise<Review> {
@@ -128,10 +128,17 @@ export class ReviewsService {
 
         // State validation at application layer
         if (review.status !== 'PENDING') {
-          throw new ValidationError({ status: `Cannot modify review with status: ${review.status}` });
+          throw new ValidationError('Validation failed', {
+            status: `Cannot modify review with status: ${review.status}`,
+          });
         }
 
-        review.updateContent(props);
+        review.updateContent({
+          title: props.title ?? review.title,
+          content: props.content ?? review.content,
+          rating: props.rating ?? review.rating,
+          now: props.now,
+        });
         await this.reviewsRepo.update(review, tx);
 
         logger.info(

@@ -25,14 +25,13 @@ export class DrizzleSessionRepository implements IUserSessionRepository {
   }
 
   public async findById(id: string, tx?: unknown): Promise<UserSessionModel | null> {
-    const rows = await this.getClient(tx)
+    const [raw] = await this.getClient(tx)
       .select()
       .from(userSessions)
       .where(eq(userSessions.id, id))
       .limit(1);
 
-    if (rows.length === 0) return null;
-    const raw = rows[0];
+    if (!raw) return null;
 
     return {
       id: raw.id,

@@ -1,7 +1,6 @@
 import { expect, test, describe } from 'bun:test';
 import {
   CreatePlaceSchema,
-  UpdatePlaceSchema,
   ListPlacesQuerySchema,
   PlaceNearbyQuerySchema,
   PlaceIdParamsSchema,

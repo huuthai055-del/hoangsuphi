@@ -1,4 +1,4 @@
-import { GPSLocation } from './value-objects/gps-location.vo';
+import type { GPSLocation } from './value-objects/gps-location.vo';
 import {
   InvalidPlaceNameError,
   InvalidPlaceSlugError,

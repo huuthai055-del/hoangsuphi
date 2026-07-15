@@ -64,6 +64,18 @@ import { DrizzleNotificationRepository } from '@/modules/notifications/repositor
 import { NotificationService } from '@/modules/notifications/service/notification.service';
 import { NotificationsController } from '@/modules/notifications/route/notifications.controller';
 
+import { SearchConfig } from '@/modules/search/config/search.config';
+import { DrizzleSearchRepository } from '@/modules/search/repository/search.repository';
+import { SearchCursorCodec } from '@/modules/search/service/search-cursor';
+import { SearchService } from '@/modules/search/service/search.service';
+import { SearchController } from '@/modules/search/route/search.controller';
+
+import { db } from '@/lib/database/client';
+import { DrizzleNearbyRepository } from '@/modules/nearby/repository/nearby.repository';
+import { NearbyCursorCodec } from '@/modules/nearby/application/nearby-cursor.codec';
+import { NearbySearchService } from '@/modules/nearby/application/nearby-search.service';
+import { NearbyController } from '@/modules/nearby/http/nearby.controller';
+
 class Container {
   private instances = new Map<string, unknown>();
   private factories = new Map<string, () => unknown>();
@@ -302,6 +314,38 @@ class Container {
     this.factories.set('NotificationsController', () => {
       const service = this.resolve<NotificationService>('NotificationService');
       return new NotificationsController(service);
+    });
+
+    // Search read projection
+    this.factories.set('SearchRepository', () => new DrizzleSearchRepository());
+    this.factories.set(
+      'SearchCursorCodec',
+      () => new SearchCursorCodec(SearchConfig.cursorKeyring)
+    );
+    this.factories.set('SearchService', () => {
+      const repository = this.resolve<DrizzleSearchRepository>('SearchRepository');
+      const cursorCodec = this.resolve<SearchCursorCodec>('SearchCursorCodec');
+      return new SearchService(repository, cursorCodec);
+    });
+    this.factories.set('SearchController', () => {
+      const service = this.resolve<SearchService>('SearchService');
+      return new SearchController(service);
+    });
+
+    // Nearby module read projection
+    this.factories.set('NearbyRepository', () => new DrizzleNearbyRepository(db));
+    this.factories.set(
+      'NearbyCursorCodec',
+      () => new NearbyCursorCodec(SearchConfig.cursorKeyring)
+    );
+    this.factories.set('NearbySearchService', () => {
+      const repository = this.resolve<DrizzleNearbyRepository>('NearbyRepository');
+      const cursorCodec = this.resolve<NearbyCursorCodec>('NearbyCursorCodec');
+      return new NearbySearchService(repository, cursorCodec);
+    });
+    this.factories.set('NearbyController', () => {
+      const service = this.resolve<NearbySearchService>('NearbySearchService');
+      return new NearbyController(service);
     });
   }
 }

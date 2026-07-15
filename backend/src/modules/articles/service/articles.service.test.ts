@@ -20,7 +20,6 @@ import type { ICategoriesRepository } from '../repository/categories-repository.
 import type { ITagsRepository } from '../repository/tags-repository.interface';
 import { Article } from '../domain/article.entity';
 import { NotFoundError, ConflictError, ValidationError, AuthorizationError } from '@/common/errors/http.errors';
-import { DuplicateKeyRepositoryError } from '../repository/repository-errors';
 
 describe('ArticlesService & Locked Domain Integration', () => {
   let findByIdMock: ReturnType<typeof mock>;

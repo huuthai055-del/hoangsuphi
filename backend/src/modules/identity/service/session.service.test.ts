@@ -6,7 +6,7 @@ import {
   type UserSessionModel,
   type RefreshTokenModel,
 } from './session.service';
-import { ValidationError, AuthenticationError, NotFoundError } from '@/common/errors/http.errors';
+import { AuthenticationError, NotFoundError } from '@/common/errors/http.errors';
 
 describe('SessionService', () => {
   let service: SessionService;

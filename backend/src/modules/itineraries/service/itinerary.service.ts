@@ -1,4 +1,4 @@
-import { Itinerary, type ItineraryVisibility, type ItineraryStatus } from '../domain/itinerary.entity';
+import { Itinerary, type ItineraryVisibility } from '../domain/itinerary.entity';
 import type { ItineraryItem, ItineraryItemOwnerType } from '../domain/itinerary-item.entity';
 import type { IItineraryRepository, ItineraryFilters } from '../repository/itinerary-repository.interface';
 import { generateUuidV7 } from '@/common/utils/uuid';
@@ -27,24 +27,24 @@ function mapDomainError(err: Error): Error {
   if (err instanceof ItineraryDomainError) {
     const msg = err.message.toLowerCase();
     if (msg.includes('title')) {
-      return new ValidationError({ title: err.message });
+      return new ValidationError('Validation failed', { title: err.message });
     }
     if (msg.includes('day number') || msg.includes('day_number')) {
-      return new ValidationError({ dayNumber: err.message });
+      return new ValidationError('Validation failed', { dayNumber: err.message });
     }
     if (msg.includes('display order') || msg.includes('display_order')) {
-      return new ValidationError({ displayOrder: err.message });
+      return new ValidationError('Validation failed', { displayOrder: err.message });
     }
     if (msg.includes('status') || msg.includes('state')) {
-      return new ValidationError({ status: err.message });
+      return new ValidationError('Validation failed', { status: err.message });
     }
     if (msg.includes('empty')) {
-      return new ValidationError({ items: err.message });
+      return new ValidationError('Validation failed', { items: err.message });
     }
     if (msg.includes('duplicate')) {
-      return new ValidationError({ duplicate: err.message });
+      return new ValidationError('Validation failed', { duplicate: err.message });
     }
-    return new ValidationError({ itinerary: err.message });
+    return new ValidationError('Validation failed', { itinerary: err.message });
   }
   return err;
 }

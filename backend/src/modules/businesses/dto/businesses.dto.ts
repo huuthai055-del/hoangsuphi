@@ -1,5 +1,53 @@
-import { z } from 'zod';
 import { slugify } from '@/common/utils/slug';
+import { z } from 'zod';
+
+const MoneySchema = z
+  .string()
+  .regex(/^(?:0|[1-9]\d{0,9})(?:\.\d{1,2})?$/u, 'Price must be a non-negative NUMERIC(12,2) value')
+  .transform((value) => {
+    const [integerPart = '0', fractionPart = ''] = value.split('.');
+    const normalizedFraction = fractionPart.replace(/0+$/u, '');
+    return normalizedFraction.length > 0 ? `${integerPart}.${normalizedFraction}` : integerPart;
+  });
+
+function priceToMinorUnits(value: string): bigint {
+  const [integerPart = '0', fractionPart = ''] = value.split('.');
+  return BigInt(integerPart) * 100n + BigInt(fractionPart.padEnd(2, '0'));
+}
+
+function validatePriceRange(
+  value: { priceMin?: string | null; priceMax?: string | null },
+  context: z.RefinementCtx
+): void {
+  const hasMin = value.priceMin !== undefined;
+  const hasMax = value.priceMax !== undefined;
+  if (hasMin !== hasMax) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: [hasMin ? 'priceMax' : 'priceMin'],
+      message: 'Price minimum and maximum must be provided together',
+    });
+    return;
+  }
+  if (!hasMin || value.priceMin === null || value.priceMax === null) {
+    if (value.priceMin !== value.priceMax) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['priceMax'],
+        message: 'Price minimum and maximum must both be null when clearing the range',
+      });
+    }
+    return;
+  }
+  if (value.priceMin === undefined || value.priceMax === undefined) return;
+  if (priceToMinorUnits(value.priceMax) < priceToMinorUnits(value.priceMin)) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['priceMax'],
+      message: 'Price maximum must be greater than or equal to minimum',
+    });
+  }
+}
 
 // ==========================================
 // REQUEST SCHEMAS & DTOs
@@ -59,9 +107,12 @@ export const CreateBusinessSchema = z
       .max(512, 'Cover URL must not exceed 512 characters')
       .nullable()
       .optional(),
+    priceMin: MoneySchema.nullable().optional(),
+    priceMax: MoneySchema.nullable().optional(),
     amenityIds: z.array(z.string().uuid('Amenity ID must be a valid UUID')).default([]),
   })
-  .strict();
+  .strict()
+  .superRefine(validatePriceRange);
 
 export type CreateBusinessRequestDto = z.infer<typeof CreateBusinessSchema>;
 
@@ -114,10 +165,13 @@ export const UpdateBusinessSchema = z
       .max(512, 'Cover URL must not exceed 512 characters')
       .nullable()
       .optional(),
+    priceMin: MoneySchema.nullable().optional(),
+    priceMax: MoneySchema.nullable().optional(),
     amenityIds: z.array(z.string().uuid('Amenity ID must be a valid UUID')).optional(),
     status: z.enum(['active', 'inactive']).optional(),
   })
-  .strict();
+  .strict()
+  .superRefine(validatePriceRange);
 
 export type UpdateBusinessRequestDto = z.infer<typeof UpdateBusinessSchema>;
 
@@ -201,6 +255,8 @@ export interface BusinessResponseDto {
   location: { lng: number; lat: number };
   description: string | null;
   coverUrl: string | null;
+  priceMin: string | null;
+  priceMax: string | null;
   status: 'active' | 'inactive';
   amenityIds: string[];
   createdAt: string;
@@ -215,6 +271,8 @@ export interface BusinessSummaryResponseDto {
   slug: string;
   location: { lng: number; lat: number };
   coverUrl: string | null;
+  priceMin: string | null;
+  priceMax: string | null;
   status: 'active' | 'inactive';
   amenityIds: string[];
 }

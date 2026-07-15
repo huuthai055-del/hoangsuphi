@@ -370,7 +370,13 @@ describe('TopList Aggregate Root Domain Entity', () => {
   test('should throw InvalidTopListStateError if already archived (explicit transition message)', () => {
     const list = TopList.create({ id: 'list-01', title: 'Title', slug: 'slug', createdBy: 'user-01' });
     list.archive();
-    const err = (() => { try { list.archive(); } catch (e) { return e; } })() as Error;
+    let err: unknown;
+    try {
+      list.archive();
+    } catch (caught) {
+      err = caught;
+    }
+    if (!(err instanceof Error)) throw new Error('Expected archive to throw');
     expect(err).toBeInstanceOf(InvalidTopListStateError);
     expect(err.message).toContain('DRAFT');
     expect(err.message).toContain('PUBLISHED');

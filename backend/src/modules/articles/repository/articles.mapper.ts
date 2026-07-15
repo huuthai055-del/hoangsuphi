@@ -11,7 +11,7 @@ export interface RawArticle {
   categoryId: string;
   viewCount: number;
   isFeatured: boolean;
-  status: string;
+  status: ArticleStatus;
   publishedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -29,7 +29,7 @@ export const ArticleMapper = {
       thumbnailId: raw.thumbnailId,
       authorId: raw.authorId,
       categoryId: raw.categoryId,
-      status: raw.status as ArticleStatus,
+      status: raw.status,
       viewCount: raw.viewCount,
       isFeatured: raw.isFeatured,
       publishedAt: raw.publishedAt,

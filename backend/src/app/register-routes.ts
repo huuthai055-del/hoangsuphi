@@ -17,6 +17,8 @@ import { faqsRouter } from '@/modules/faqs/route/faqs.route';
 import { topListsRouter } from '@/modules/faqs/route/top-lists.route';
 import { weatherRouter } from '@/modules/weather/route/weather.route';
 import { notificationsRouter } from '@/modules/notifications/route/notifications.route';
+import { searchRouter } from '@/modules/search/route/search.route';
+import { nearbyRouter } from '@/modules/nearby/http/nearby.routes';
 
 export function registerRoutes(app: Hono) {
   // Liveness Check
@@ -55,7 +57,8 @@ export function registerRoutes(app: Hono) {
   v1Router.route('/top-lists', topListsRouter);
   v1Router.route('/weather', weatherRouter);
   v1Router.route('/notifications', notificationsRouter);
+  v1Router.route('/search', searchRouter);
+  v1Router.route('/nearby', nearbyRouter);
 
   app.route(AppConfig.server.apiPrefix, v1Router);
 }
-

@@ -200,6 +200,9 @@ export class Itinerary {
     }
 
     const removedItem = this.props.items[index];
+    if (!removedItem) {
+      throw new ItineraryDomainError(`Itinerary item not found with ID: ${itemId}`);
+    }
     const updateTime = now || new Date();
 
     // Remove the item
@@ -253,15 +256,16 @@ export class Itinerary {
       if (order.displayOrder < 1) {
         throw new ItineraryDomainError('Display order must be at least 1');
       }
-      if (!groups[order.dayNumber]) {
-        groups[order.dayNumber] = [];
-      }
-      groups[order.dayNumber].push(order);
+      const dayGroup = groups[order.dayNumber] ?? [];
+      dayGroup.push(order);
+      groups[order.dayNumber] = dayGroup;
     }
 
     for (const dayStr of Object.keys(groups)) {
       const dayNum = Number(dayStr);
-      const ordersInDay = groups[dayNum].sort((a, b) => a.displayOrder - b.displayOrder);
+      const ordersInDay = groups[dayNum];
+      if (!ordersInDay) continue;
+      ordersInDay.sort((a, b) => a.displayOrder - b.displayOrder);
 
       let expectedOrder = 1;
       for (const order of ordersInDay) {

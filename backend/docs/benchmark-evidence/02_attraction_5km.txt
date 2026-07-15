@@ -1,0 +1,61 @@
+Limit  (cost=12964.01..12989.05 rows=1 width=320) (actual time=7.410..7.422 rows=21 loops=1)
+  Output: 'ATTRACTION'::text, 2, attractions.id, ((attractions.name)::text), ((attractions.slug)::text), (st_y((attractions.location)::geometry)), (st_x((attractions.location)::geometry)), (((st_distance(attractions.location, '0101000020E610000098DD9387852A5A407FFB3A70CEC83640'::geography, true)))::text), (st_distance(attractions.location, '0101000020E610000098DD9387852A5A407FFB3A70CEC83640'::geography, true)), regions.id, ((regions.name)::text), ((regions.slug)::text), ((attractions.cover_url)::text), (((avg((reviews.rating)::numeric)))::text), (COALESCE(((count(reviews.id))::integer), 0))
+  Buffers: shared hit=3845
+  ->  Result  (cost=12964.01..12989.05 rows=1 width=320) (actual time=7.409..7.418 rows=21 loops=1)
+        Output: 'ATTRACTION'::text, (2), attractions.id, ((attractions.name)::text), ((attractions.slug)::text), (st_y((attractions.location)::geometry)), (st_x((attractions.location)::geometry)), ((st_distance(attractions.location, '0101000020E610000098DD9387852A5A407FFB3A70CEC83640'::geography, true)))::text, (st_distance(attractions.location, '0101000020E610000098DD9387852A5A407FFB3A70CEC83640'::geography, true)), regions.id, ((regions.name)::text), ((regions.slug)::text), ((attractions.cover_url)::text), (((avg((reviews.rating)::numeric)))::text), (COALESCE(((count(reviews.id))::integer), 0))
+        Buffers: shared hit=3845
+        ->  Sort  (cost=12964.01..12964.02 rows=1 width=320) (actual time=7.401..7.405 rows=21 loops=1)
+              Output: 'ATTRACTION'::text, 2, attractions.id, ((attractions.name)::text), ((attractions.slug)::text), (st_y((attractions.location)::geometry)), (st_x((attractions.location)::geometry)), (st_distance(attractions.location, '0101000020E610000098DD9387852A5A407FFB3A70CEC83640'::geography, true)), regions.id, ((regions.name)::text), ((regions.slug)::text), ((attractions.cover_url)::text), (((avg((reviews.rating)::numeric)))::text), (COALESCE(((count(reviews.id))::integer), 0)), attractions.location
+              Sort Key: (st_distance(attractions.location, '0101000020E610000098DD9387852A5A407FFB3A70CEC83640'::geography, true)), attractions.id
+              Sort Method: top-N heapsort  Memory: 34kB
+              Buffers: shared hit=3845
+              ->  Nested Loop Left Join  (cost=109.37..12964.00 rows=1 width=320) (actual time=0.216..7.027 rows=899 loops=1)
+                    Output: 'ATTRACTION'::text, 2, attractions.id, (attractions.name)::text, (attractions.slug)::text, st_y((attractions.location)::geometry), st_x((attractions.location)::geometry), st_distance(attractions.location, '0101000020E610000098DD9387852A5A407FFB3A70CEC83640'::geography, true), regions.id, (regions.name)::text, (regions.slug)::text, (attractions.cover_url)::text, ((avg((reviews.rating)::numeric)))::text, COALESCE(((count(reviews.id))::integer), 0), attractions.location
+                    Buffers: shared hit=3845
+                    ->  Nested Loop  (cost=101.05..12943.15 rows=1 width=668) (actual time=0.182..2.728 rows=899 loops=1)
+                          Output: attractions.id, attractions.name, attractions.slug, attractions.location, attractions.cover_url, regions.id, regions.name, regions.slug
+                          Inner Unique: true
+                          Join Filter: (attractions.region_id = regions.id)
+                          Rows Removed by Join Filter: 4241
+                          Buffers: shared hit=1148
+                          ->  Nested Loop  (cost=101.05..12941.92 rows=1 width=630) (actual time=0.177..1.292 rows=899 loops=1)
+                                Output: attractions.id, attractions.name, attractions.slug, attractions.location, attractions.cover_url, attractions.region_id
+                                Buffers: shared hit=249
+                                ->  Seq Scan on public.attraction_categories  (cost=0.00..1.05 rows=3 width=16) (actual time=0.007..0.009 rows=3 loops=1)
+                                      Output: attraction_categories.id, attraction_categories.code, attraction_categories.name, attraction_categories.map_icon, attraction_categories.map_color, attraction_categories.is_utility, attraction_categories.created_at, attraction_categories.updated_at
+                                      Filter: (NOT attraction_categories.is_utility)
+                                      Rows Removed by Filter: 2
+                                      Buffers: shared hit=1
+                                ->  Bitmap Heap Scan on public.attractions  (cost=101.05..4313.61 rows=1 width=646) (actual time=0.136..0.394 rows=300 loops=3)
+                                      Output: attractions.id, attractions.region_id, attractions.category_id, attractions.name, attractions.slug, attractions.location, attractions.description, attractions.cover_url, attractions.status, attractions.created_at, attractions.updated_at, attractions.deleted_at
+                                      Recheck Cond: (attractions.category_id = attraction_categories.id)
+                                      Filter: ((attractions.deleted_at IS NULL) AND ((attractions.status)::text = 'active'::text) AND st_dwithin(attractions.location, '0101000020E610000098DD9387852A5A407FFB3A70CEC83640'::geography, '5000'::double precision, true))
+                                      Rows Removed by Filter: 33
+                                      Heap Blocks: exact=176
+                                      Buffers: shared hit=248
+                                      ->  BitmapAnd  (cost=101.05..101.05 rows=333 width=0) (actual time=0.123..0.124 rows=0 loops=3)
+                                            Buffers: shared hit=72
+                                            ->  Bitmap Index Scan on attractions_category_id_idx  (cost=0.00..8.03 rows=500 width=0) (actual time=0.018..0.018 rows=500 loops=3)
+                                                  Index Cond: (attractions.category_id = attraction_categories.id)
+                                                  Buffers: shared hit=6
+                                            ->  Bitmap Index Scan on attractions_location_gist_idx  (cost=0.00..92.77 rows=1667 width=0) (actual time=0.103..0.103 rows=1667 loops=3)
+                                                  Index Cond: (attractions.location && _st_expand('0101000020E610000098DD9387852A5A407FFB3A70CEC83640'::geography, '5000'::double precision))
+                                                  Buffers: shared hit=66
+                          ->  Seq Scan on public.regions  (cost=0.00..1.10 rows=10 width=54) (actual time=0.000..0.001 rows=6 loops=899)
+                                Output: regions.id, regions.parent_id, regions.name, regions.slug, regions.level, regions.path, regions.description, regions.latitude, regions.longitude, regions.geom, regions.created_at, regions.updated_at, regions.deleted_at
+                                Filter: (regions.deleted_at IS NULL)
+                                Buffers: shared hit=899
+                    ->  Aggregate  (cost=8.32..8.33 rows=1 width=36) (actual time=0.002..0.002 rows=1 loops=899)
+                          Output: avg((reviews.rating)::numeric), (count(reviews.id))::integer
+                          Buffers: shared hit=2697
+                          ->  Index Scan using reviews_owner_idx on public.reviews  (cost=0.29..8.31 rows=1 width=20) (actual time=0.001..0.002 rows=1 loops=899)
+                                Output: reviews.id, reviews.user_id, reviews.owner_type, reviews.owner_id, reviews.rating, reviews.title, reviews.content, reviews.status, reviews.created_at, reviews.updated_at, reviews.deleted_at
+                                Index Cond: ((reviews.owner_type = 'ATTRACTION'::owner_type) AND (reviews.owner_id = attractions.id))
+                                Filter: ((reviews.deleted_at IS NULL) AND (reviews.status = 'APPROVED'::review_status))
+                                Rows Removed by Filter: 0
+                                Buffers: shared hit=2697
+Settings: search_path = 'public, topology, tiger, drizzle'
+Planning:
+  Buffers: shared hit=74
+Planning Time: 1.001 ms
+Execution Time: 7.490 ms

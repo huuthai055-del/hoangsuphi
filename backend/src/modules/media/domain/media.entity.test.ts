@@ -271,12 +271,14 @@ describe('Media Domain Entity & Storage Mock', () => {
   describe('Storage Abstraction Contract Verification', () => {
     test('should allow mocking IMediaStorage successfully', async () => {
       const mockUpload = mock(() => Promise.resolve());
+      const mockDownload = mock(() => Promise.resolve(Buffer.from('mock file data')));
       const mockDelete = mock(() => Promise.resolve());
       const mockExists = mock(() => Promise.resolve(true));
       const mockGetUrl = mock(() => Promise.resolve('https://s3.hoangsuphi.vn/file.jpg'));
 
       const storage: IMediaStorage = {
         upload: mockUpload,
+        download: mockDownload,
         delete: mockDelete,
         exists: mockExists,
         getUrl: mockGetUrl,
@@ -310,6 +312,7 @@ describe('Media Domain Entity & Storage Mock', () => {
         status: 'READY',
         ownerType: 'ARTICLE',
         ownerId: '019f4bc4-f550-7d52-bba4-3b6258b55701',
+        uploadedBy: null,
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,

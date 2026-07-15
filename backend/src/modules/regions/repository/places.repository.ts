@@ -91,13 +91,13 @@ export class DrizzleTouristPlacesRepository implements ITouristPlacesRepository 
     // PostgreSQL PostGIS geography distance validation: ST_DWithin
     // ST_DWithin checks if two points are within the specified radius (in meters).
     // ST_MakePoint and geography cast calculate the shortest distance along the earth's curved surface.
-    // It utilizes the GIST spatial index on the geom column for optimal sub-millisecond query performance.
+    // It utilizes the GIST spatial index on the location column.
     const results = await db
       .select()
       .from(touristPlaces)
       .where(
         and(
-          sql`ST_DWithin(${touristPlaces.geom}, ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography, ${radiusMeters})`,
+          sql`ST_DWithin(${touristPlaces.location}, ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography, ${radiusMeters})`,
           isNull(touristPlaces.deletedAt)
         )
       )
@@ -119,7 +119,7 @@ export class DrizzleTouristPlacesRepository implements ITouristPlacesRepository 
         regionId: data.regionId,
         name: data.name,
         slug: data.slug,
-        geom: data.geom,
+        location: data.location,
         description: data.description,
         coverUrl: data.coverUrl,
         updatedAt: new Date(),

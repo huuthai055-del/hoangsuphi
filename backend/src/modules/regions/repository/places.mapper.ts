@@ -7,7 +7,7 @@ export const TouristPlaceMapper = {
     regionId: string;
     name: string;
     slug: string;
-    geom: { lng: number; lat: number };
+    location: { lng: number; lat: number };
     description: string | null;
     coverUrl: string | null;
     createdAt: Date;
@@ -19,7 +19,7 @@ export const TouristPlaceMapper = {
       regionId: raw.regionId,
       name: raw.name,
       slug: raw.slug,
-      location: new GPSLocation(Number(raw.geom.lng), Number(raw.geom.lat)),
+      location: new GPSLocation(Number(raw.location.lng), Number(raw.location.lat)),
       description: raw.description,
       coverUrl: raw.coverUrl,
       status: raw.deletedAt ? 'inactive' : 'active',
@@ -35,7 +35,7 @@ export const TouristPlaceMapper = {
       regionId: place.regionId,
       name: place.name,
       slug: place.slug,
-      geom: { lng: place.location.lng, lat: place.location.lat },
+      location: { lng: place.location.lng, lat: place.location.lat },
       description: place.description,
       coverUrl: place.coverUrl,
       createdAt: place.createdAt,

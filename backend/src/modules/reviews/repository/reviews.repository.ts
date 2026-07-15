@@ -9,7 +9,7 @@ import type {
   FavoriteFilters,
   FavoritePagination,
 } from './reviews-repository.interface';
-import type { Review, OwnerType, ReviewStatus } from '../domain/reviews.entity';
+import type { Review, OwnerType } from '../domain/reviews.entity';
 import type { Favorite } from '../domain/favorites.entity';
 import {
   reviews as reviewsSchema,
@@ -343,7 +343,7 @@ export class DrizzleReviewsRepository implements IReviewsRepository {
 
       return row?.count ? Number.parseInt(row.count, 10) : 0;
     } catch (err) {
-      mapDbError(err, 'count', filters);
+      mapDbError(err, 'count', filters ? { ...filters } : undefined);
     }
   }
 }
@@ -501,7 +501,7 @@ export class DrizzleFavoritesRepository implements IFavoritesRepository {
 
       return row?.count ? Number.parseInt(row.count, 10) : 0;
     } catch (err) {
-      mapDbError(err, 'countFavorite', filters);
+      mapDbError(err, 'countFavorite', filters ? { ...filters } : undefined);
     }
   }
 }

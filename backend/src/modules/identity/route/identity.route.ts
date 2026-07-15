@@ -10,6 +10,7 @@ import { validateBody } from '@/middleware/validator';
 import { rateLimit } from '@/middleware/rate-limit';
 import type { MiddlewareHandler } from 'hono';
 import type { IdentityController } from './identity.controller';
+import type { AuthService } from '../service/auth.service';
 
 const identityRouter = new Hono();
 

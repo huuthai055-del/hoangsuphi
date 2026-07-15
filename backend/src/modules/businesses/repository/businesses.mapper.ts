@@ -1,5 +1,5 @@
-import { Business } from '../domain/business.entity';
 import { GPSLocation } from '@/modules/regions/domain/value-objects/gps-location.vo';
+import { Business } from '../domain/business.entity';
 
 export const BusinessMapper = {
   toDomain(
@@ -12,6 +12,8 @@ export const BusinessMapper = {
       location: { lng: number; lat: number };
       description: string | null;
       coverUrl: string | null;
+      priceMin: string | null;
+      priceMax: string | null;
       status: string;
       createdAt: Date;
       updatedAt: Date;
@@ -28,6 +30,8 @@ export const BusinessMapper = {
       location: new GPSLocation(Number(raw.location.lng), Number(raw.location.lat)),
       description: raw.description,
       coverUrl: raw.coverUrl,
+      priceMin: raw.priceMin,
+      priceMax: raw.priceMax,
       status: raw.deletedAt ? 'inactive' : (raw.status as 'active' | 'inactive'),
       amenityIds,
       createdAt: raw.createdAt,
@@ -46,6 +50,8 @@ export const BusinessMapper = {
       location: { lng: business.location.lng, lat: business.location.lat },
       description: business.description,
       coverUrl: business.coverUrl,
+      priceMin: business.priceMin,
+      priceMax: business.priceMax,
       status: business.status,
       createdAt: business.createdAt,
       updatedAt: business.updatedAt,

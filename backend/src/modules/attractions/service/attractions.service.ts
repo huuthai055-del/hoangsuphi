@@ -135,7 +135,7 @@ export class AttractionsService {
       throw new ValidationError('Cannot update a soft-deleted attraction');
     }
 
-    const updateProps: any = {};
+    const updateProps: Parameters<Attraction['update']>[0] = {};
 
     if (command.regionId !== undefined && command.regionId !== attraction.regionId) {
       await this.verifyRegionExists(command.regionId);

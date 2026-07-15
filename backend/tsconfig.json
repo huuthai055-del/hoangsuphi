@@ -19,6 +19,7 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
+    "types": ["bun", "node"],
     "baseUrl": ".",
     "paths": {
       "@/config/*": ["./src/config/*"],

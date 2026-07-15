@@ -1,0 +1,44 @@
+Limit  (cost=10040.64..10065.67 rows=1 width=320) (actual time=14.819..14.828 rows=21 loops=1)
+  Output: 'TOURIST_PLACE'::text, 1, tourist_places.id, ((tourist_places.name)::text), ((tourist_places.slug)::text), (st_y((tourist_places.location)::geometry)), (st_x((tourist_places.location)::geometry)), (((st_distance(tourist_places.location, '0101000020E610000098DD9387852A5A407FFB3A70CEC83640'::geography, true)))::text), (st_distance(tourist_places.location, '0101000020E610000098DD9387852A5A407FFB3A70CEC83640'::geography, true)), regions.id, ((regions.name)::text), ((regions.slug)::text), ((tourist_places.cover_url)::text), (((avg((reviews.rating)::numeric)))::text), (COALESCE(((count(reviews.id))::integer), 0))
+  Buffers: shared hit=3270
+  ->  Result  (cost=10040.64..10065.67 rows=1 width=320) (actual time=14.818..14.824 rows=21 loops=1)
+        Output: 'TOURIST_PLACE'::text, (1), tourist_places.id, ((tourist_places.name)::text), ((tourist_places.slug)::text), (st_y((tourist_places.location)::geometry)), (st_x((tourist_places.location)::geometry)), ((st_distance(tourist_places.location, '0101000020E610000098DD9387852A5A407FFB3A70CEC83640'::geography, true)))::text, (st_distance(tourist_places.location, '0101000020E610000098DD9387852A5A407FFB3A70CEC83640'::geography, true)), regions.id, ((regions.name)::text), ((regions.slug)::text), ((tourist_places.cover_url)::text), (((avg((reviews.rating)::numeric)))::text), (COALESCE(((count(reviews.id))::integer), 0))
+        Buffers: shared hit=3270
+        ->  Sort  (cost=10040.64..10040.64 rows=1 width=320) (actual time=14.814..14.816 rows=21 loops=1)
+              Output: 'TOURIST_PLACE'::text, 1, tourist_places.id, ((tourist_places.name)::text), ((tourist_places.slug)::text), (st_y((tourist_places.location)::geometry)), (st_x((tourist_places.location)::geometry)), (st_distance(tourist_places.location, '0101000020E610000098DD9387852A5A407FFB3A70CEC83640'::geography, true)), regions.id, ((regions.name)::text), ((regions.slug)::text), ((tourist_places.cover_url)::text), (((avg((reviews.rating)::numeric)))::text), (COALESCE(((count(reviews.id))::integer), 0)), tourist_places.location
+              Sort Key: (st_distance(tourist_places.location, '0101000020E610000098DD9387852A5A407FFB3A70CEC83640'::geography, true)), tourist_places.id
+              Sort Method: top-N heapsort  Memory: 34kB
+              Buffers: shared hit=3270
+              ->  Nested Loop Left Join  (cost=8.59..10040.63 rows=1 width=320) (actual time=8.724..14.479 rows=752 loops=1)
+                    Output: 'TOURIST_PLACE'::text, 1, tourist_places.id, (tourist_places.name)::text, (tourist_places.slug)::text, st_y((tourist_places.location)::geometry), st_x((tourist_places.location)::geometry), st_distance(tourist_places.location, '0101000020E610000098DD9387852A5A407FFB3A70CEC83640'::geography, true), regions.id, (regions.name)::text, (regions.slug)::text, (tourist_places.cover_url)::text, ((avg((reviews.rating)::numeric)))::text, COALESCE(((count(reviews.id))::integer), 0), tourist_places.location
+                    Buffers: shared hit=3264
+                    ->  Nested Loop  (cost=0.27..10019.77 rows=1 width=658) (actual time=8.661..10.661 rows=752 loops=1)
+                          Output: tourist_places.id, tourist_places.name, tourist_places.slug, tourist_places.location, tourist_places.cover_url, regions.id, regions.name, regions.slug
+                          Inner Unique: true
+                          Join Filter: (regions.id = tourist_places.region_id)
+                          Rows Removed by Join Filter: 3554
+                          Buffers: shared hit=1008
+                          ->  Index Scan using tourist_places_location_gist_idx on public.tourist_places  (cost=0.27..10018.55 rows=1 width=620) (actual time=8.636..9.333 rows=752 loops=1)
+                                Output: tourist_places.id, tourist_places.region_id, tourist_places.name, tourist_places.slug, tourist_places.location, tourist_places.description, tourist_places.cover_url, tourist_places.status, tourist_places.created_at, tourist_places.updated_at, tourist_places.deleted_at
+                                Index Cond: (tourist_places.location && _st_expand('0101000020E610000098DD9387852A5A407FFB3A70CEC83640'::geography, '5000'::double precision))
+                                Filter: ((tourist_places.deleted_at IS NULL) AND ((tourist_places.status)::text = 'active'::text) AND st_dwithin(tourist_places.location, '0101000020E610000098DD9387852A5A407FFB3A70CEC83640'::geography, '5000'::double precision, true))
+                                Rows Removed by Filter: 48
+                                Buffers: shared hit=256
+                          ->  Seq Scan on public.regions  (cost=0.00..1.10 rows=10 width=54) (actual time=0.001..0.001 rows=6 loops=752)
+                                Output: regions.id, regions.parent_id, regions.name, regions.slug, regions.level, regions.path, regions.description, regions.latitude, regions.longitude, regions.geom, regions.created_at, regions.updated_at, regions.deleted_at
+                                Filter: (regions.deleted_at IS NULL)
+                                Buffers: shared hit=752
+                    ->  Aggregate  (cost=8.32..8.33 rows=1 width=36) (actual time=0.003..0.003 rows=1 loops=752)
+                          Output: avg((reviews.rating)::numeric), (count(reviews.id))::integer
+                          Buffers: shared hit=2256
+                          ->  Index Scan using reviews_owner_idx on public.reviews  (cost=0.29..8.31 rows=1 width=20) (actual time=0.002..0.002 rows=1 loops=752)
+                                Output: reviews.id, reviews.user_id, reviews.owner_type, reviews.owner_id, reviews.rating, reviews.title, reviews.content, reviews.status, reviews.created_at, reviews.updated_at, reviews.deleted_at
+                                Index Cond: ((reviews.owner_type = 'PLACE'::owner_type) AND (reviews.owner_id = tourist_places.id))
+                                Filter: ((reviews.deleted_at IS NULL) AND (reviews.status = 'APPROVED'::review_status))
+                                Rows Removed by Filter: 0
+                                Buffers: shared hit=2256
+Settings: search_path = 'public, topology, tiger, drizzle'
+Planning:
+  Buffers: shared hit=260
+Planning Time: 7.538 ms
+Execution Time: 14.926 ms

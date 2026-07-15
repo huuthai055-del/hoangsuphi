@@ -9,7 +9,7 @@ describe('TouristPlaceMapper', () => {
       regionId: '3a552ef3-40e1-7ca7-8000-000000000002',
       name: 'Bản Phùng Rice Terrace',
       slug: 'ban-phung-rice-terrace',
-      geom: { lng: 104.5, lat: 22.6 },
+      location: { lng: 104.5, lat: 22.6 },
       description: 'Stunning rice terraces',
       coverUrl: 'https://example.com/cover.jpg',
       createdAt: new Date('2026-07-07T12:00:00Z'),
@@ -20,12 +20,12 @@ describe('TouristPlaceMapper', () => {
     const domain = TouristPlaceMapper.toDomain(raw);
     expect(domain).toBeInstanceOf(TouristPlace);
     expect(domain.id).toBe(raw.id);
-    expect(domain.location.lng).toBe(raw.geom.lng);
-    expect(domain.location.lat).toBe(raw.geom.lat);
+    expect(domain.location.lng).toBe(raw.location.lng);
+    expect(domain.location.lat).toBe(raw.location.lat);
 
     const persistence = TouristPlaceMapper.toPersistence(domain);
     expect(persistence.id).toBe(raw.id);
-    expect(persistence.geom.lng).toBe(raw.geom.lng);
-    expect(persistence.geom.lat).toBe(raw.geom.lat);
+    expect(persistence.location.lng).toBe(raw.location.lng);
+    expect(persistence.location.lat).toBe(raw.location.lat);
   });
 });

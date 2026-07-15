@@ -15,7 +15,7 @@ export class TagsController {
 
   public list = async (c: Context) => {
     const query = c.get('validQuery') as ListTagsQueryDto;
-    const tags = await this.service.listTags({ isFeatured: query.isFeatured });
+    const tags = await this.service.listTags({ featuredOnly: query.isFeatured });
     const mapped = tags.map((t) => mapTagToResponse(t));
     return c.json({ data: mapped }, 200);
   };

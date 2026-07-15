@@ -1,4 +1,4 @@
-import { expect, test, describe } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import { CreateBusinessSchema, UpdateBusinessSchema } from './businesses.dto';
 
 describe('Business DTO Validation', () => {
@@ -49,5 +49,36 @@ describe('Business DTO Validation', () => {
     };
     const result = CreateBusinessSchema.safeParse(payload);
     expect(result.success).toBe(false);
+  });
+
+  test('validates, canonicalizes and clears a complete VND price range', () => {
+    const created = CreateBusinessSchema.safeParse({
+      ...validPayload,
+      priceMin: '100000.00',
+      priceMax: '250000.50',
+    });
+    expect(created.success).toBe(true);
+    if (created.success) {
+      expect(created.data.priceMin).toBe('100000');
+      expect(created.data.priceMax).toBe('250000.5');
+    }
+    expect(UpdateBusinessSchema.safeParse({ priceMin: null, priceMax: null }).success).toBe(true);
+  });
+
+  test('rejects incomplete, reversed or out-of-range prices', () => {
+    expect(CreateBusinessSchema.safeParse({ ...validPayload, priceMin: '100000' }).success).toBe(
+      false
+    );
+    expect(
+      CreateBusinessSchema.safeParse({ ...validPayload, priceMin: '250000', priceMax: '100000' })
+        .success
+    ).toBe(false);
+    expect(
+      CreateBusinessSchema.safeParse({
+        ...validPayload,
+        priceMin: '10000000000.00',
+        priceMax: '10000000000.00',
+      }).success
+    ).toBe(false);
   });
 });

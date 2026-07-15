@@ -7,7 +7,7 @@ const selectSpy = mock(() => mockDbChain);
 const insertSpy = mock(() => mockDbChain);
 const updateSpy = mock(() => mockDbChain);
 const deleteSpy = mock(() => mockDbChain);
-const valuesSpy = mock(() => mockDbChain);
+const valuesSpy = mock((_values: unknown) => mockDbChain);
 const whereSpy = mock(() => mockDbChain);
 const innerJoinSpy = mock(() => mockDbChain);
 const limitSpy = mock(() => mockDbChain);
@@ -112,7 +112,7 @@ describe('Repositories Layer', () => {
     thumbnailId: '019f4bc4-f550-7d52-bba4-3b6258b55709',
     authorId: '019f4bc4-f550-7d52-bba4-3b6258b55710',
     categoryId: categoryId,
-    status: 'draft',
+    status: 'draft' as const,
     viewCount: 150,
     isFeatured: false,
     publishedAt: null,
@@ -181,7 +181,7 @@ describe('Repositories Layer', () => {
       mockResolveValue = [rawCategory];
       const results = await repo.findAll();
       expect(results.length).toBe(1);
-      expect(results[0].id).toBe(categoryId);
+      expect(results[0]?.id).toBe(categoryId);
     });
 
     test('exists() and existsByCode() should return boolean', async () => {
@@ -470,7 +470,8 @@ describe('Repositories Layer', () => {
       // Duplicate tag IDs should be deduped to a single insert
       await repo.addTagsToArticle(articleId, [tagId, tagId, tagId]);
       expect(insertSpy).toHaveBeenCalledTimes(1);
-      const insertCall = valuesSpy.mock.calls[0][0];
+      const insertCall = valuesSpy.mock.calls.at(0)?.[0];
+      if (!Array.isArray(insertCall)) throw new Error('Expected a bulk tag insert');
       expect(insertCall.length).toBe(1); // only 1 unique tagId
 
       insertSpy.mockClear();
@@ -492,7 +493,8 @@ describe('Repositories Layer', () => {
       await repo.replaceTagsOfArticle(articleId, [tagId, tagId]);
       expect(deleteSpy).toHaveBeenCalled();
       expect(insertSpy).toHaveBeenCalled();
-      const insertCall = valuesSpy.mock.calls[0][0];
+      const insertCall = valuesSpy.mock.calls.at(0)?.[0];
+      if (!Array.isArray(insertCall)) throw new Error('Expected a bulk tag insert');
       expect(insertCall.length).toBe(1); // deduped
 
       insertSpy.mockClear();
@@ -516,7 +518,7 @@ describe('Repositories Layer', () => {
       const res = await repo.search(
         {
           keyword: 'trekking 100% _abc_',
-          status: 'draft',
+    status: 'draft' as const,
           categoryId,
           isFeatured: true,
           tagId,

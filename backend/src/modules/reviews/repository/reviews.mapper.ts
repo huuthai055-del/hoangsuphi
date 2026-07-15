@@ -41,7 +41,11 @@ export const ReviewsMapper = {
   },
 
   toPersistence(domain: Review): RawReview {
-    return domain.toPersistence();
+    const raw = domain.toPersistence();
+    return {
+      ...raw,
+      deletedAt: raw.deletedAt ?? null,
+    };
   },
 };
 

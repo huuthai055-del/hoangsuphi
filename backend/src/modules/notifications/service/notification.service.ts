@@ -33,19 +33,19 @@ function mapDomainError(err: Error): Error {
     return new NotFoundError(err.message, { cause: err });
   }
   if (err instanceof InvalidNotificationTitleError) {
-    return new ValidationError({ title: err.message });
+    return new ValidationError('Validation failed', { title: err.message });
   }
   if (err instanceof InvalidNotificationMessageError) {
-    return new ValidationError({ message: err.message });
+    return new ValidationError('Validation failed', { message: err.message });
   }
   if (err instanceof InvalidNotificationUserError) {
-    return new ValidationError({ userId: err.message });
+    return new ValidationError('Validation failed', { userId: err.message });
   }
   if (err instanceof InvalidNotificationStateError || err instanceof ImmutableNotificationError) {
-    return new ValidationError({ state: err.message });
+    return new ValidationError('Validation failed', { state: err.message });
   }
   if (err instanceof NotificationDomainError) {
-    return new ValidationError({ notification: err.message });
+    return new ValidationError('Validation failed', { notification: err.message });
   }
   return err;
 }

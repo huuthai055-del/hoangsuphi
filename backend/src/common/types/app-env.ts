@@ -3,8 +3,8 @@ import type { AuthenticatedUser } from '@/modules/identity/middleware/identity.c
 export interface AppEnv {
   Variables: {
     user: AuthenticatedUser;
-    validBody: any;
-    validParams: any;
-    validQuery: any;
+    validBody: unknown;
+    validParams: unknown;
+    validQuery: unknown;
   };
 }

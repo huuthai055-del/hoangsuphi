@@ -1,5 +1,4 @@
 import {
-  NotificationDomainError,
   InvalidNotificationStateError,
   ImmutableNotificationError,
   InvalidNotificationTitleError,

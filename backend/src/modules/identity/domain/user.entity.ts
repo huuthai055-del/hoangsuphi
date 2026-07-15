@@ -199,8 +199,8 @@ export class User {
   }
 
   public increaseFailedLoginAttempts(
-    maxAttempts: number = 5,
-    lockoutDurationMs: number = 15 * 60 * 1000
+    maxAttempts = 5,
+    lockoutDurationMs = 15 * 60 * 1000
   ): void {
     this.ensureNotDeleted();
     this._failedLoginAttempts += 1;

@@ -1,5 +1,5 @@
 import { expect, test, describe, beforeEach, afterEach, spyOn, mock } from 'bun:test';
-import { AuthService, type LoginResult, type RefreshResult } from './auth.service';
+import { AuthService } from './auth.service';
 import { hashToken } from '@/common/utils/token-hash';
 import { User } from '../domain/user.entity';
 import {

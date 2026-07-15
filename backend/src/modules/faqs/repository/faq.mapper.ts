@@ -1,4 +1,4 @@
-import type { Faq, FaqProps, FaqStatus } from '../domain/faq.entity';
+import type { Faq, FaqStatus } from '../domain/faq.entity';
 import { Faq as FaqClass } from '../domain/faq.entity';
 import type { TopList } from '../domain/top-list.entity';
 import { TopList as TopListClass } from '../domain/top-list.entity';

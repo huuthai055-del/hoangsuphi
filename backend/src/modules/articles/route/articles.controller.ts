@@ -43,11 +43,11 @@ export class ArticlesController {
       },
       {
         page: query.page,
-        limit: query.limit,
+        pageSize: query.limit,
       },
       {
-        sortBy: query.sort,
-        sortOrder: query.order,
+        field: query.sort,
+        order: query.order === 'asc' ? 'ASC' : 'DESC',
       }
     );
 

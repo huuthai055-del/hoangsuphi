@@ -1,16 +1,16 @@
 import type { Context } from 'hono';
-import type { BusinessesService } from '../service/businesses.service';
 import type { Business } from '../domain/business.entity';
 import type {
-  CreateBusinessRequestDto,
-  UpdateBusinessRequestDto,
-  ListBusinessesQueryDto,
-  BusinessNearbyQueryDto,
   BusinessIdParamsDto,
-  BusinessSlugParamsDto,
+  BusinessNearbyQueryDto,
   BusinessResponseDto,
+  BusinessSlugParamsDto,
   BusinessSummaryResponseDto,
+  CreateBusinessRequestDto,
+  ListBusinessesQueryDto,
+  UpdateBusinessRequestDto,
 } from '../dto/businesses.dto';
+import type { BusinessesService } from '../service/businesses.service';
 
 export class BusinessesController {
   constructor(private readonly service: BusinessesService) {}
@@ -25,6 +25,8 @@ export class BusinessesController {
       location: { lng: business.location.lng, lat: business.location.lat },
       description: business.description,
       coverUrl: business.coverUrl,
+      priceMin: business.priceMin,
+      priceMax: business.priceMax,
       status: business.status,
       amenityIds: business.amenityIds,
       createdAt: business.createdAt.toISOString(),
@@ -41,6 +43,8 @@ export class BusinessesController {
       slug: business.slug,
       location: { lng: business.location.lng, lat: business.location.lat },
       coverUrl: business.coverUrl,
+      priceMin: business.priceMin,
+      priceMax: business.priceMax,
       status: business.status,
       amenityIds: business.amenityIds,
     };
@@ -122,6 +126,8 @@ export class BusinessesController {
       location: body.location,
       description: body.description,
       coverUrl: body.coverUrl,
+      priceMin: body.priceMin,
+      priceMax: body.priceMax,
       amenityIds: body.amenityIds,
     });
 
@@ -140,6 +146,8 @@ export class BusinessesController {
       location: body.location,
       description: body.description,
       coverUrl: body.coverUrl,
+      priceMin: body.priceMin,
+      priceMax: body.priceMax,
       amenityIds: body.amenityIds,
       status: body.status,
     });

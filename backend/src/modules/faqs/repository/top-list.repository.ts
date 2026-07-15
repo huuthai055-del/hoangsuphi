@@ -281,7 +281,7 @@ export class DrizzleTopListRepository implements ITopListRepository {
         .where(and(...conditions));
       return row?.count ? Number.parseInt(row.count, 10) : 0;
     } catch (err) {
-      mapDbError(err, 'count', filters);
+      mapDbError(err, 'count', filters ? { ...filters } : undefined);
     }
   }
 }
