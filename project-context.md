@@ -15,7 +15,7 @@
 
 # 📋 PROJECT CONTEXT — CỔNG THÔNG TIN DU LỊCH HOÀNG SU PHÌ
  
-> **Cập nhật lần cuối:** 2026-07-19 | **Phiên:** #041 | **Trạng thái:** 🚧 Phase 4.5 Email — IN PROGRESS (Step 4.5.2 LOCKED)
+> **Cập nhật lần cuối:** 2026-07-20 | **Phiên:** #045 | **Trạng thái:** 🔒 Phase 4 MVP code baseline LOCKED; Phase 4.5 production Resend activation pending domain/DNS.
  
 ---
  
@@ -30,7 +30,7 @@
 | **Ngôn ngữ chính** | Tiếng Việt (Ưu tiên) — Hỗ trợ: EN, ZH, KO, JA (Phase sau) |
 | **Thị trường mục tiêu** | Du khách nội địa Việt Nam + khách nước ngoài (backpacker) |
 | **Tạo dự án** | 2026-07-06 |
-| **Trạng thái hiện tại** | 🚧 Phase 4.5 Email — IN PROGRESS (Step 4.5.2 LOCKED) |
+| **Trạng thái hiện tại** | 🔒 Phase 4.1–4.8 MVP code baseline LOCKED; Step 4.5.6 chỉ kích hoạt Resend production sau khi có domain và xác minh DNS/sender. Phase 5 chưa bắt đầu. |
 
 ### Mục tiêu chiến lược
 
@@ -262,18 +262,26 @@ scope: api | db | frontend | infra | auth | search | media
 | 15 | Weather, Notifications, Itineraries, FAQs & Top Lists Modules — Domain, Repositories, Services, DTOs, Controllers, Routes, DI Container, Integration Tests & Locked | #017 | ✅ |
 | 16 | Phase 4.4 SEO — Backend Foundation, Sitemap, Robots, Next.js minimal shell & SSR metadata | #040 | 🔒 LOCKED |
 | 17 | Step 4.5.2 Verify Email — token security, Redis rate limits/idempotency, resend/confirm API và PostgreSQL/Redis integration verification | #041 | 🔒 LOCKED |
+| 18 | Phase 4.5 Email — Verify Email, Forgot/Reset Password, Contact Form, FakeEmailSender, Redis/PostgreSQL verification | #042 | ✅ CODE COMPLETE — production Resend activation pending domain |
+| 19 | Phase 4.6 Redirect Management — registry/resolver, Redis cache, Next.js execution và end-to-end verification | #043 | 🔒 LOCKED |
+| 20 | Phase 4.7 Recommendation — SQL/PostGIS public read model, signed cursor, visibility và no-leak verification | #044 | 🔒 LOCKED |
+| 21 | Phase 4.8 Live Harvest Status — admin lifecycle, public current/timeline, Media-safe projection và PostgreSQL verification | #045 | 🔒 LOCKED |
+| 22 | Phase 4 final re-audit — backend/frontend regression, exception register và umbrella closeout | #045 | 🔒 MVP CODE BASELINE LOCKED |
 
 ---
 
 ## 8. CURRENT TASK
 
-> **Phiên #041 — 2026-07-19 (PHASE 4.5 EMAIL — STEP 4.5.2 LOCKED)**
+> **Phiên #045 — 2026-07-20 (PHASE 4 FINAL AUDIT — MVP CODE BASELINE LOCKED)**
 
-- [x] Hoàn thành và khóa Contract v0.5 cùng Step 4.5.1 Email Foundation, One-Time Token Repository và Redis infrastructure.
-- [x] Hoàn thành và 🔒 LOCK Step 4.5.2 Verify Email: register integration, resend/confirm API, typed provider-failure policy, Redis rate limit/idempotency và FakeEmailSender.
-- [x] Loại bỏ dummy token persistence; generic resend không còn có thể lỗi foreign key hoặc lộ trạng thái qua timing bounded by provider timeout plus 500ms grace.
-- [x] Xác minh PostgreSQL token/re-send integration, Redis live `SET NX`, typecheck, lint, build và full backend regression: 1246 pass, 67 skip, 0 fail.
-- [x] Cập nhật closeout và nhận phê duyệt người dùng để khóa Step 4.5.2.
+- [x] Step 4.8.1 Harvest Foundation/Admin Lifecycle được người dùng cho phép tiếp tục và đưa vào final audit.
+- [x] Step 4.8.2 public current-status và region timeline đã triển khai bằng read-only set-based PostgreSQL projection, signed keyset cursor và public-safe Media mapping.
+- [x] Harvest PostgreSQL suite 25/25; current query = 1, timeline = 2; concurrent public GET không ghi DB và không gọi Redis.
+- [x] Full backend với PostgreSQL/Redis thật: 1429 pass, 0 fail, 3 conditional Cloudinary network smoke skips; dedicated locked Phase 4.3 real-provider evidence vẫn hợp lệ.
+- [x] Frontend unit 39/39, runtime SSR/cross-crawl/redirect 29/29; backend/frontend typecheck, lint và production build đều pass.
+- [x] 🔒 LOCK Phase 4.8 và Phase 4 MVP code baseline theo phê duyệt rõ ràng của người dùng.
+- [x] Giữ nguyên hai ghi chú trung thực: Search `<100 ms` là ngoại lệ đã duyệt; Resend production activation chờ domain/DNS/sender.
+- [x] Closeout: `backend/docs/04.08.02-harvest-public-read-model-closeout.md` và `backend/docs/04.00-phase-4-final-audit-closeout.md`.
 
 ---
 
@@ -283,15 +291,14 @@ scope: api | db | frontend | infra | auth | search | media
 
 | # | Nhiệm vụ | Phụ thuộc |
 | :--- | :--- | :--- |
-| N1 | Step 4.5.3 Forgot Password & Reset | Step 4.5.2 LOCKED |
+| N1 | Lập kế hoạch Phase 5 Frontend | Chỉ bắt đầu khi người dùng yêu cầu; Phase 4 đã LOCKED |
+| N2 | Step 4.5.6 Resend Production Activation | Domain `hoangsuphi.vn` được mua, DNS và sender domain được xác minh |
 
-### 🟡 Ưu tiên trung bình (sau N1)
+### 🟡 Ưu tiên trung bình (sau khi Phase 5 được duyệt)
 
 | # | Nhiệm vụ | Phụ thuộc |
 | :--- | :--- | :--- |
-| N2 | Phase 4.6 Redirect Management (CRUD redirects, 301/302 support) | Phase 4.4 |
-| N3 | Phase 4.7 Recommendation (SQL-based recommendation queries) | Phase 4.4 |
-| N4 | Phase 4.8 Live Harvest Status (Harvest timeline & updates) | Phase 4.4 |
+| N6 | Tích hợp UI Harvest Status | Public API Phase 4.8 đã LOCKED; thuộc phạm vi frontend được duyệt sau |
 
 ### 🟢 Ưu tiên thấp (Phase 2)
 
@@ -770,8 +777,100 @@ scope: api | db | frontend | infra | auth | search | media
 - Xuất bản Closeout Report chi tiết và chính thức khóa Phase 4.4 SEO.
  
 **Kết luận:** `🔒 PHASE 4.4 SEO — LOCKED`. Phase 4.5 chưa bắt đầu.
- 
+
+---
+
+### 📅 Phiên #041 — 2026-07-19
+
+**Việc đã làm:**
+- Hoàn thành và 🔒 LOCK Step 4.5.2 Verify Email: tích hợp register, resend/confirm API, one-time token security, Redis idempotency/rate limit và FakeEmailSender.
+- Xác minh PostgreSQL token/re-send integration, Redis live `SET NX`, typecheck, lint, build và backend regression.
+
+**Kết luận:** `🔒 STEP 4.5.2 VERIFY EMAIL — LOCKED`.
+
+---
+
+### 📅 Phiên #042 — 2026-07-19
+
+**Việc đã làm:**
+- Hoàn thành code Forgot/Reset Password, Contact Form và integration audit của Phase 4.5.
+- Giữ Resend production activation tại Step 4.5.6 ở trạng thái pending vì domain `hoangsuphi.vn` chưa được mua và xác minh DNS.
+
+**Kết luận:** `✅ PHASE 4.5 EMAIL — CODE COMPLETE`; chưa tuyên bố production email activated.
+
+---
+
+### 📅 Phiên #043 — 2026-07-19
+
+**Việc đã làm:**
+- Đồng bộ `project-context.md` theo trạng thái Phase 4.5 code-complete đã có trong roadmap.
+- Chốt Phase 4.6 Redirect Management theo ba step: backend registry/resolver, frontend Next.js execution, rồi verification/LOCK.
+- Chốt contract MVP internal-path-only, additive migration, cache Redis TTL 60 giây, không sửa Phase 3 entity và frontend fail-open nếu resolver không khả dụng.
+
+**Kết luận:** `🟡 PHASE 4.6 REDIRECT MANAGEMENT — STEPS 4.6.1–4.6.2 IMPLEMENTATION COMPLETE, AWAITING USER APPROVAL`; chưa bắt đầu Step 4.6.3.
+
+---
+
+### 📅 Phiên #043 — 2026-07-19 (Migration History Repair & Step 4.6.1 Re-verification)
+
+**Việc đã làm:**
+- Audit xác nhận journal có hai entry mồ côi `0018_stale_loners` và `0019_heavy_legion`: không có SQL/snapshot tương ứng, không tồn tại trong Git và chưa từng được ghi nhận trong metadata PostgreSQL.
+- Chuẩn hóa chain migration thành `0018_redirect_registry`; áp dụng thành công trên local development và `hoangsuphi_test`, kiểm tra lặp migration an toàn.
+- Xác minh Redirect PostgreSQL integration 5/5 và toàn bộ Redirect module 24/24; full backend regression 1291 pass, 93 conditional skip, 0 fail; typecheck, lint, build và diff check đều pass.
+
+**Kết luận:** Step 4.6.1 chỉ chờ user review/approval; Phase 4.6 vẫn đang thực hiện và không tự động chuyển sang Step 4.6.2.
+
+---
+
+### 📅 Phiên #043 — 2026-07-19 (Step 4.6.2 Frontend Redirect Execution Review)
+
+**Việc đã làm:**
+- Review middleware Next.js và sửa các lỗi contract: protected/system paths không gọi resolver; chỉ GET/HEAD mới redirect; lowercase + trailing slash được canonicalize trong một 308; response resolver bị kiểm tra canonical internal target, status 301/302 và self-loop trước khi redirect.
+- Bổ sung client timeout có validation (100–5.000 ms), `no-store`, fail-open không log raw lỗi backend, matcher middleware và unit tests cho resolver/middleware; sửa TypeScript generic trong runtime regression cũ.
+- Xác minh frontend: unit suite 39/39, runtime SSR/cross-crawl 25/25, typecheck/lint/build/diff check pass.
+
+**Kết luận:** Step 4.6.2 implementation complete và chờ user review/approval cùng Step 4.6.1; chưa bắt đầu Step 4.6.3.
+
+---
+
+### 📅 Phiên #043 — 2026-07-19 (Step 4.6.3 Final Verification & Lock)
+
+**Việc đã làm:**
+- Bổ sung integration dùng PostgreSQL + Redis thật để kiểm chứng cache redirect được tạo, invalidate và repopulate đúng sau CRUD.
+- Bổ sung Next.js production runtime test cho public resolver: 301/302, canonical 308 một hop, query-drop, protected/system path, non-GET và resolver 503 fail-open.
+- Sửa lifecycle test Windows để chạy trực tiếp Next.js qua Node và chờ child process kết thúc; final check không còn port 4105/4106/4107 bị giữ.
+- Chạy migration idempotence trên `hoangsuphi_test`, full backend 1303 pass/76 conditional skip/0 fail, frontend unit 39/39 và runtime 29/29; typecheck, lint, build và diff check đều sạch.
+
+**Kết luận:** `🔒 PHASE 4.6 REDIRECT MANAGEMENT — LOCKED` theo phê duyệt của người dùng. Chi tiết bằng chứng: `backend/docs/04.06.03-redirect-integration-closeout.md`.
+
 ---
  
 *Tài liệu được tạo và bảo trì bởi AI Agent Antigravity (Google DeepMind)*
-*Cập nhật lần cuối: 2026-07-18*
+*Cập nhật lần cuối: 2026-07-19 — Phiên #043*
+
+---
+
+### 📅 Phiên #044 — 2026-07-19 (Phase 4.7 Recommendation Final Verification & Lock)
+
+**Việc đã làm:**
+- Chạy PostgreSQL/PostGIS integration, visibility, no-N+1 và strict validation cho bốn strategy: nearby, same_region, top_rated và newest.
+- Chạy full backend regression, typecheck, lint và build; tạo `backend/docs/04.07.02-recommendation-integration-closeout.md`.
+
+**Kết luận:** `🔒 PHASE 4.7 RECOMMENDATION — LOCKED` theo phê duyệt của người dùng.
+
+---
+
+### 📅 Phiên #045 — 2026-07-20 (Phase 4.8 & Phase 4 Final Audit/Lock)
+
+**Việc đã làm:**
+- Hoàn thiện Step 4.8.2 với hai public Harvest endpoints, strict DTO, signed cursor, current/timeline PUBLISHED-only và READY IMAGE projection đúng owner.
+- Xác minh trên PostgreSQL thật: Harvest 25/25; query count current/timeline = 1/2; cursor không duplicate/omission; concurrent GET không ghi DB/Media ownership và không gọi Redis.
+- Chạy full backend với PostgreSQL/Redis thật: 1429 pass, 0 fail, 3 credential-gated Cloudinary smoke skips; typecheck, lint và build pass.
+- Chạy frontend unit 39/39, production runtime 29/29, typecheck, lint và Next.js build pass.
+- Tạo closeout Phase 4.8 và umbrella Phase 4; đồng bộ roadmap/context.
+
+**Kết luận:** `🔒 PHASE 4.8 LIVE HARVEST STATUS — LOCKED` và `🔒 PHASE 4 MVP CODE BASELINE — LOCKED` theo chỉ thị rõ ràng của người dùng. Search SLA exception và Resend/domain prerequisite tiếp tục được ghi nhận trung thực; Phase 5 chưa bắt đầu.
+
+---
+
+*Cập nhật lần cuối: 2026-07-20 — Phiên #045*

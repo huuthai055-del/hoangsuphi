@@ -12,6 +12,17 @@ export const rateLimit = (
   customWindowMs?: number
 ): MiddlewareHandler => {
   return async (c, next) => {
+    // Harvest Status is a strictly read-only, no-cache projection. Its Phase 4.8
+    // contract explicitly forbids Redis reads/writes on these public GETs.
+    if (
+      c.req.method === 'GET' &&
+      (c.req.path === '/api/v1/harvest-status' ||
+        c.req.path.startsWith('/api/v1/harvest-status/regions/'))
+    ) {
+      await next();
+      return;
+    }
+
     if (process.env.NODE_ENV === 'test' && process.env.ENABLE_RATE_LIMIT_FOR_TESTS !== 'true') {
       await next();
       return;
@@ -44,4 +55,3 @@ export const rateLimit = (
     await next();
   };
 };
-

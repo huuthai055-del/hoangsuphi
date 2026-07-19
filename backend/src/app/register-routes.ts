@@ -19,10 +19,14 @@ import { placesRouter } from '@/modules/regions/route/places.route';
 import { regionsRouter } from '@/modules/regions/route/regions.route';
 import { reviewsRouter } from '@/modules/reviews/route/reviews.route';
 import { searchRouter } from '@/modules/search/route/search.route';
+import { recommendationsRouter } from '@/modules/recommendations/http/recommendations.routes';
 import type { SeoController } from '@/modules/seo/route/seo.controller';
 import { seoRouter } from '@/modules/seo/route/seo.route';
 import { weatherRouter } from '@/modules/weather/route/weather.route';
 import { contactRouter } from '@/modules/contact/route/contact.route';
+import { redirectsAdminRouter, redirectsPublicRouter } from '@/modules/redirects/route/redirects.route';
+import { harvestStatusRoute } from '@/modules/harvest-status/route/harvest-status.route';
+import { harvestStatusPublicRouter } from '@/modules/harvest-status/public/harvest-status.public.route';
 
 export function registerRoutes(app: Hono) {
   // Liveness Check
@@ -68,8 +72,13 @@ export function registerRoutes(app: Hono) {
   v1Router.route('/notifications', notificationsRouter);
   v1Router.route('/search', searchRouter);
   v1Router.route('/nearby', nearbyRouter);
+  v1Router.route('/recommendations', recommendationsRouter);
   v1Router.route('/seo', seoRouter);
   v1Router.route('/contact', contactRouter);
+  v1Router.route('/redirects', redirectsPublicRouter);
+  v1Router.route('/admin/redirects', redirectsAdminRouter);
+  v1Router.route('/', harvestStatusRoute);
+  v1Router.route('/harvest-status', harvestStatusPublicRouter);
 
   app.route(AppConfig.server.apiPrefix, v1Router);
 }

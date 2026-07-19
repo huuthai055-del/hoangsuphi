@@ -7,9 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "bun test src/lib/seo.smoke.test.ts src/lib/seo/jsonld.test.ts src/lib/seo/metadata.test.ts",
-    "test:unit": "bun test src/lib/seo.smoke.test.ts src/lib/seo/jsonld.test.ts src/lib/seo/metadata.test.ts",
-    "test:runtime": "bun test src/lib/ssr.runtime.test.ts && bun test src/lib/cross-crawl.runtime.test.ts --timeout 90000"
+    "test": "bun test src/lib/seo.smoke.test.ts src/lib/seo/jsonld.test.ts src/lib/seo/metadata.test.ts src/lib/redirect-resolver.client.test.ts src/middleware.test.ts",
+    "test:unit": "bun test src/lib/seo.smoke.test.ts src/lib/seo/jsonld.test.ts src/lib/seo/metadata.test.ts src/lib/redirect-resolver.client.test.ts src/middleware.test.ts",
+    "test:redirect": "bun test src/lib/redirect-resolver.client.test.ts src/middleware.test.ts",
+    "test:runtime": "bun test src/lib/ssr.runtime.test.ts && bun test src/lib/cross-crawl.runtime.test.ts --timeout 90000 && bun test src/lib/redirect.runtime.test.ts --timeout 120000"
   },
   "dependencies": {
     "next": "15.1.0",

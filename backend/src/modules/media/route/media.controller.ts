@@ -1,6 +1,7 @@
 import {
   AuthenticationError,
   AuthorizationError,
+  ConflictError,
   NotFoundError,
   ValidationError,
 } from '@/common/errors/http.errors';
@@ -144,6 +145,12 @@ export class MediaController {
 
     if (media.uploadedBy !== user.id && !user.roles.includes('admin')) {
       throw new AuthorizationError('You do not have permission to delete this media');
+    }
+
+    if (media.ownerType === 'HARVEST_UPDATE') {
+      throw new ConflictError('Media attached to a harvest update cannot be deleted', {
+        code: 'HARVEST_MEDIA_ATTACHED',
+      });
     }
 
     media.softDelete();

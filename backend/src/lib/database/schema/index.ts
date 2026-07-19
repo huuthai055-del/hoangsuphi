@@ -11,3 +11,5 @@ export * from './reviews';
 export * from './itineraries';
 export * from './faqs';
 export * from './notifications';
+export * from './redirects';
+export * from './harvest-updates';

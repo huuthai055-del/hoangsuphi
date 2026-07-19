@@ -1,0 +1,1 @@
+export const HARVEST_MEDIA_MAX_IMAGES = 8;

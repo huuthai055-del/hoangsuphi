@@ -1,4 +1,7 @@
 export const Permissions = {
+  Harvest: {
+    Write: 'harvest:write',
+  },
   Itinerary: {
     Create: 'itinerary:create',
     Read: 'itinerary:read',

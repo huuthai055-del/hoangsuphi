@@ -1,6 +1,6 @@
 # 🗺️ PROJECT ROADMAP — CỔNG THÔNG TIN DU LỊCH HOÀNG SU PHÌ
  
-> **Cập nhật lần cuối:** 2026-07-16 | **Phiên:** #032
+> **Cập nhật lần cuối:** 2026-07-20 | **Phiên:** #045
 > **Mục đích:** Theo dõi tiến độ toàn bộ vòng đời dự án từ ý tưởng đến vận hành.
  
 ---
@@ -12,7 +12,7 @@ Phase  0  Planning                ██████████  ✅ HOÀN THÀ
 Phase  1  Database Design         ██████████  ✅ HOÀN THÀNH
 Phase  2  Backend Foundation      ██████████  ✅ HOÀN THÀNH (V1.0 Code & Docs Locked)
 Phase  3  Core Modules            ██████████  ✅ PHASE COMPLETED (3.1 - 3.9 🔒 Locked)
-Phase  4  Production Features (MVP Stable) ██░░░░░░░░  🚧 Đang thực hiện — 4.1 🔒; 4.2 🔒; 4.3–4.8 chưa bắt đầu
+Phase  4  Production Features (MVP Stable) ██████████  🔒 MVP CODE BASELINE LOCKED; Resend activation pending domain
 Phase  5  Frontend                ░░░░░░░░░░  ⬜ Chưa bắt đầu
 Phase  6  Admin CMS               ░░░░░░░░░░  ⬜ Chưa bắt đầu
 Phase  7  Performance             ░░░░░░░░░░  ⬜ Chưa bắt đầu
@@ -160,7 +160,7 @@ Launch      →    Maintenance & Expansion
 
 ---
 
-### 🚧 PHASE 4 — PRODUCTION FEATURES (MVP STABLE) `ĐANG THỰC HIỆN`
+### 🔒 PHASE 4 — PRODUCTION FEATURES (MVP STABLE) `MVP CODE BASELINE LOCKED — 2026-07-20`
 
 > **Mục tiêu:** Hoàn thiện các tính năng giúp website vận hành ổn định ở quy mô cấp huyện, ưu tiên đơn giản, dễ bảo trì và có thể triển khai thực tế nhanh. Không tối ưu quá mức hay bổ sung hạ tầng phức tạp khi chưa cần thiết.
 
@@ -168,12 +168,12 @@ Launch      →    Maintenance & Expansion
 | :--- | :--- | :--- | :--- |
 | **4.1** | **Search & Advanced Filter** | 🔒 LOCKED | Steps 4.1.0–4.1.6, Price và final audit hoàn tất. SLA `<100 ms` được ghi nhận là ngoại lệ, không đánh dấu pass. |
 | **4.2** | **Nearby Search** | 🔒 LOCKED | PostGIS (`ST_DWithin`, `ST_Distance`) tìm địa điểm theo bán kính và sắp xếp theo khoảng cách. Warm DB p95 tại 25 km = 89,47 ms trong 30 mẫu. |
-| **4.3** | **Media Upload** | ⬜ | Upload → Validate → Resize → WebP → Cloudinary → Lưu metadata. |
-| **4.4** | **SEO** | ⬜ | Dynamic Sitemap, robots.txt, Canonical URL, OpenGraph, Schema.org JSON-LD. |
-| **4.5** | **Email** | ✅ CODE COMPLETE | Phase 4.5 Code Complete. Production Activation (Step 4.5.6) Pending Domain. |
-| **4.6** | **Redirect Management** | ⬜ | CRUD Redirects, hỗ trợ HTTP 301/302. |
-| **4.7** | **Recommendation** | ⬜ | Gợi ý bằng SQL (Nearby, Top Rated, Newest, Same Region), chưa sử dụng AI. |
-| **4.8** | **Live Harvest Status** | ⬜ | Module đặc thù HSP: CRUD, Timeline, Ảnh, Thông báo trạng thái mùa vụ. |
+| **4.3** | **Media Upload** | 🔒 LOCKED | Upload → Validate → Resize → WebP → Cloudinary → Lưu metadata. |
+| **4.4** | **SEO** | 🔒 LOCKED | Dynamic Sitemap, robots.txt, Canonical URL, OpenGraph, Schema.org JSON-LD. |
+| **4.5** | **Email** | 🔒 CODE BASELINE LOCKED | Verify, Forgot/Reset và Contact đã hoàn tất. Production Activation (Step 4.5.6) vẫn pending cho tới khi mua domain và xác minh DNS/sender. |
+| **4.6** | **Redirect Management** | 🔒 LOCKED | Internal exact-path registry/resolver, Redis cache invalidation, Next.js public execution và end-to-end verification hoàn tất. |
+| **4.7** | **Recommendation** | 🔒 LOCKED | SQL-based public Recommendation API, PostgreSQL/PostGIS integration, security boundaries, and full regression verified; locked by user approval. |
+| **4.8** | **Live Harvest Status** | 🔒 LOCKED | Admin lifecycle, public current/timeline, signed cursor, READY IMAGE projection và PostgreSQL verification hoàn tất. |
 
 #### Tiến độ chi tiết Phase 4.1
 
@@ -205,6 +205,34 @@ Chi tiết thiết kế và quy tắc lập trình xem tại tài liệu đặc 
 
 **Closeout Phase 4.2:** Hoàn thành và LOCK ngày 2026-07-16. Endpoint hoạt động chính xác theo bán kính, global distance ordering, signed HMAC keyset pagination và read-only LATERAL projection. Dedicated PostGIS suite đạt 85/85; benchmark 27 scenarios × 30 mẫu trên 9.700 spatial entities + 9.700 reviews; raw samples và 9 EXPLAIN plans lấy trực tiếp từ repository đã được lưu. Warm DB p95 tại 25 km = 89,47 ms < 150 ms ✅.
 
+#### Kế hoạch chi tiết Phase 4.6 — Redirect Management
+
+> **Mục tiêu:** quản lý redirect SEO an toàn, tối giản và có thể truy vết, không sửa slug hay domain entity đã LOCKED. Không có step tài liệu độc lập: contract MVP dưới đây là ranh giới triển khai đã chốt.
+
+**Contract MVP đã chốt**
+
+- Chỉ cho phép redirect **internal exact path**; không external URL, wildcard hoặc regex.
+- Canonicalize source/target theo lowercase, Unicode NFC và không trailing slash (trừ `/`); query string không được giữ lại.
+- `301` là mặc định; `302` chỉ dùng khi admin chọn redirect tạm thời.
+- Từ chối source là `/`, `/api...`, `/_next...`, `/sitemap.xml`, `/robots.txt`, `/favicon.ico` hoặc `/images...`; từ chối self-redirect, redirect chain và cycle.
+- Bảng `redirects` cần được đưa vào runtime bằng **một additive migration** theo database design hiện có; không đổi Phase 3 domain entity.
+- Backend là source of truth cho CRUD/resolver; frontend Next.js middleware thực thi HTTP redirect. Redis cache resolver TTL 60 giây phải bị invalidate sau CRUD. Nếu resolver không khả dụng, middleware fail-open và để route bình thường tiếp tục xử lý.
+
+| Step | Hạng mục | Trạng thái | Ghi chú |
+| :--- | :--- | :--- | :--- |
+| **4.6.1** | Redirect Registry & Resolver | 🔒 LOCKED | Additive migration/schema, domain-neutral registry, protected admin CRUD (`system:write`), resolver read-only, normalize/validate và Redis cache invalidation; PostgreSQL/security tests passed. Migration history repaired to `0018_redirect_registry`. |
+| **4.6.2** | Frontend Redirect Execution | 🔒 LOCKED | Next.js middleware gọi internal resolver, trả 301/302 thật, chỉ xử lý GET/HEAD public, bypass system/static paths, canonical 308 một hop và fail-open nếu resolver unavailable. |
+| **4.6.3** | End-to-end Verification & Lock | 🔒 LOCKED | PostgreSQL + Redis cache lifecycle, Next runtime redirect, loop/chain/security cases, typecheck/lint/build và full regression passed. Closeout: `backend/docs/04.06.03-redirect-integration-closeout.md`. |
+
+#### Tiến độ chi tiết Phase 4.8 — Live Harvest Status
+
+> **Mục tiêu:** cho admin/editor công bố tình trạng mùa vụ địa phương; public API trả current status và timeline chính xác, không biến tính năng thành dự báo thời tiết hay hệ thống notification.
+
+| Step | Hạng mục | Trạng thái | Ghi chú |
+| :--- | :--- | :--- | :--- |
+| **4.8.1** | Harvest Foundation & Admin Lifecycle | 🔒 LOCKED | Additive schema/migration, lifecycle DRAFT → PUBLISHED → ARCHIVED, `harvest:write`, protected admin API và Media ownership server-side. |
+| **4.8.2** | Public Read Model, PostgreSQL Verification & Lock | 🔒 LOCKED | Anonymous current/timeline API, HMAC keyset cursor, PUBLISHED-only visibility, READY IMAGE projection, 1/2-query bound, no Redis/write/N+1. Closeout: `backend/docs/04.08.02-harvest-public-read-model-closeout.md`. |
+
 ### Không triển khai trong Phase 4
 - ❌ Typesense
 - ❌ BullMQ / Queue
@@ -219,16 +247,18 @@ Chi tiết thiết kế và quy tắc lập trình xem tại tài liệu đặc 
 ### Điều kiện hoàn thành
 - [ ] Search & Filter phản hồi < 100ms với dữ liệu thực tế.
 - [x] Nearby Search hoạt động chính xác theo bán kính.
-- [ ] Upload ảnh → Cloudinary hoạt động end-to-end.
-- [ ] Ảnh tự động chuyển WebP và resize.
-- [ ] Email Verify & Forgot Password hoạt động ổn định.
-- [ ] Sitemap.xml và robots.txt được tạo tự động.
-- [ ] Schema.org JSON-LD hiển thị đúng trên các trang chính.
-- [ ] Redirect 301/302 hoạt động đúng.
-- [ ] Recommendation trả kết quả phù hợp bằng SQL.
-- [ ] Harvest Status hoàn chỉnh và sẵn sàng sử dụng thực tế.
+- [x] Upload ảnh → Cloudinary hoạt động end-to-end; real-provider evidence được lưu trong closeout Phase 4.3.
+- [x] Ảnh tự động chuyển WebP và resize.
+- [x] Email Verify & Forgot Password hoạt động qua FakeEmailSender; Resend production activation vẫn pending domain.
+- [x] Sitemap.xml và robots.txt được tạo tự động.
+- [x] Schema.org JSON-LD hiển thị đúng trên các trang chính.
+- [x] Redirect 301/302 hoạt động đúng.
+- [x] Recommendation trả kết quả phù hợp bằng SQL.
+- [x] Harvest Status backend hoàn chỉnh, read-only public API và admin lifecycle đã được PostgreSQL verification.
 
 > **Ngoại lệ được phê duyệt cho 4.1:** Điều kiện Search `<100 ms` không đạt nhưng được người dùng chấp nhận ngày 2026-07-14. Ô trên giữ nguyên chưa đạt để bảo toàn bằng chứng; ngoại lệ này không miễn các hạng mục closeout khác.
+
+> **Điều kiện kích hoạt ngoài code cho 4.5:** domain `hoangsuphi.vn` chưa được mua/xác minh. Phase 4 khóa code baseline; Step 4.5.6 chỉ được kích hoạt Resend production sau khi DNS/sender domain sẵn sàng và không được thiết kế lại các flow email đã khóa.
 
 ### Mục tiêu cuối Phase 4
 - Website đủ ổn định để triển khai và kinh doanh ở quy mô cấp huyện.
@@ -516,6 +546,13 @@ Chi tiết thiết kế và quy tắc lập trình xem tại tài liệu đặc 
 | 2026-07-16 | 🔒 LOCK Phase 4.2 Nearby Search sau final re-audit | Phiên #032 — Sửa benchmark fail-open và database isolation; loại SQL/EXPLAIN cũ; chạy 27 scenarios × 30 mẫu trên 9.700 entities + 9.700 reviews. 25 km DB p95 = 89,47 ms. 9 current-query EXPLAIN plans có non-zero rows, GiST + `reviews_owner_idx`; Nearby suite 85/85, full regression 1052 pass/0 fail, build/typecheck/biome/diff sạch. |
 | 2026-07-19 | 🔒 LOCK Step 4.5.2 Verify Email | Phiên #041 — Resend/confirm routes, token security, Redis idempotency/rate limit, FakeEmailSender, PostgreSQL/Redis live integration; full backend 1246 pass, 67 skip, 0 fail. Step 4.5.3 chưa bắt đầu. |
 | 2026-07-19 | ✅ CODE COMPLETE Phase 4.5 Email | Phiên #042 — Hoàn tất Forgot/Reset, Contact Form và Integration Audit. Toàn bộ tests pass. Production Activation (Step 4.5.6) Pending Domain. |
+| 2026-07-19 | Đồng bộ trạng thái và chốt lộ trình Phase 4.6 | Phiên #043 — `project-context.md` được đồng bộ theo Phase 4.5 code-complete. Chốt Redirect Management theo ba step: registry/resolver, Next.js execution, verification/lock; contract MVP internal-path-only, additive migration, Redis TTL 60 giây và frontend fail-open. |
+| 2026-07-19 | Repair migration history và re-verify Step 4.6.1 | Phiên #043 — Loại hai journal entry mồ côi chưa từng được áp dụng, chuẩn hóa migration thành `0018_redirect_registry`, migrate thành công local/test. Redirect PostgreSQL integration 5/5, module 24/24; full backend 1291 pass, 93 conditional skip, 0 fail. Step 4.6.1 chờ user approval. |
+| 2026-07-19 | Review và remediation Step 4.6.2 Frontend Redirect Execution | Phiên #043 — Sửa middleware bypass/method/canonicalization/response validation và timeout fail-open; unit 39/39, runtime SSR + cross-crawl 25/25, typecheck/lint/build/diff check pass. Step 4.6.2 chờ user approval; Step 4.6.3 chưa bắt đầu. |
+| 2026-07-19 | 🔒 LOCK Phase 4.6 Redirect Management | Phiên #043 — Chạy `0018_redirect_registry` idempotence trên PostgreSQL test, live PostgreSQL+Redis CRUD cache lifecycle và Next.js production redirect runtime. Backend 1303 pass/76 conditional skip/0 fail; frontend unit 39/39 và runtime 29/29; typecheck/lint/build/diff sạch. |
+| 2026-07-19 | 🔒 LOCK Phase 4.7 Recommendation | Phiên #044 — SQL/PostGIS read model, strict cursor/visibility, permission, no-leak gates và full regression đã được người dùng phê duyệt. |
+| 2026-07-20 | 🔒 LOCK Phase 4.8 Live Harvest Status | Phiên #045 — Admin lifecycle và public current/timeline hoàn tất; Harvest PostgreSQL 25/25, signed cursor, query count 1/2, no Redis/write/N+1 và READY IMAGE no-leak. |
+| 2026-07-20 | 🔒 LOCK Phase 4 MVP code baseline | Phiên #045 — Re-audit Phase 4.1–4.8: backend 1429 pass/0 fail, frontend unit 39/39, runtime 29/29, typecheck/lint/build sạch. Giữ nguyên Search SLA exception và Resend/domain prerequisite. |
 
 ---
 
@@ -532,23 +569,42 @@ Chi tiết thiết kế và quy tắc lập trình xem tại tài liệu đặc 
   - Sub-phase 3.7 Media Manager: 🔒 **LOCKED**
   - Sub-phase 3.8 Reviews & Favorites: 🔒 **LOCKED**
   - Sub-phase 3.9 Operational Utilities: 🔒 **LOCKED**
-- 🚧 Phase 4 (Production Features) — ĐANG THỰC HIỆN
+- 🔒 Phase 4 (Production Features) — MVP CODE BASELINE LOCKED
+  - Sub-phase 4.1 Search & Advanced Filter: 🔒 **LOCKED**; SLA `<100 ms` exception recorded.
+
+---
+
+- ✅ Phase 0 (Planning) — HOÀN THÀNH
+- ✅ Phase 1 (Database Design) — HOÀN THÀNH
+- ✅ Phase 2 (Backend Foundation) — HOÀN THÀNH
+- ✅ Phase 3 (Core Modules) — HOÀN THÀNH (Remediation & Code Complete & 🔒 Locked)
+  - Sub-phase 3.1 Identity: 🔒 **LOCKED**
+  - Sub-phase 3.2 Regions: 🔒 **LOCKED**
+  - Sub-phase 3.3 Tourist Places: 🔒 **LOCKED**
+  - Sub-phase 3.4 Businesses & Amenities: 🔒 **LOCKED**
+  - Sub-phase 3.5 Attractions & Utilities: 🔒 **LOCKED**
+  - Sub-phase 3.6 Articles & Tags: 🔒 **LOCKED**
+  - Sub-phase 3.7 Media Manager: 🔒 **LOCKED**
+  - Sub-phase 3.8 Reviews & Favorites: 🔒 **LOCKED**
+  - Sub-phase 3.9 Operational Utilities: 🔒 **LOCKED**
+- 🔒 Phase 4 (Production Features) — MVP CODE BASELINE LOCKED
   - Sub-phase 4.1 Search & Advanced Filter: 🔒 **LOCKED**; SLA `<100 ms` exception recorded.
   - Sub-phase 4.2 Nearby Search: 🔒 **LOCKED**; 25 km DB p95 = 89,47 ms, 85/85 Nearby tests.
   - Sub-phase 4.3 Media Upload: 🔒 **LOCKED**.
   - Sub-phase 4.4 SEO: 🔒 **LOCKED**.
-  - Sub-phase 4.5 Email: ✅ **CODE COMPLETE** — PRODUCTION ACTIVATION PENDING DOMAIN.
+  - Sub-phase 4.5 Email: 🔒 **CODE BASELINE LOCKED** — PRODUCTION ACTIVATION PENDING DOMAIN.
+  - Sub-phase 4.6 Redirect Management: 🔒 **LOCKED**.
+  - Sub-phase 4.7 Recommendation: 🔒 **LOCKED**.
+  - Sub-phase 4.8 Live Harvest Status: 🔒 **LOCKED**.
 
 ## Next Session
 
 ### Objective
-Chờ hoàn tất Step 4.5.6 (Mua domain & Production Email Activation) hoặc bắt đầu tính năng của Phase tiếp theo theo chỉ định của người dùng.
-
-### Current Position
-- **Current Phase**: Phase 4 (Production Features - MVP Stable)
-- **Current Session**: SESSION #042
-- **Completed**: Phase 4.1–4.4 🔒 LOCKED; Phase 4.5 ✅ CODE COMPLETE
-- **Next Step**: Step 4.5.6 (Pending Domain) / Phase 4.6 Redirect Management
+Phase 4 đã đóng code baseline. Chỉ lập kế hoạch Phase 5 khi người dùng yêu cầu; Step 4.5.6 chỉ kích hoạt khi domain `hoangsuphi.vn`, DNS và sender domain đã sẵn sàng.
+- **Current Phase**: Phase 4 closed; chưa bắt đầu Phase 5.
+- **Current Session**: SESSION #045
+- **Completed**: Phase 4.1–4.8 đã audit; code baseline 🔒 LOCKED. Phase 4.5 production activation vẫn là prerequisite ngoài code.
+- **Next Step**: Chờ yêu cầu lập kế hoạch Phase 5 hoặc kích hoạt Step 4.5.6 khi có domain.
 
 ### Phase 4.2 Completion Summary
 - Repository: `ST_DWithin` + `ST_Distance` + `UNION ALL` 4 entity types + LEFT JOIN LATERAL reviews
@@ -566,3 +622,16 @@ Chờ hoàn tất Step 4.5.6 (Mua domain & Production Email Activation) hoặc b
 
 *Tài liệu được tạo và bảo trì bởi AI Agent Antigravity (Google DeepMind)*
 *Cập nhật lần cuối: 2026-07-16T00:30:00+07:00*
+
+---
+
+## AUTHORITATIVE CLOSEOUT — SESSION #045 (2026-07-20)
+
+- 🔒 Phase 4 (Production Features) — **MVP CODE BASELINE LOCKED**.
+- Phase 4.1–4.4 và 4.6–4.8: **LOCKED**.
+- Phase 4.5: **CODE BASELINE LOCKED**; Step 4.5.6 production Resend activation vẫn chờ mua domain, xác minh DNS và sender.
+- Fresh audit: backend **1429 pass, 0 fail, 3 conditional Cloudinary smoke skips**; frontend unit **39/39** và production runtime **29/29**; backend/frontend typecheck, lint và build đều pass.
+- Giữ nguyên ngoại lệ đã duyệt: Search `<100 ms` không đạt. Cloudinary real-provider smoke evidence đã tồn tại trong closeout Phase 4.3.
+- Phase 4.8 closeout: `backend/docs/04.08.02-harvest-public-read-model-closeout.md`.
+- Phase 4 umbrella closeout: `backend/docs/04.00-phase-4-final-audit-closeout.md`.
+- Chưa bắt đầu Phase 5.

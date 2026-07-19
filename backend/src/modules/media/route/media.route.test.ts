@@ -709,5 +709,30 @@ describe('Media API Routing & Controller', () => {
 
       expect(res.status).toBe(403);
     });
+
+    test('should reject deletion of media attached to a harvest update', async () => {
+      const harvestMedia = Media.create({
+        id: mediaId,
+        fileName: 'harvest.jpg',
+        storageKey: originalKey,
+        mimeType: 'image/jpeg',
+        mediaType: 'IMAGE',
+        fileSize: 10000,
+        hash: 'hash-harvest',
+        storageProvider: 'CLOUDINARY',
+        uploadedBy: '00000000-0000-0000-0000-000000000001',
+        ownerType: 'HARVEST_UPDATE',
+        ownerId: '00000000-0000-0000-0000-000000000002',
+      });
+      mockFindById.mockImplementation(() => Promise.resolve(harvestMedia));
+
+      const res = await app.request(`/api/v1/media/${mediaId}`, {
+        method: 'DELETE',
+        headers: { Authorization: 'Bearer valid-token' },
+      });
+
+      expect(res.status).toBe(409);
+      expect(mockUpdate).not.toHaveBeenCalled();
+    });
   });
 });

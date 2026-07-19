@@ -13,7 +13,7 @@ export function registerMiddlewares(app: Hono) {
     '*',
     cors({
       origin: env.CORS_ORIGINS,
-      allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowHeaders: [
         'Content-Type',
         'Authorization',

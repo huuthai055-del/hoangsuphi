@@ -99,6 +99,22 @@ import { SeoService } from '@/modules/seo/service/seo.service';
 import { ContactService } from '@/modules/contact/service/contact.service';
 import { ContactController } from '@/modules/contact/route/contact.controller';
 
+import { DrizzleRedirectsRepository } from '@/modules/redirects/repository/drizzle-redirects.repository';
+import { RedirectsService } from '@/modules/redirects/service/redirects.service';
+import { RedirectsController } from '@/modules/redirects/route/redirects.controller';
+
+import { DrizzleRecommendationsRepository } from '@/modules/recommendations/repository/recommendations.repository';
+import { RecommendationsService } from '@/modules/recommendations/application/recommendations.service';
+import { RecommendationsController } from '@/modules/recommendations/http/recommendations.controller';
+import { HarvestMediaOwnershipAdapter } from '@/modules/harvest-status/ports/media-ownership.adapter';
+import { HarvestStatusRepository } from '@/modules/harvest-status/repository/harvest-status.repository';
+import { HarvestStatusController } from '@/modules/harvest-status/route/harvest-status.controller';
+import { HarvestStatusService } from '@/modules/harvest-status/service/harvest-status.service';
+import { DrizzleHarvestStatusReadRepository } from '@/modules/harvest-status/public/harvest-status.read-repository';
+import { HarvestStatusCursorCodec } from '@/modules/harvest-status/public/harvest-status.cursor';
+import { HarvestStatusPublicService } from '@/modules/harvest-status/public/harvest-status.public.service';
+import { HarvestStatusPublicController } from '@/modules/harvest-status/public/harvest-status.public.controller';
+
 class Container {
   private instances = new Map<string, unknown>();
   private factories = new Map<string, () => unknown>();
@@ -341,6 +357,40 @@ class Container {
       return new PlacesController(service);
     });
 
+    // Harvest status module
+    this.factories.set('HarvestStatusRepository', () => new HarvestStatusRepository(db));
+    this.factories.set('HarvestMediaOwnershipPort', () => new HarvestMediaOwnershipAdapter(db));
+    this.factories.set('HarvestStatusService', () => {
+      const harvestRepo = this.resolve<HarvestStatusRepository>('HarvestStatusRepository');
+      const mediaPort = this.resolve<HarvestMediaOwnershipAdapter>('HarvestMediaOwnershipPort');
+      const regionsRepo = this.resolve<DrizzleRegionsRepository>('RegionsRepository');
+      return new HarvestStatusService(harvestRepo, mediaPort, regionsRepo, db);
+    });
+    this.factories.set('HarvestStatusController', () => {
+      const service = this.resolve<HarvestStatusService>('HarvestStatusService');
+      return new HarvestStatusController(service);
+    });
+    this.factories.set(
+      'HarvestStatusReadRepository',
+      () => new DrizzleHarvestStatusReadRepository(db)
+    );
+    this.factories.set(
+      'HarvestStatusCursorCodec',
+      () => new HarvestStatusCursorCodec(SearchConfig.cursorKeyring)
+    );
+    this.factories.set('HarvestStatusPublicService', () => {
+      const repository = this.resolve<DrizzleHarvestStatusReadRepository>(
+        'HarvestStatusReadRepository'
+      );
+      const cursor = this.resolve<HarvestStatusCursorCodec>('HarvestStatusCursorCodec');
+      const storage = this.resolve<MediaStorageResolver>('MediaStorageResolver');
+      return new HarvestStatusPublicService(repository, cursor, storage, env.PUBLIC_SITE_URL ?? '');
+    });
+    this.factories.set('HarvestStatusPublicController', () => {
+      const service = this.resolve<HarvestStatusPublicService>('HarvestStatusPublicService');
+      return new HarvestStatusPublicController(service);
+    });
+
     // Reviews & Favorites
     this.factories.set('ReviewsRepository', () => new DrizzleReviewsRepository());
     this.factories.set('FavoritesRepository', () => new DrizzleFavoritesRepository());
@@ -472,6 +522,29 @@ class Container {
     this.factories.set('ContactController', () => {
       const service = this.resolve<ContactService>('ContactService');
       return new ContactController(service);
+    });
+
+    // Redirects module
+    this.factories.set('RedirectsRepository', () => new DrizzleRedirectsRepository(db));
+    this.factories.set('RedirectsService', () => {
+      const repository = this.resolve<DrizzleRedirectsRepository>('RedirectsRepository');
+      const redisStore = this.resolve<RedisStoreAdapter | FakeRedisStore>('RedisStore');
+      return new RedirectsService(repository, redisStore);
+    });
+    this.factories.set('RedirectsController', () => {
+      const service = this.resolve<RedirectsService>('RedirectsService');
+      return new RedirectsController(service);
+    });
+
+    // Recommendations module
+    this.factories.set('RecommendationsRepository', () => new DrizzleRecommendationsRepository(db));
+    this.factories.set('RecommendationsService', () => {
+      const repository = this.resolve<DrizzleRecommendationsRepository>('RecommendationsRepository');
+      return new RecommendationsService(repository);
+    });
+    this.factories.set('RecommendationsController', () => {
+      const service = this.resolve<RecommendationsService>('RecommendationsService');
+      return new RecommendationsController(service);
     });
   }
 }

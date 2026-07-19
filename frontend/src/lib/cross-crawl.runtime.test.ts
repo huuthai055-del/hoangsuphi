@@ -31,8 +31,8 @@ const mockData = [
   { path: '/hoi-dap', expectedKind: 'faq-page' }
 ];
 
-let mockBackend: Server;
-let nextProcess: ReturnType<typeof Bun.spawn>;
+let mockBackend: Server<undefined>;
+let nextProcess: ReturnType<typeof Bun.spawn> | undefined;
 
 beforeAll(async () => {
   mockBackend = Bun.serve({
@@ -97,12 +97,14 @@ beforeAll(async () => {
     },
   });
 
-  const nextBin = process.platform === 'win32'
-    ? 'node_modules\\.bin\\next.exe'
-    : 'node_modules/.bin/next';
-
   nextProcess = Bun.spawn(
-    [nextBin, 'start', '-p', NEXT_PORT.toString()],
+    [
+      process.platform === 'win32' ? 'node.exe' : 'node',
+      'node_modules/next/dist/bin/next',
+      'start',
+      '-p',
+      NEXT_PORT.toString(),
+    ],
     {
       env: { ...process.env, PUBLIC_SITE_URL: CANONICAL_BASE, INTERNAL_BACKEND_URL: MOCK_BASE },
       stdio: ['ignore', 'ignore', 'ignore'],
@@ -127,6 +129,7 @@ beforeAll(async () => {
 afterAll(async () => {
   if (nextProcess) {
     nextProcess.kill();
+    await nextProcess.exited;
   }
   if (mockBackend) {
     mockBackend.stop(true);

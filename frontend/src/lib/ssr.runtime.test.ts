@@ -61,9 +61,9 @@ const ARTICLE_FIXTURE = {
 };
 
 // ─── State ───────────────────────────────────────
-let mockBackend: Server;
+let mockBackend: Server<undefined>;
 let mockBackend503 = false;
-let nextProcess: ReturnType<typeof Bun.spawn>;
+let nextProcess: ReturnType<typeof Bun.spawn> | undefined;
 
 // ─── Helpers ─────────────────────────────────────
 
@@ -144,14 +144,11 @@ beforeAll(async () => {
     },
   });
 
-  // 2. Start Next.js production server
-  // On Windows, Bun installs next.exe; on POSIX systems it's a shebang script.
-  const nextBin = process.platform === 'win32'
-    ? 'node_modules\\.bin\\next.exe'
-    : 'node_modules/.bin/next';
-
+  // Run the JS entry point with Node instead of the Windows command shim so
+  // teardown owns the real Next.js server process.
+  const nodeExecutable = process.platform === 'win32' ? 'node.exe' : 'node';
   nextProcess = Bun.spawn(
-    [nextBin, 'start', '--port', String(NEXT_PORT)],
+    [nodeExecutable, 'node_modules/next/dist/bin/next', 'start', '--port', String(NEXT_PORT)],
     {
       cwd: process.cwd(),
       env: {
@@ -174,6 +171,7 @@ beforeAll(async () => {
 afterAll(async () => {
   if (nextProcess) {
     nextProcess.kill();
+    await nextProcess.exited;
   }
   if (mockBackend) {
     mockBackend.stop(true);

@@ -323,6 +323,11 @@ async function main() {
     const allPermissionsList = [
       // Regions & Places
       {
+        code: 'harvest:write',
+        name: 'Harvest Write',
+        description: 'Create and modify harvest status updates',
+      },
+      {
         code: 'system:write',
         name: 'System Write',
         description: 'Modify system regions and configurations',
@@ -464,6 +469,7 @@ async function main() {
     // Editor permissions
     const editorRoleId = getRequiredMapValue(roleMap, 'editor');
     const editorPermissionCodes = [
+      'harvest:write',
       'place:write',
       'attraction:write',
       'business:write',
