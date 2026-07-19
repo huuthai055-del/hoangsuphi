@@ -1,7 +1,7 @@
-import type { IMediaStorage } from '../domain/storage.interface';
-import { StorageUploadError } from '../domain/media-errors';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
+import { StorageUploadError } from '../domain/media-errors';
+import type { IMediaStorage } from '../domain/storage.interface';
 
 export class LocalStorageAdapter implements IMediaStorage {
   private readonly uploadDir: string;
@@ -24,8 +24,8 @@ export class LocalStorageAdapter implements IMediaStorage {
       const dirPath = path.dirname(filePath);
       await fs.mkdir(dirPath, { recursive: true });
       await fs.writeFile(filePath, fileBuffer);
-    } catch (err) {
-      throw new StorageUploadError(`Failed to upload file to local storage: ${err instanceof Error ? err.message : String(err)}`);
+    } catch {
+      throw new StorageUploadError('Failed to upload file to local storage');
     }
   }
 
@@ -33,8 +33,8 @@ export class LocalStorageAdapter implements IMediaStorage {
     try {
       const filePath = this.getAbsolutePath(key);
       return await fs.readFile(filePath);
-    } catch (err) {
-      throw new StorageUploadError(`Failed to download file from local storage: ${err instanceof Error ? err.message : String(err)}`);
+    } catch {
+      throw new StorageUploadError('Failed to download file from local storage');
     }
   }
 
@@ -42,8 +42,9 @@ export class LocalStorageAdapter implements IMediaStorage {
     try {
       const filePath = this.getAbsolutePath(key);
       await fs.rm(filePath, { force: true });
-    } catch {
-      // Don't crash if delete fails (e.g. file already gone)
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') return;
+      throw new StorageUploadError('Failed to delete file from local storage');
     }
   }
 

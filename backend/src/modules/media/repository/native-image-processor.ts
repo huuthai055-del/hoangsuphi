@@ -89,7 +89,9 @@ export class NativeImageProcessor implements IImageProcessor {
       // 4. Fallback for WebP or other formats
       return { width: 800, height: 600, gps: null };
     } catch (err) {
-      throw new ExifExtractionError(`Failed to extract image metadata: ${err instanceof Error ? err.message : String(err)}`);
+      throw new ExifExtractionError(
+        `Failed to extract image metadata: ${err instanceof Error ? err.message : String(err)}`
+      );
     }
   }
 
@@ -113,7 +115,9 @@ export class NativeImageProcessor implements IImageProcessor {
         fileSize: resizedBuffer.length,
       };
     } catch (err) {
-      throw new ImageProcessingError(`Failed to resize image: ${err instanceof Error ? err.message : String(err)}`);
+      throw new ImageProcessingError(
+        `Failed to resize image: ${err instanceof Error ? err.message : String(err)}`
+      );
     }
   }
 }

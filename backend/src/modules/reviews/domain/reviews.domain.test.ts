@@ -1,12 +1,12 @@
-import { expect, test, describe } from 'bun:test';
-import { Review } from './reviews.entity';
+import { describe, expect, test } from 'bun:test';
 import { Favorite } from './favorites.entity';
 import { ReviewRating } from './review-rating.value-object';
+import { Review } from './reviews.entity';
 import {
-  InvalidRatingError,
-  ImmutableReviewError,
-  InvalidReviewStateTransitionError,
   FavoriteDomainError,
+  ImmutableReviewError,
+  InvalidRatingError,
+  InvalidReviewStateTransitionError,
 } from './reviews.errors';
 
 describe('Reviews & Favorites Domain Layer', () => {
@@ -150,7 +150,9 @@ describe('Reviews & Favorites Domain Layer', () => {
       expect(() => review.approve()).toThrow(ImmutableReviewError);
       expect(() => review.reject()).toThrow(ImmutableReviewError);
       expect(() => review.softDelete()).toThrow(ImmutableReviewError);
-      expect(() => review.updateContent({ title: 'New', content: 'New', rating: 3 })).toThrow(ImmutableReviewError);
+      expect(() => review.updateContent({ title: 'New', content: 'New', rating: 3 })).toThrow(
+        ImmutableReviewError
+      );
     });
 
     test('should update content successfully when in PENDING status', () => {
@@ -183,18 +185,26 @@ describe('Reviews & Favorites Domain Layer', () => {
 
     test('should throw error if updating to empty title or content', () => {
       const review = Review.create(validProps);
-      expect(() => review.updateContent({ title: '', content: 'valid', rating: 3 })).toThrow(ImmutableReviewError);
-      expect(() => review.updateContent({ title: 'valid', content: '   ', rating: 3 })).toThrow(ImmutableReviewError);
+      expect(() => review.updateContent({ title: '', content: 'valid', rating: 3 })).toThrow(
+        ImmutableReviewError
+      );
+      expect(() => review.updateContent({ title: 'valid', content: '   ', rating: 3 })).toThrow(
+        ImmutableReviewError
+      );
     });
 
     test('should throw error if updating approved or rejected reviews', () => {
       const review1 = Review.create(validProps);
       review1.approve();
-      expect(() => review1.updateContent({ title: 'New', content: 'New', rating: 4 })).toThrow(ImmutableReviewError);
+      expect(() => review1.updateContent({ title: 'New', content: 'New', rating: 4 })).toThrow(
+        ImmutableReviewError
+      );
 
       const review2 = Review.create(validProps);
       review2.reject();
-      expect(() => review2.updateContent({ title: 'New', content: 'New', rating: 4 })).toThrow(ImmutableReviewError);
+      expect(() => review2.updateContent({ title: 'New', content: 'New', rating: 4 })).toThrow(
+        ImmutableReviewError
+      );
     });
 
     test('should check equality correctly', () => {
@@ -232,11 +242,15 @@ describe('Reviews & Favorites Domain Layer', () => {
 
     test('should throw error for empty fields', () => {
       expect(() => Favorite.create({ ...validFavProps, userId: '' })).toThrow(FavoriteDomainError);
-      expect(() => Favorite.create({ ...validFavProps, ownerId: '   ' })).toThrow(FavoriteDomainError);
+      expect(() => Favorite.create({ ...validFavProps, ownerId: '   ' })).toThrow(
+        FavoriteDomainError
+      );
     });
 
     test('should throw error for invalid ownerType', () => {
-      expect(() => Favorite.create({ ...validFavProps, ownerType: 'USER' as any })).toThrow(FavoriteDomainError);
+      expect(() => Favorite.create({ ...validFavProps, ownerType: 'USER' as any })).toThrow(
+        FavoriteDomainError
+      );
     });
 
     test('should rehydrate favorite correctly', () => {

@@ -1,5 +1,5 @@
-import type { Category } from '../domain/category.entity';
 import type { TransactionClient } from '@/lib/database/client';
+import type { Category } from '../domain/category.entity';
 
 export interface ICategoriesRepository {
   findById(id: string): Promise<Category | null>;

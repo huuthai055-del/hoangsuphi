@@ -1,17 +1,18 @@
-import { expect, test, describe, beforeEach, afterEach, spyOn, mock } from 'bun:test';
-import { AuthService } from './auth.service';
-import { hashToken } from '@/common/utils/token-hash';
-import { User } from '../domain/user.entity';
+import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from 'bun:test';
 import {
-  ValidationError,
   AuthenticationError,
   ConflictError,
   NotFoundError,
+  ValidationError,
 } from '@/common/errors/http.errors';
-import type { IPasswordService } from './password.service';
-import type { ITokenService } from './token.service';
-import type { ISessionService, UserSessionModel } from './session.service';
+import { hashToken } from '@/common/utils/token-hash';
+import { User } from '../domain/user.entity';
 import type { IUserRepository } from '../repository/users-repository.interface';
+import { AuthService } from './auth.service';
+import type { IPasswordService } from './password.service';
+import type { ISessionService, UserSessionModel } from './session.service';
+import type { ITokenService } from './token.service';
+import type { IEmailVerificationService } from './email-verification.service';
 
 // Mock database client exports explicitly to prevent circular dependencies
 mock.module('@/lib/database/client', () => {
@@ -31,6 +32,7 @@ describe('AuthService', () => {
   let mockTokenService: ITokenService;
   let mockSessionService: ISessionService;
   let mockUserRepo: IUserRepository;
+  let mockEmailVerificationService: IEmailVerificationService;
   const originalNow = Date.now;
 
   const userId = '019f4264-a179-7672-b7b6-278802ae1916';
@@ -137,11 +139,18 @@ describe('AuthService', () => {
       findRoleByCode: async () => ({ id: 'viewer-role-id' }),
     };
 
+    mockEmailVerificationService = {
+      issueAndSendVerificationEmail: async () => {},
+      resend: async () => {},
+      confirm: async () => {},
+    };
+
     service = new AuthService(
       mockPasswordService,
       mockTokenService,
       mockSessionService,
-      mockUserRepo
+      mockUserRepo,
+      mockEmailVerificationService
     );
   });
 
@@ -222,6 +231,47 @@ describe('AuthService', () => {
       await expect(service.register(email, password, '')).rejects.toThrow(
         'Default role "viewer" not found in the database. Please run seeding.'
       );
+    });
+
+    test('should invoke issueAndSendVerificationEmail when emailVerificationService is provided', async () => {
+      const mockEmailVerificationService = {
+        issueAndSendVerificationEmail: async () => {},
+        resend: async () => {},
+        confirm: async () => {},
+      };
+      const issueSpy = spyOn(mockEmailVerificationService, 'issueAndSendVerificationEmail');
+      const serviceWithEmail = new AuthService(
+        mockPasswordService,
+        mockTokenService,
+        mockSessionService,
+        mockUserRepo,
+        mockEmailVerificationService
+      );
+
+      const user = await serviceWithEmail.register(email, password, 'Test User');
+      expect(user.status).toBe('pending_verification');
+      expect(issueSpy).toHaveBeenCalledWith(user.id, user.email);
+    });
+
+    test('should not fail registration if issueAndSendVerificationEmail throws an error during register', async () => {
+      const mockEmailVerificationService = {
+        issueAndSendVerificationEmail: async () => {
+          throw new Error('503 Email Provider Down');
+        },
+        resend: async () => {},
+        confirm: async () => {},
+      };
+      const serviceWithEmail = new AuthService(
+        mockPasswordService,
+        mockTokenService,
+        mockSessionService,
+        mockUserRepo,
+        mockEmailVerificationService
+      );
+
+      const user = await serviceWithEmail.register(email, password, 'Test User');
+      expect(user.status).toBe('pending_verification');
+      expect(user.id).toBeDefined();
     });
   });
 
@@ -604,7 +654,11 @@ describe('AuthService', () => {
       expect(validatePolicySpy).toHaveBeenCalledWith('NewSecurePassword123!');
       expect(hashSpy).toHaveBeenCalledWith('NewSecurePassword123!');
       expect(updateRepoSpy).toHaveBeenCalledWith(testUser, expect.anything());
-      expect(revokeAllSessionsSpy).toHaveBeenCalledWith(userId, 'password_change', expect.anything());
+      expect(revokeAllSessionsSpy).toHaveBeenCalledWith(
+        userId,
+        'password_change',
+        expect.anything()
+      );
     });
 
     test('should throw ValidationError if fields are missing', async () => {

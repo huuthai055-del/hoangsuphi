@@ -1,7 +1,7 @@
 import type { Context } from 'hono';
+import type { ForecastQueryDto, WeatherQueryDto } from '../dto/weather.dto';
 import type { WeatherService } from '../service/weather.service';
 import { mapCurrentWeatherToResponse, mapForecastToResponse } from './mappers/weather.mapper';
-import type { WeatherQueryDto, ForecastQueryDto } from '../dto/weather.dto';
 
 export class WeatherController {
   constructor(private readonly service: WeatherService) {}

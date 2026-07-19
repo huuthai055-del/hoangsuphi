@@ -1,10 +1,10 @@
-import { describe, test, expect } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import { User } from './user.entity';
 import {
-  InvalidUserEmailError,
   InvalidPasswordHashError,
-  UserAccountDeletedError,
+  InvalidUserEmailError,
   InvalidUserStatusTransitionError,
+  UserAccountDeletedError,
 } from './user.errors';
 
 describe('User Domain Entity', () => {

@@ -1,6 +1,6 @@
-import { sign, verify, decode } from 'hono/jwt';
-import { env } from '@/config/env';
 import { parseDurationToSeconds } from '@/common/utils/duration';
+import { env } from '@/config/env';
+import { decode, sign, verify } from 'hono/jwt';
 
 export interface AccessTokenPayload {
   sub: string;

@@ -86,7 +86,9 @@ export class Article {
     }
     const cleanSlug = slug.trim();
     if (!SEO_SLUG_REGEX.test(cleanSlug)) {
-      throw new ArticleDomainError('Article slug must be a valid SEO slug format (lowercase alphanumeric and single dashes, no leading/trailing dashes)');
+      throw new ArticleDomainError(
+        'Article slug must be a valid SEO slug format (lowercase alphanumeric and single dashes, no leading/trailing dashes)'
+      );
     }
   }
 
@@ -200,21 +202,51 @@ export class Article {
   }
 
   // Getters
-  public get id(): string { return this._id; }
-  public get title(): string { return this._title; }
-  public get slug(): string { return this._slug; }
-  public get excerpt(): string { return this._excerpt; }
-  public get content(): string { return this._content; }
-  public get thumbnailId(): string | null { return this._thumbnailId; }
-  public get authorId(): string { return this._authorId; }
-  public get categoryId(): string { return this._categoryId; }
-  public get status(): ArticleStatus { return this._status; }
-  public get viewCount(): number { return this._viewCount; }
-  public get isFeatured(): boolean { return this._isFeatured; }
-  public get publishedAt(): Date | null { return this._publishedAt; }
-  public get createdAt(): Date { return this._createdAt; }
-  public get updatedAt(): Date { return this._updatedAt; }
-  public get deletedAt(): Date | null { return this._deletedAt; }
+  public get id(): string {
+    return this._id;
+  }
+  public get title(): string {
+    return this._title;
+  }
+  public get slug(): string {
+    return this._slug;
+  }
+  public get excerpt(): string {
+    return this._excerpt;
+  }
+  public get content(): string {
+    return this._content;
+  }
+  public get thumbnailId(): string | null {
+    return this._thumbnailId;
+  }
+  public get authorId(): string {
+    return this._authorId;
+  }
+  public get categoryId(): string {
+    return this._categoryId;
+  }
+  public get status(): ArticleStatus {
+    return this._status;
+  }
+  public get viewCount(): number {
+    return this._viewCount;
+  }
+  public get isFeatured(): boolean {
+    return this._isFeatured;
+  }
+  public get publishedAt(): Date | null {
+    return this._publishedAt;
+  }
+  public get createdAt(): Date {
+    return this._createdAt;
+  }
+  public get updatedAt(): Date {
+    return this._updatedAt;
+  }
+  public get deletedAt(): Date | null {
+    return this._deletedAt;
+  }
 
   // Internal Setters (Mutators without touching updatedAt)
   private setTitleInternal(newTitle: string, newSlug?: string): void {
@@ -290,7 +322,8 @@ export class Article {
     const cleanTitle = newTitle.trim();
     const cleanSlug = newSlug !== undefined ? newSlug.trim() : undefined;
 
-    const hasChanges = this._title !== cleanTitle || (cleanSlug !== undefined && this._slug !== cleanSlug);
+    const hasChanges =
+      this._title !== cleanTitle || (cleanSlug !== undefined && this._slug !== cleanSlug);
     if (!hasChanges) return;
 
     this.setTitleInternal(newTitle, newSlug);
@@ -443,7 +476,9 @@ export class Article {
     };
 
     if (!allowedTransitions[this._status]?.includes(targetStatus)) {
-      throw new ArticleDomainError(`Illegal status transition from ${this._status} to ${targetStatus}`);
+      throw new ArticleDomainError(
+        `Illegal status transition from ${this._status} to ${targetStatus}`
+      );
     }
 
     const timestamp = Article.resolveNow(now);

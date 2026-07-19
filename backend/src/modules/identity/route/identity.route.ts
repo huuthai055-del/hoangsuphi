@@ -1,22 +1,40 @@
-import { Hono } from 'hono';
 import { container } from '@/common/di/container';
+import { rateLimit } from '@/middleware/rate-limit';
+import { validateBody } from '@/middleware/validator';
+import { Hono } from 'hono';
+import type { MiddlewareHandler } from 'hono';
+import { EmailVerificationConstants } from '../constants/email-verification.constants';
 import {
-  RegisterRequestSchema,
+  ConfirmVerificationRequestSchema,
+  ResendVerificationRequestSchema,
+} from '../dto/email-verification.dto';
+import {
+  ChangePasswordRequestSchema,
   LoginRequestSchema,
   RefreshRequestSchema,
-  ChangePasswordRequestSchema,
+  RegisterRequestSchema,
 } from '../dto/identity.dto';
-import { validateBody } from '@/middleware/validator';
-import { rateLimit } from '@/middleware/rate-limit';
-import type { MiddlewareHandler } from 'hono';
-import type { IdentityController } from './identity.controller';
+import {
+  ForgotPasswordRequestSchema,
+  ResetPasswordRequestSchema,
+} from '../dto/password-recovery.dto';
+import { PasswordRecoveryConstants } from '../constants/password-recovery.constants';
 import type { AuthService } from '../service/auth.service';
+import type { EmailVerificationController } from './email-verification.controller';
+import type { IdentityController } from './identity.controller';
+import type { PasswordRecoveryController } from './password-recovery.controller';
 
 const identityRouter = new Hono();
 
 // Dependency Injection Setup
-const authGuard: MiddlewareHandler = (c, next) => container.resolve<MiddlewareHandler>('AuthGuard')(c, next);
-const getController = (): IdentityController => container.resolve<IdentityController>('IdentityController');
+const authGuard: MiddlewareHandler = (c, next) =>
+  container.resolve<MiddlewareHandler>('AuthGuard')(c, next);
+const getController = (): IdentityController =>
+  container.resolve<IdentityController>('IdentityController');
+const getEmailVerificationController = (): EmailVerificationController =>
+  container.resolve<EmailVerificationController>('EmailVerificationController');
+const getPasswordRecoveryController = (): PasswordRecoveryController =>
+  container.resolve<PasswordRecoveryController>('PasswordRecoveryController');
 
 // Public Routes — rate-limited by IP to mitigate brute-force and enumeration.
 // Account-level lockout in User domain is kept as an independent second layer.
@@ -41,16 +59,57 @@ identityRouter.post(
   (c) => getController().refresh(c)
 );
 
+identityRouter.post(
+  '/email-verification/resend',
+  rateLimit(
+    'email-verification/resend-ip',
+    EmailVerificationConstants.RATE_LIMIT_IP_MAX,
+    EmailVerificationConstants.RATE_LIMIT_WINDOW_MS
+  ),
+  validateBody(ResendVerificationRequestSchema),
+  (c) => getEmailVerificationController().resend(c)
+);
+
+identityRouter.post(
+  '/email-verification/confirm',
+  rateLimit(
+    'email-verification/confirm-ip',
+    EmailVerificationConstants.RATE_LIMIT_CONFIRM_IP_MAX,
+    EmailVerificationConstants.RATE_LIMIT_WINDOW_MS
+  ),
+  validateBody(ConfirmVerificationRequestSchema),
+  (c) => getEmailVerificationController().confirm(c)
+);
+
+identityRouter.post(
+  '/password/forgot',
+  rateLimit(
+    'password/forgot-ip',
+    PasswordRecoveryConstants.RATE_LIMIT_FORGOT_IP_MAX,
+    PasswordRecoveryConstants.RATE_LIMIT_WINDOW_MS
+  ),
+  validateBody(ForgotPasswordRequestSchema),
+  (c) => getPasswordRecoveryController().forgot(c)
+);
+
+identityRouter.post(
+  '/password/reset',
+  rateLimit(
+    'password/reset-ip',
+    PasswordRecoveryConstants.RATE_LIMIT_RESET_IP_MAX,
+    PasswordRecoveryConstants.RATE_LIMIT_WINDOW_MS
+  ),
+  validateBody(ResetPasswordRequestSchema),
+  (c) => getPasswordRecoveryController().reset(c)
+);
+
 // Protected Routes
 identityRouter.post('/logout', authGuard, (c) => getController().logout(c));
 
 identityRouter.post('/logout-all', authGuard, (c) => getController().logoutAll(c));
 
-identityRouter.post(
-  '/change-password',
-  authGuard,
-  validateBody(ChangePasswordRequestSchema),
-  (c) => getController().changePassword(c)
+identityRouter.post('/change-password', authGuard, validateBody(ChangePasswordRequestSchema), (c) =>
+  getController().changePassword(c)
 );
 
 // OpenAPI Spec endpoint for Identity Module
@@ -247,6 +306,173 @@ identityRouter.get('/openapi.json', (c) => {
             204: { description: 'Password changed successfully' },
             400: { description: 'Validation failed / Weak new password' },
             401: { description: 'Unauthorized / Current password verification failed' },
+          },
+        },
+      },
+      '/auth/email-verification/resend': {
+        post: {
+          summary: 'Resend email verification link',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    email: { type: 'string', format: 'email', example: 'user@example.com' },
+                  },
+                  required: ['email'],
+                },
+              },
+            },
+          },
+          responses: {
+            202: {
+              description: 'Verification email accepted and will be sent if account exists',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: {
+                        type: 'object',
+                        properties: {
+                          message: { type: 'string' },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            400: { description: 'Validation failed' },
+            429: { description: 'Rate limit exceeded' },
+          },
+        },
+      },
+      '/auth/email-verification/confirm': {
+        post: {
+          summary: 'Confirm email address with token',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    token: { type: 'string', example: 'raw-token-string' },
+                  },
+                  required: ['token'],
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: 'Email verification successful',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: {
+                        type: 'object',
+                        properties: {
+                          message: { type: 'string' },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            400: { description: 'Token invalid or expired' },
+            429: { description: 'Rate limit exceeded' },
+          },
+        },
+      },
+      '/auth/password/forgot': {
+        post: {
+          summary: 'Request a password-reset link without disclosing account state',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    email: { type: 'string', format: 'email', example: 'user@example.com' },
+                  },
+                  required: ['email'],
+                  additionalProperties: false,
+                },
+              },
+            },
+          },
+          responses: {
+            202: {
+              description: 'Generic reset-link request acceptance',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: {
+                        type: 'object',
+                        properties: {
+                          message: { type: 'string' },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            400: { description: 'Validation failed' },
+            429: { description: 'Rate limit exceeded' },
+          },
+        },
+      },
+      '/auth/password/reset': {
+        post: {
+          summary: 'Reset password with a one-time password-reset token',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    token: { type: 'string', example: 'raw-token-string' },
+                    newPassword: { type: 'string', format: 'password' },
+                  },
+                  required: ['token', 'newPassword'],
+                  additionalProperties: false,
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: 'Password reset successful; existing sessions are revoked',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: {
+                        type: 'object',
+                        properties: {
+                          message: { type: 'string' },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            400: { description: 'Validation failed or token invalid/expired' },
+            429: { description: 'Rate limit exceeded' },
           },
         },
       },

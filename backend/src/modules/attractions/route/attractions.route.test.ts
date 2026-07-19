@@ -116,12 +116,12 @@ mock.module('@/modules/attractions/repository/attractions.repository', () => {
   };
 });
 
-import { expect, test, describe, beforeEach } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'bun:test';
+import { Region } from '@/modules/regions/domain/region.aggregate';
+import { GPSLocation } from '@/modules/regions/domain/value-objects/gps-location.vo';
+import { LtreePath } from '@/modules/regions/domain/value-objects/ltree-path.vo';
 import type { Hono } from 'hono';
 import { Attraction } from '../domain/attraction.entity';
-import { GPSLocation } from '@/modules/regions/domain/value-objects/gps-location.vo';
-import { Region } from '@/modules/regions/domain/region.aggregate';
-import { LtreePath } from '@/modules/regions/domain/value-objects/ltree-path.vo';
 
 describe('Attractions API Routing & Controller', () => {
   let app: Hono;
@@ -205,7 +205,7 @@ describe('Attractions API Routing & Controller', () => {
     status: 'active',
     createdAt: new Date(),
     updatedAt: new Date(),
-    deletedAt: null
+    deletedAt: null,
   });
 
   test('GET /api/v1/attractions - should return empty list with 200', async () => {
@@ -262,9 +262,9 @@ describe('Attractions API Routing & Controller', () => {
 
     const res = await app.request('/api/v1/attractions', {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer valid-token'
+        Authorization: 'Bearer valid-token',
       },
       body: JSON.stringify({
         regionId: '3a552ef3-40e1-7ca7-8000-000000000001',
@@ -287,9 +287,9 @@ describe('Attractions API Routing & Controller', () => {
 
     const res = await app.request('/api/v1/attractions/3a552ef3-40e1-7ca7-8000-000000000002', {
       method: 'PATCH',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer valid-token'
+        Authorization: 'Bearer valid-token',
       },
       body: JSON.stringify({
         name: 'Updated Peak Name',
@@ -308,8 +308,8 @@ describe('Attractions API Routing & Controller', () => {
     const res = await app.request('/api/v1/attractions/3a552ef3-40e1-7ca7-8000-000000000002', {
       method: 'DELETE',
       headers: {
-        'Authorization': 'Bearer valid-token'
-      }
+        Authorization: 'Bearer valid-token',
+      },
     });
 
     expect(res.status).toBe(204);
@@ -341,7 +341,7 @@ describe('Attractions API Routing & Controller', () => {
       status: 'inactive',
       createdAt: new Date(),
       updatedAt: new Date(),
-      deletedAt: null
+      deletedAt: null,
     });
     mockFindAttractionById.mockImplementation(() => Promise.resolve(inactiveAttraction));
 
@@ -350,8 +350,8 @@ describe('Attractions API Routing & Controller', () => {
       {
         method: 'PATCH',
         headers: {
-          'Authorization': 'Bearer valid-token'
-        }
+          Authorization: 'Bearer valid-token',
+        },
       }
     );
 
@@ -369,8 +369,8 @@ describe('Attractions API Routing & Controller', () => {
       {
         method: 'PATCH',
         headers: {
-          'Authorization': 'Bearer valid-token'
-        }
+          Authorization: 'Bearer valid-token',
+        },
       }
     );
 

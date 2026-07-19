@@ -1,4 +1,4 @@
-import { describe, test, expect, mock, beforeEach } from 'bun:test';
+import { beforeEach, describe, expect, mock, test } from 'bun:test';
 
 // 1. Setup global resolve value for the thenable DB chain
 let mockResolveValue: any = undefined;
@@ -50,17 +50,17 @@ mock.module('@/lib/database/client', () => {
   };
 });
 
-import { DrizzleItineraryRepository } from './itinerary.repository';
-import { Itinerary } from '../domain/itinerary.entity';
 import {
-  DuplicateKeyRepositoryError,
-  ConstraintViolationRepositoryError,
-  NotNullViolationRepositoryError,
   CheckConstraintViolationRepositoryError,
-  TransactionConflictRepositoryError,
+  ConstraintViolationRepositoryError,
   DatabaseOperationRepositoryError,
+  DuplicateKeyRepositoryError,
   EntityNotFoundRepositoryError,
+  NotNullViolationRepositoryError,
+  TransactionConflictRepositoryError,
 } from '@/common/errors/repository.errors';
+import { Itinerary } from '../domain/itinerary.entity';
+import { DrizzleItineraryRepository } from './itinerary.repository';
 
 describe('Itineraries Repository Layer', () => {
   let repo: DrizzleItineraryRepository;
@@ -92,7 +92,7 @@ describe('Itineraries Repository Layer', () => {
   beforeEach(() => {
     repo = new DrizzleItineraryRepository();
     mockResolveValue = undefined;
-    
+
     selectSpy.mockClear();
     insertSpy.mockClear();
     updateSpy.mockClear();
@@ -110,7 +110,7 @@ describe('Itineraries Repository Layer', () => {
       // 1. Mock select itineraries row
       mockResolveValue = [sampleRawItinerary];
       const result = await repo.findById(sampleRawItinerary.id);
-      
+
       expect(result).not.toBeNull();
       expect(result?.id).toBe(sampleRawItinerary.id);
       expect(result?.title).toBe(sampleRawItinerary.title);
@@ -202,7 +202,7 @@ describe('Itineraries Repository Layer', () => {
   describe('findMany() & findByUser()', () => {
     test('should return paginated itineraries results list', async () => {
       mockResolveValue = [{ count: '1' }]; // count query resolves first
-      
+
       const res = await repo.findMany({
         filters: { status: 'DRAFT' },
         pagination: { limit: 5, offset: 0 },

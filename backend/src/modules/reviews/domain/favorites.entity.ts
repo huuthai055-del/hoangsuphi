@@ -1,5 +1,5 @@
-import { FavoriteDomainError } from './reviews.errors';
 import type { OwnerType } from './reviews.entity';
+import { FavoriteDomainError } from './reviews.errors';
 
 export interface FavoriteProps {
   id: string;
@@ -29,7 +29,7 @@ export class Favorite {
     if (!props.ownerId || !props.ownerId.trim()) {
       throw new FavoriteDomainError('Owner ID is required');
     }
-    
+
     const validOwnerTypes: OwnerType[] = ['PLACE', 'BUSINESS', 'ARTICLE', 'ATTRACTION'];
     if (!validOwnerTypes.includes(props.ownerType)) {
       throw new FavoriteDomainError(`Invalid owner type: ${props.ownerType}`);
@@ -53,7 +53,7 @@ export class Favorite {
     if (!props.ownerId || !props.ownerId.trim()) {
       throw new FavoriteDomainError('Owner ID is required');
     }
-    
+
     const validOwnerTypes: OwnerType[] = ['PLACE', 'BUSINESS', 'ARTICLE', 'ATTRACTION'];
     if (!validOwnerTypes.includes(props.ownerType)) {
       throw new FavoriteDomainError(`Invalid owner type: ${props.ownerType}`);

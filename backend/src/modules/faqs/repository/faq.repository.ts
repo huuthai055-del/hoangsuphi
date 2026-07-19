@@ -1,39 +1,63 @@
-import { db, type TransactionClient } from '@/lib/database/client';
-import { eq, and, isNull, sql, desc, asc } from 'drizzle-orm';
-import type { SQL } from 'drizzle-orm';
-import type { IFaqRepository, FaqFilters } from './faq-repository.interface';
-import type { Faq } from '../domain/faq.entity';
-import { faqs as faqsSchema } from '@/lib/database/schema/faqs';
-import { FaqMapper, type RawFaq } from './faq.mapper';
 import {
-  RepositoryError,
+  CheckConstraintViolationRepositoryError,
+  ConstraintViolationRepositoryError,
+  DatabaseOperationRepositoryError,
   DuplicateKeyRepositoryError,
   EntityNotFoundRepositoryError,
-  DatabaseOperationRepositoryError,
-  ConstraintViolationRepositoryError,
   NotNullViolationRepositoryError,
-  CheckConstraintViolationRepositoryError,
+  RepositoryError,
   TransactionConflictRepositoryError,
 } from '@/common/errors/repository.errors';
 import type { PaginatedResult, PaginationOptions } from '@/common/types/pagination';
+import { type TransactionClient, db } from '@/lib/database/client';
+import { faqs as faqsSchema } from '@/lib/database/schema/faqs';
+import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
+import type { SQL } from 'drizzle-orm';
+import type { Faq } from '../domain/faq.entity';
+import type { FaqFilters, IFaqRepository } from './faq-repository.interface';
+import { FaqMapper, type RawFaq } from './faq.mapper';
 
 function mapDbError(err: unknown, operation: string, details?: Record<string, unknown>): never {
   if (err instanceof RepositoryError) throw err;
   const pgErr = err as { code?: string; constraint?: string; column?: string };
   switch (pgErr.code) {
     case '23505':
-      throw new DuplicateKeyRepositoryError(`${operation} failed: unique constraint violated`, { constraint: pgErr.constraint, ...details }, err as Error);
+      throw new DuplicateKeyRepositoryError(
+        `${operation} failed: unique constraint violated`,
+        { constraint: pgErr.constraint, ...details },
+        err as Error
+      );
     case '23503':
-      throw new ConstraintViolationRepositoryError(`${operation} failed: foreign key constraint violated`, { constraint: pgErr.constraint, ...details }, err as Error);
+      throw new ConstraintViolationRepositoryError(
+        `${operation} failed: foreign key constraint violated`,
+        { constraint: pgErr.constraint, ...details },
+        err as Error
+      );
     case '23502':
-      throw new NotNullViolationRepositoryError(`${operation} failed: not-null constraint violated`, { column: pgErr.column, ...details }, err as Error);
+      throw new NotNullViolationRepositoryError(
+        `${operation} failed: not-null constraint violated`,
+        { column: pgErr.column, ...details },
+        err as Error
+      );
     case '23514':
-      throw new CheckConstraintViolationRepositoryError(`${operation} failed: check constraint violated`, { constraint: pgErr.constraint, ...details }, err as Error);
+      throw new CheckConstraintViolationRepositoryError(
+        `${operation} failed: check constraint violated`,
+        { constraint: pgErr.constraint, ...details },
+        err as Error
+      );
     case '40001':
     case '40P01':
-      throw new TransactionConflictRepositoryError(`${operation} failed: transaction conflict`, details, err as Error);
+      throw new TransactionConflictRepositoryError(
+        `${operation} failed: transaction conflict`,
+        details,
+        err as Error
+      );
     default:
-      throw new DatabaseOperationRepositoryError(`${operation} failed: raw database error`, details, err as Error);
+      throw new DatabaseOperationRepositoryError(
+        `${operation} failed: raw database error`,
+        details,
+        err as Error
+      );
   }
 }
 
@@ -47,7 +71,8 @@ export class DrizzleFaqRepository implements IFaqRepository {
 
     if (filters) {
       const { status, category, search } = filters;
-      if (status) conditions.push(eq(faqsSchema.status, status as 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'));
+      if (status)
+        conditions.push(eq(faqsSchema.status, status as 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'));
       if (category) conditions.push(eq(faqsSchema.category, category));
       if (search) {
         const cleanSearch = `%${search.replace(/%/g, '\\%').replace(/_/g, '\\_')}%`;

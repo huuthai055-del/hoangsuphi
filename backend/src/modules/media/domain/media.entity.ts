@@ -12,6 +12,9 @@ export interface MediaProps {
   fileSize: number;
   hash: string;
   status: MediaStatus;
+  storageProvider: 'LOCAL' | 'CLOUDINARY';
+  altText: string | null;
+  caption: string | null;
   ownerType: string | null;
   ownerId: string | null;
   /** The user ID of whoever uploaded this file. Used for delete access control. */
@@ -30,6 +33,9 @@ export class Media {
   private _fileSize: number;
   private _hash: string;
   private _status: MediaStatus;
+  private _storageProvider: 'LOCAL' | 'CLOUDINARY';
+  private _altText: string | null;
+  private _caption: string | null;
   private _ownerType: string | null;
   private _ownerId: string | null;
   private _uploadedBy: string | null;
@@ -46,6 +52,9 @@ export class Media {
     this._fileSize = props.fileSize;
     this._hash = props.hash;
     this._status = props.status;
+    this._storageProvider = props.storageProvider;
+    this._altText = props.altText;
+    this._caption = props.caption;
     this._ownerType = props.ownerType;
     this._ownerId = props.ownerId;
     this._uploadedBy = props.uploadedBy;
@@ -99,6 +108,9 @@ export class Media {
     mediaType: MediaType;
     fileSize: number;
     hash: string;
+    storageProvider?: 'LOCAL' | 'CLOUDINARY';
+    altText?: string | null;
+    caption?: string | null;
     ownerType?: string | null;
     ownerId?: string | null;
     uploadedBy?: string | null;
@@ -122,6 +134,9 @@ export class Media {
       fileSize: props.fileSize,
       hash: props.hash.trim(),
       status: 'UPLOADING',
+      storageProvider: props.storageProvider ?? 'LOCAL',
+      altText: props.altText ?? null,
+      caption: props.caption ?? null,
       ownerType: props.ownerType ?? null,
       ownerId: props.ownerId ?? null,
       uploadedBy: props.uploadedBy ?? null,
@@ -148,6 +163,9 @@ export class Media {
       fileSize: props.fileSize,
       hash: props.hash.trim(),
       status: props.status,
+      storageProvider: props.storageProvider ?? 'LOCAL',
+      altText: props.altText,
+      caption: props.caption,
       ownerType: props.ownerType,
       ownerId: props.ownerId,
       uploadedBy: props.uploadedBy,
@@ -158,20 +176,57 @@ export class Media {
   }
 
   // Getters
-  public get id(): string { return this._id; }
-  public get fileName(): string { return this._fileName; }
-  public get storageKey(): string { return this._storageKey; }
-  public get mimeType(): string { return this._mimeType; }
-  public get mediaType(): MediaType { return this._mediaType; }
-  public get fileSize(): number { return this._fileSize; }
-  public get hash(): string { return this._hash; }
-  public get status(): MediaStatus { return this._status; }
-  public get ownerType(): string | null { return this._ownerType; }
-  public get ownerId(): string | null { return this._ownerId; }
-  public get uploadedBy(): string | null { return this._uploadedBy; }
-  public get createdAt(): Date { return this._createdAt; }
-  public get updatedAt(): Date { return this._updatedAt; }
-  public get deletedAt(): Date | null { return this._deletedAt; }
+  public get id(): string {
+    return this._id;
+  }
+  public get fileName(): string {
+    return this._fileName;
+  }
+  public get storageKey(): string {
+    return this._storageKey;
+  }
+  public get mimeType(): string {
+    return this._mimeType;
+  }
+  public get mediaType(): MediaType {
+    return this._mediaType;
+  }
+  public get fileSize(): number {
+    return this._fileSize;
+  }
+  public get hash(): string {
+    return this._hash;
+  }
+  public get status(): MediaStatus {
+    return this._status;
+  }
+  public get storageProvider(): 'LOCAL' | 'CLOUDINARY' {
+    return this._storageProvider;
+  }
+  public get altText(): string | null {
+    return this._altText;
+  }
+  public get caption(): string | null {
+    return this._caption;
+  }
+  public get ownerType(): string | null {
+    return this._ownerType;
+  }
+  public get ownerId(): string | null {
+    return this._ownerId;
+  }
+  public get uploadedBy(): string | null {
+    return this._uploadedBy;
+  }
+  public get createdAt(): Date {
+    return this._createdAt;
+  }
+  public get updatedAt(): Date {
+    return this._updatedAt;
+  }
+  public get deletedAt(): Date | null {
+    return this._deletedAt;
+  }
 
   // Lifecycle State Transitions
   private ensureNotDeleted(): void {
@@ -184,7 +239,7 @@ export class Media {
     this.ensureNotDeleted();
 
     const allowedTransitions: Record<MediaStatus, readonly MediaStatus[]> = {
-      UPLOADING: ['READY', 'PROCESSING', 'FAILED', 'DELETED'],
+      UPLOADING: ['PROCESSING', 'FAILED', 'DELETED'],
       PROCESSING: ['READY', 'FAILED', 'DELETED'],
       READY: ['DELETED'],
       FAILED: ['DELETED'],
@@ -192,7 +247,9 @@ export class Media {
     };
 
     if (!allowedTransitions[this._status]?.includes(targetStatus)) {
-      throw new MediaDomainError(`Illegal status transition from ${this._status} to ${targetStatus}`);
+      throw new MediaDomainError(
+        `Illegal status transition from ${this._status} to ${targetStatus}`
+      );
     }
 
     const timestamp = now ?? new Date();
@@ -244,6 +301,9 @@ export class Media {
       fileSize: this._fileSize,
       hash: this._hash,
       status: this._status,
+      storageProvider: this._storageProvider,
+      altText: this._altText,
+      caption: this._caption,
       ownerType: this._ownerType,
       ownerId: this._ownerId,
       uploadedBy: this._uploadedBy,

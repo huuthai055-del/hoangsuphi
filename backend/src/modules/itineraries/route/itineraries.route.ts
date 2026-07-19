@@ -1,17 +1,17 @@
-import { Hono } from 'hono';
-import { container } from '@/common/di/container';
 import { Permissions } from '@/common/constants/permissions';
+import { container } from '@/common/di/container';
+import { validateBody, validateParams, validateQuery } from '@/middleware/validator';
 import { requirePermission } from '@/modules/identity/middleware/permission.middleware';
+import { Hono } from 'hono';
 import {
+  AddItineraryItemRequestSchema,
+  CreateItineraryRequestSchema,
+  ItineraryFilterQuerySchema,
   ItineraryIdParamsSchema,
   ItineraryItemIdParamsSchema,
-  CreateItineraryRequestSchema,
-  UpdateItineraryRequestSchema,
-  AddItineraryItemRequestSchema,
   ReorderItineraryItemsRequestSchema,
-  ItineraryFilterQuerySchema,
+  UpdateItineraryRequestSchema,
 } from '../dto/itineraries.dto';
-import { validateBody, validateParams, validateQuery } from '@/middleware/validator';
 import type { ItinerariesController } from './itineraries.controller';
 
 import type { MiddlewareHandler } from 'hono';
@@ -19,8 +19,10 @@ import type { MiddlewareHandler } from 'hono';
 const itinerariesRouter = new Hono();
 
 // Dynamically resolve authGuard and controller from Container
-const authGuard: MiddlewareHandler = (c, next) => container.resolve<MiddlewareHandler>('AuthGuard')(c, next);
-const getController = (): ItinerariesController => container.resolve<ItinerariesController>('ItinerariesController');
+const authGuard: MiddlewareHandler = (c, next) =>
+  container.resolve<MiddlewareHandler>('AuthGuard')(c, next);
+const getController = (): ItinerariesController =>
+  container.resolve<ItinerariesController>('ItinerariesController');
 
 // Routes
 itinerariesRouter.post(

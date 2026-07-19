@@ -1,19 +1,22 @@
+import {
+  AuthenticationError,
+  AuthorizationError,
+  NotFoundError,
+  ValidationError,
+} from '@/common/errors/http.errors';
 import type { Context } from 'hono';
-import type { MediaUploadService } from '../service/media-upload.service';
-import type { MediaProcessingService } from '../service/media-processing.service';
-import type { IMediaRepository } from '../repository/media-repository.interface';
-import type { IMediaStorage } from '../domain/storage.interface';
-import { MediaPresentationMapper } from './mappers/media.mapper';
 import type { MediaIdParamsDto } from '../dto/media.dto';
 import { UploadMediaSchema } from '../dto/media.dto';
-import { ValidationError, NotFoundError, AuthenticationError, AuthorizationError } from '@/common/errors/http.errors';
+import type { IMediaRepository } from '../repository/media-repository.interface';
+import type { MediaIngestionService } from '../service/media-ingestion.service';
+import type { MediaStorageResolver } from '../service/media-storage.resolver';
+import { MediaPresentationMapper } from './mappers/media.mapper';
 
 export class MediaController {
   constructor(
-    private readonly uploadService: MediaUploadService,
-    private readonly processingService: MediaProcessingService,
+    private readonly ingestionService: MediaIngestionService,
     private readonly mediaRepo: IMediaRepository,
-    private readonly storage: IMediaStorage
+    private readonly storageResolver: MediaStorageResolver
   ) {}
 
   public upload = async (c: Context) => {
@@ -22,85 +25,109 @@ export class MediaController {
       throw new AuthenticationError('Authentication required');
     }
 
-    const body = await c.req.parseBody();
+    const body = await c.req.parseBody({ all: true });
     const file = body.file;
     if (!file || !(file instanceof File)) {
       throw new ValidationError('File payload is required in multipart form data');
     }
 
-    // Validate ownerType and ownerId with Zod schema (enum check + UUID format)
-    const ownerFieldsResult = UploadMediaSchema.safeParse({
-      ownerType: typeof body.ownerType === 'string' ? body.ownerType : undefined,
-      ownerId: typeof body.ownerId === 'string' ? body.ownerId : undefined,
-    });
-    if (!ownerFieldsResult.success) {
+    const { file: _, ...textFields } = body;
+    const parsedResult = UploadMediaSchema.safeParse(textFields);
+
+    if (!parsedResult.success) {
       const details: Record<string, string> = {};
-      for (const issue of ownerFieldsResult.error.issues) {
+      for (const issue of parsedResult.error.issues) {
         details[issue.path.join('.')] = issue.message;
       }
       throw new ValidationError('Validation failed', details);
-    }
-    const { ownerType, ownerId } = ownerFieldsResult.data;
-
-    // When ownerType is 'USER', the ownerId must refer to the caller themselves.
-    // Allowing any user to set ownerId to another user's ID would let them
-    // forge ownership and bypass future user-scoped access checks.
-    if (ownerType === 'USER' && ownerId !== user.id) {
-      throw new ValidationError(
-        'Validation failed',
-        { ownerId: 'When ownerType is USER, ownerId must match your own user ID' }
-      );
     }
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    const media = await this.uploadService.upload({
+    const { media, deduplicated } = await this.ingestionService.ingest({
       fileName: file.name,
       mimeType: file.type,
       fileBuffer: buffer,
-      ownerType: ownerType ?? null,
-      ownerId: ownerId ?? null,
+      altText: parsedResult.data.altText,
+      caption: parsedResult.data.caption,
       uploadedBy: user.id,
+      signal: c.req.raw.signal,
     });
 
-    // Kích hoạt image processing pipeline để tạo variants và trích xuất EXIF
-    await this.processingService.process(media.id);
+    const storage = this.storageResolver.resolve(media.storageProvider);
+    const variants = await this.mediaRepo.getVariants(media.id);
+    const metadata = await this.mediaRepo.getMetadata(media.id);
+    const response = await MediaPresentationMapper.toResponseDto(
+      media,
+      storage,
+      variants,
+      metadata
+    );
 
-    // Refresh media state từ repo sau khi process
-    const processedMedia = await this.mediaRepo.findById(media.id);
-    if (!processedMedia) {
-      throw new NotFoundError('Media processed but not found');
-    }
-
-    const response = await MediaPresentationMapper.toResponseDto(processedMedia, this.storage);
-    return c.json(response, 201);
+    return c.json(
+      {
+        data: response,
+        meta: {
+          deduplicated,
+        },
+        error: null,
+      },
+      deduplicated ? 200 : 201
+    );
   };
 
   public getById = async (c: Context) => {
     const params = c.get('validParams') as MediaIdParamsDto;
     const media = await this.mediaRepo.findById(params.id);
-    if (!media) {
+    if (!media || media.status !== 'READY') {
       throw new NotFoundError(`Media not found with ID: ${params.id}`);
     }
 
-    const response = await MediaPresentationMapper.toResponseDto(media, this.storage);
-    return c.json(response, 200);
+    const storage = this.storageResolver.resolve(media.storageProvider);
+    const variants = await this.mediaRepo.getVariants(media.id);
+    const metadata = await this.mediaRepo.getMetadata(media.id);
+    const response = await MediaPresentationMapper.toResponseDto(
+      media,
+      storage,
+      variants,
+      metadata
+    );
+
+    return c.json(
+      {
+        data: response,
+        meta: {
+          deduplicated: false,
+        },
+        error: null,
+      },
+      200
+    );
   };
 
   public getVariants = async (c: Context) => {
     const params = c.get('validParams') as MediaIdParamsDto;
     const media = await this.mediaRepo.findById(params.id);
-    if (!media) {
+    if (!media || media.status !== 'READY') {
       throw new NotFoundError(`Media not found with ID: ${params.id}`);
     }
 
+    const storage = this.storageResolver.resolve(media.storageProvider);
     const variants = await this.mediaRepo.getVariants(params.id);
-    const mapped = await Promise.all(
-      variants.map((v) => MediaPresentationMapper.toVariantResponseDto(v, this.storage))
-    );
+    const mapped = [];
+    for (const v of variants) {
+      mapped.push(await MediaPresentationMapper.toVariantResponseDto(v, storage));
+    }
 
-    return c.json({ data: mapped }, 200);
+    return c.json(
+      {
+        data: mapped,
+        meta: {},
+        error: null,
+      },
+      200
+    );
   };
 
   public delete = async (c: Context) => {
@@ -115,14 +142,10 @@ export class MediaController {
       throw new NotFoundError(`Media not found with ID: ${params.id}`);
     }
 
-    // Access control: check the actual uploader identity, not the content-owner.
-    // media.ownerId is the ID of the content entity (article, business, etc.) —
-    // it is NOT the uploader. media.uploadedBy is set at upload time to user.id.
     if (media.uploadedBy !== user.id && !user.roles.includes('admin')) {
       throw new AuthorizationError('You do not have permission to delete this media');
     }
 
-    // Soft delete
     media.softDelete();
     await this.mediaRepo.update(media);
 

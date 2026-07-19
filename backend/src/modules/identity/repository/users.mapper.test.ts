@@ -1,6 +1,6 @@
-import { describe, test, expect } from 'bun:test';
-import { UserMapper } from './users.mapper';
+import { describe, expect, test } from 'bun:test';
 import { User } from '../domain/user.entity';
+import { UserMapper } from './users.mapper';
 
 describe('UserMapper', () => {
   const dbModel = {

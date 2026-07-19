@@ -1,7 +1,7 @@
-import { expect, test, describe, beforeEach, mock } from 'bun:test';
+import { beforeEach, describe, expect, mock, test } from 'bun:test';
+import { container } from '@/common/di/container';
 import type { Hono } from 'hono';
 import { WeatherController } from './weather.controller';
-import { container } from '@/common/di/container';
 
 describe('Weather API Routing & Controller', () => {
   let app: Hono;

@@ -1,16 +1,16 @@
+import { ConflictError, NotFoundError, ValidationError } from '@/common/errors/http.errors';
+import { generateUuidV7 } from '@/common/utils/uuid';
 import { runInTransaction } from '@/lib/database/client';
+import { logger } from '@/lib/logger';
+import { requestStore } from '@/lib/logger/context';
+import { Region, type RegionLevel } from '../domain/region.aggregate';
+import { GPSLocation } from '../domain/value-objects/gps-location.vo';
+import { LtreePath } from '../domain/value-objects/ltree-path.vo';
+import type { ITouristPlacesRepository } from '../repository/places-repository.interface';
 import type {
   IRegionsRepository,
   ListRegionsOptions,
 } from '../repository/regions-repository.interface';
-import type { ITouristPlacesRepository } from '../repository/places-repository.interface';
-import { Region, type RegionLevel } from '../domain/region.aggregate';
-import { LtreePath } from '../domain/value-objects/ltree-path.vo';
-import { GPSLocation } from '../domain/value-objects/gps-location.vo';
-import { generateUuidV7 } from '@/common/utils/uuid';
-import { logger } from '@/lib/logger';
-import { requestStore } from '@/lib/logger/context';
-import { NotFoundError, ConflictError, ValidationError } from '@/common/errors/http.errors';
 
 export interface CreateRegionCommand {
   id?: string;
@@ -133,7 +133,9 @@ export class RegionsService {
       region.changeDescription(command.description);
     }
     if (command.center !== undefined) {
-      region.updateLocation(command.center ? new GPSLocation(command.center.lng, command.center.lat) : null);
+      region.updateLocation(
+        command.center ? new GPSLocation(command.center.lng, command.center.lat) : null
+      );
     } else if (command.latitude !== undefined || command.longitude !== undefined) {
       const lat = command.latitude !== undefined ? command.latitude : region.latitude;
       const lng = command.longitude !== undefined ? command.longitude : region.longitude;
@@ -197,7 +199,11 @@ export class RegionsService {
           const relativePath = descPathVal.substring(oldPath.length);
           const updatedDescPath = newPath + relativePath;
 
-          desc.move(desc.parentId, new LtreePath(updatedDescPath), (desc.level + levelDiff) as RegionLevel);
+          desc.move(
+            desc.parentId,
+            new LtreePath(updatedDescPath),
+            (desc.level + levelDiff) as RegionLevel
+          );
 
           await this.regionsRepo.update(desc, tx);
         }
@@ -320,7 +326,9 @@ export class RegionsService {
     return region;
   }
 
-  public async listRegions(options: ListRegionsOptions): Promise<{ items: Region[]; total: number }> {
+  public async listRegions(
+    options: ListRegionsOptions
+  ): Promise<{ items: Region[]; total: number }> {
     const [items, total] = await Promise.all([
       this.regionsRepo.list(options),
       this.regionsRepo.count(options),

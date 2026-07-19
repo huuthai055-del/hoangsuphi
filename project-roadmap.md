@@ -170,7 +170,7 @@ Launch      →    Maintenance & Expansion
 | **4.2** | **Nearby Search** | 🔒 LOCKED | PostGIS (`ST_DWithin`, `ST_Distance`) tìm địa điểm theo bán kính và sắp xếp theo khoảng cách. Warm DB p95 tại 25 km = 89,47 ms trong 30 mẫu. |
 | **4.3** | **Media Upload** | ⬜ | Upload → Validate → Resize → WebP → Cloudinary → Lưu metadata. |
 | **4.4** | **SEO** | ⬜ | Dynamic Sitemap, robots.txt, Canonical URL, OpenGraph, Schema.org JSON-LD. |
-| **4.5** | **Email** | ⬜ | Resend: Verify Email, Forgot Password, Contact Form. |
+| **4.5** | **Email** | ✅ CODE COMPLETE | Phase 4.5 Code Complete. Production Activation (Step 4.5.6) Pending Domain. |
 | **4.6** | **Redirect Management** | ⬜ | CRUD Redirects, hỗ trợ HTTP 301/302. |
 | **4.7** | **Recommendation** | ⬜ | Gợi ý bằng SQL (Nearby, Top Rated, Newest, Same Region), chưa sử dụng AI. |
 | **4.8** | **Live Harvest Status** | ⬜ | Module đặc thù HSP: CRUD, Timeline, Ảnh, Thông báo trạng thái mùa vụ. |
@@ -514,6 +514,8 @@ Chi tiết thiết kế và quy tắc lập trình xem tại tài liệu đặc 
 | 2026-07-15 | Xác minh dữ liệu không gian & GiST index | Phiên #029 — Tạo migration 0015 thêm GiST indexes cho tourist_places và businesses, viết bộ integration tests và spatial fixtures cho data readiness, pass 8/8 tests. |
 | 2026-07-15 | Triển khai Steps 4.2.2–4.2.5 Nearby Search | Phiên #030 — NearbyRepository (ST_DWithin + LEFT JOIN LATERAL), NearbySearchService (HMAC cursor, fingerprint), HTTP controller, route, DI, 47 unit tests pass, PostgreSQL integration tests suite hoàn tất. |
 | 2026-07-16 | 🔒 LOCK Phase 4.2 Nearby Search sau final re-audit | Phiên #032 — Sửa benchmark fail-open và database isolation; loại SQL/EXPLAIN cũ; chạy 27 scenarios × 30 mẫu trên 9.700 entities + 9.700 reviews. 25 km DB p95 = 89,47 ms. 9 current-query EXPLAIN plans có non-zero rows, GiST + `reviews_owner_idx`; Nearby suite 85/85, full regression 1052 pass/0 fail, build/typecheck/biome/diff sạch. |
+| 2026-07-19 | 🔒 LOCK Step 4.5.2 Verify Email | Phiên #041 — Resend/confirm routes, token security, Redis idempotency/rate limit, FakeEmailSender, PostgreSQL/Redis live integration; full backend 1246 pass, 67 skip, 0 fail. Step 4.5.3 chưa bắt đầu. |
+| 2026-07-19 | ✅ CODE COMPLETE Phase 4.5 Email | Phiên #042 — Hoàn tất Forgot/Reset, Contact Form và Integration Audit. Toàn bộ tests pass. Production Activation (Step 4.5.6) Pending Domain. |
 
 ---
 
@@ -533,17 +535,20 @@ Chi tiết thiết kế và quy tắc lập trình xem tại tài liệu đặc 
 - 🚧 Phase 4 (Production Features) — ĐANG THỰC HIỆN
   - Sub-phase 4.1 Search & Advanced Filter: 🔒 **LOCKED**; SLA `<100 ms` exception recorded.
   - Sub-phase 4.2 Nearby Search: 🔒 **LOCKED**; 25 km DB p95 = 89,47 ms, 85/85 Nearby tests.
+  - Sub-phase 4.3 Media Upload: 🔒 **LOCKED**.
+  - Sub-phase 4.4 SEO: 🔒 **LOCKED**.
+  - Sub-phase 4.5 Email: ✅ **CODE COMPLETE** — PRODUCTION ACTIVATION PENDING DOMAIN.
 
 ## Next Session
 
 ### Objective
-Bắt đầu Phase 4.3 — Media Upload. Upload → Validate → Resize → WebP → Cloudinary → Lưu metadata.
+Chờ hoàn tất Step 4.5.6 (Mua domain & Production Email Activation) hoặc bắt đầu tính năng của Phase tiếp theo theo chỉ định của người dùng.
 
 ### Current Position
 - **Current Phase**: Phase 4 (Production Features - MVP Stable)
-- **Current Session**: SESSION #032
-- **Completed**: Phase 4.1 🔒 Search & Advanced Filter; Phase 4.2 🔒 Nearby Search
-- **Next Step**: Phase 4.3 Media Upload
+- **Current Session**: SESSION #042
+- **Completed**: Phase 4.1–4.4 🔒 LOCKED; Phase 4.5 ✅ CODE COMPLETE
+- **Next Step**: Step 4.5.6 (Pending Domain) / Phase 4.6 Redirect Management
 
 ### Phase 4.2 Completion Summary
 - Repository: `ST_DWithin` + `ST_Distance` + `UNION ALL` 4 entity types + LEFT JOIN LATERAL reviews

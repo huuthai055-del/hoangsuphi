@@ -1,23 +1,25 @@
-import { Hono } from 'hono';
-import { z } from 'zod';
 import { container } from '@/common/di/container';
+import { validateBody, validateParams, validateQuery } from '@/middleware/validator';
+import { requirePermission } from '@/modules/identity/middleware/permission.middleware';
+import { Hono } from 'hono';
+import type { MiddlewareHandler } from 'hono';
+import { z } from 'zod';
 import {
   CreatePlaceSchema,
-  UpdatePlaceSchema,
   ListPlacesQuerySchema,
-  PlaceNearbyQuerySchema,
   PlaceIdParamsSchema,
+  PlaceNearbyQuerySchema,
   PlaceSlugParamsSchema,
+  UpdatePlaceSchema,
 } from '../dto/places.dto';
-import { validateBody, validateQuery, validateParams } from '@/middleware/validator';
-import { requirePermission } from '@/modules/identity/middleware/permission.middleware';
-import type { MiddlewareHandler } from 'hono';
 import type { PlacesController } from './places.controller';
 
 const placesRouter = new Hono();
 
-const authGuard: MiddlewareHandler = (c, next) => container.resolve<MiddlewareHandler>('AuthGuard')(c, next);
-const getController = (): PlacesController => container.resolve<PlacesController>('PlacesController');
+const authGuard: MiddlewareHandler = (c, next) =>
+  container.resolve<MiddlewareHandler>('AuthGuard')(c, next);
+const getController = (): PlacesController =>
+  container.resolve<PlacesController>('PlacesController');
 
 // ==========================================
 // PUBLIC ROUTES
@@ -27,10 +29,14 @@ const getController = (): PlacesController => container.resolve<PlacesController
 placesRouter.get('/', validateQuery(ListPlacesQuerySchema), (c) => getController().list(c));
 
 // GET /api/v1/places/nearby
-placesRouter.get('/nearby', validateQuery(PlaceNearbyQuerySchema), (c) => getController().searchNearby(c));
+placesRouter.get('/nearby', validateQuery(PlaceNearbyQuerySchema), (c) =>
+  getController().searchNearby(c)
+);
 
 // GET /api/v1/places/slug/:slug
-placesRouter.get('/slug/:slug', validateParams(PlaceSlugParamsSchema), (c) => getController().getBySlug(c));
+placesRouter.get('/slug/:slug', validateParams(PlaceSlugParamsSchema), (c) =>
+  getController().getBySlug(c)
+);
 
 // GET /api/v1/places/region/:regionId
 placesRouter.get(

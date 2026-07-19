@@ -1,19 +1,19 @@
-import { expect, test, describe, beforeEach, afterEach, spyOn } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
+import { User } from '../domain/user.entity';
+import type { IPermissionRepository } from '../repository/permissions-repository.interface';
+import type { IUserRepository } from '../repository/users-repository.interface';
+import type { ISessionService } from '../service/session.service';
+import type { AccessTokenPayload, ITokenService } from '../service/token.service';
 import { authMiddleware } from './auth.middleware';
 import { optionalAuthMiddleware } from './optional-auth.middleware';
 import {
-  requireAuthenticated,
-  requirePermission,
   requireAllPermissions,
   requireAnyPermission,
-  requireRole,
   requireAnyRole,
+  requireAuthenticated,
+  requirePermission,
+  requireRole,
 } from './permission.middleware';
-import { User } from '../domain/user.entity';
-import type { ITokenService, AccessTokenPayload } from '../service/token.service';
-import type { ISessionService } from '../service/session.service';
-import type { IUserRepository } from '../repository/users-repository.interface';
-import type { IPermissionRepository } from '../repository/permissions-repository.interface';
 
 describe('Identity Middlewares', () => {
   let mockTokenService: ITokenService;
@@ -120,7 +120,12 @@ describe('Identity Middlewares', () => {
 
   describe('authMiddleware', () => {
     test('should set context user successfully for a valid token and active session', async () => {
-      const middleware = authMiddleware(mockTokenService, mockSessionService, mockUserRepo, mockPermissionRepo);
+      const middleware = authMiddleware(
+        mockTokenService,
+        mockSessionService,
+        mockUserRepo,
+        mockPermissionRepo
+      );
       const c = createMockContext({
         authorization: `Bearer ${validToken}`,
         'x-session-id': sessionId,
@@ -147,36 +152,50 @@ describe('Identity Middlewares', () => {
     });
 
     test('should throw AuthenticationError if Authorization header is missing', async () => {
-      const middleware = authMiddleware(mockTokenService, mockSessionService, mockUserRepo, mockPermissionRepo);
+      const middleware = authMiddleware(
+        mockTokenService,
+        mockSessionService,
+        mockUserRepo,
+        mockPermissionRepo
+      );
       const c = createMockContext({}, {});
 
-      await expect(middleware(c, async () => {})).rejects.toThrow(
-        'Unauthorized'
-      );
+      await expect(middleware(c, async () => {})).rejects.toThrow('Unauthorized');
     });
 
     test('should throw AuthenticationError if Authorization header has wrong bearer format', async () => {
-      const middleware = authMiddleware(mockTokenService, mockSessionService, mockUserRepo, mockPermissionRepo);
+      const middleware = authMiddleware(
+        mockTokenService,
+        mockSessionService,
+        mockUserRepo,
+        mockPermissionRepo
+      );
       const c = createMockContext({ authorization: 'Basic abc' });
 
-      await expect(middleware(c, async () => {})).rejects.toThrow(
-        'Unauthorized'
-      );
+      await expect(middleware(c, async () => {})).rejects.toThrow('Unauthorized');
     });
 
     test('should throw AuthenticationError for malformed or invalid token signature', async () => {
       spyOn(mockTokenService, 'verifyAccessToken').mockImplementation(async () => null);
-      const middleware = authMiddleware(mockTokenService, mockSessionService, mockUserRepo, mockPermissionRepo);
+      const middleware = authMiddleware(
+        mockTokenService,
+        mockSessionService,
+        mockUserRepo,
+        mockPermissionRepo
+      );
       const c = createMockContext({ authorization: 'Bearer invalid' });
 
-      await expect(middleware(c, async () => {})).rejects.toThrow(
-        'Unauthorized'
-      );
+      await expect(middleware(c, async () => {})).rejects.toThrow('Unauthorized');
     });
 
     test('should throw AuthenticationError if user is not found in database', async () => {
       spyOn(mockUserRepo, 'findById').mockImplementation(async () => null);
-      const middleware = authMiddleware(mockTokenService, mockSessionService, mockUserRepo, mockPermissionRepo);
+      const middleware = authMiddleware(
+        mockTokenService,
+        mockSessionService,
+        mockUserRepo,
+        mockPermissionRepo
+      );
       const c = createMockContext({
         authorization: `Bearer ${validToken}`,
         'x-session-id': sessionId,
@@ -192,7 +211,12 @@ describe('Identity Middlewares', () => {
       });
       spyOn(mockUserRepo, 'findById').mockImplementation(async () => inactiveUser);
 
-      const middleware = authMiddleware(mockTokenService, mockSessionService, mockUserRepo, mockPermissionRepo);
+      const middleware = authMiddleware(
+        mockTokenService,
+        mockSessionService,
+        mockUserRepo,
+        mockPermissionRepo
+      );
       const c = createMockContext({
         authorization: `Bearer ${validToken}`,
         'x-session-id': sessionId,
@@ -208,7 +232,12 @@ describe('Identity Middlewares', () => {
       });
       spyOn(mockUserRepo, 'findById').mockImplementation(async () => userWithOldVersion);
 
-      const middleware = authMiddleware(mockTokenService, mockSessionService, mockUserRepo, mockPermissionRepo);
+      const middleware = authMiddleware(
+        mockTokenService,
+        mockSessionService,
+        mockUserRepo,
+        mockPermissionRepo
+      );
       const c = createMockContext({
         authorization: `Bearer ${validToken}`,
         'x-session-id': sessionId,
@@ -220,9 +249,16 @@ describe('Identity Middlewares', () => {
     test('should throw AuthenticationError if session identifier (sid) is missing in JWT payload', async () => {
       const payloadWithoutSid = { ...validPayload };
       (payloadWithoutSid as any).sid = undefined;
-      spyOn(mockTokenService, 'verifyAccessToken').mockImplementation(async () => payloadWithoutSid as any);
-      
-      const middleware = authMiddleware(mockTokenService, mockSessionService, mockUserRepo, mockPermissionRepo);
+      spyOn(mockTokenService, 'verifyAccessToken').mockImplementation(
+        async () => payloadWithoutSid as any
+      );
+
+      const middleware = authMiddleware(
+        mockTokenService,
+        mockSessionService,
+        mockUserRepo,
+        mockPermissionRepo
+      );
       const c = createMockContext({ authorization: `Bearer ${validToken}` });
 
       await expect(middleware(c, async () => {})).rejects.toThrow('Unauthorized');
@@ -230,9 +266,16 @@ describe('Identity Middlewares', () => {
 
     test('should throw AuthenticationError if session identifier (sid) in JWT is not a valid UUID', async () => {
       const payloadWithBadSid = { ...validPayload, sid: 'not-a-uuid' };
-      spyOn(mockTokenService, 'verifyAccessToken').mockImplementation(async () => payloadWithBadSid as any);
+      spyOn(mockTokenService, 'verifyAccessToken').mockImplementation(
+        async () => payloadWithBadSid as any
+      );
 
-      const middleware = authMiddleware(mockTokenService, mockSessionService, mockUserRepo, mockPermissionRepo);
+      const middleware = authMiddleware(
+        mockTokenService,
+        mockSessionService,
+        mockUserRepo,
+        mockPermissionRepo
+      );
       const c = createMockContext({ authorization: `Bearer ${validToken}` });
 
       await expect(middleware(c, async () => {})).rejects.toThrow('Unauthorized');
@@ -241,7 +284,12 @@ describe('Identity Middlewares', () => {
     test('should throw AuthenticationError if session is inactive or expired', async () => {
       spyOn(mockSessionService, 'isSessionActive').mockImplementation(async () => false);
 
-      const middleware = authMiddleware(mockTokenService, mockSessionService, mockUserRepo, mockPermissionRepo);
+      const middleware = authMiddleware(
+        mockTokenService,
+        mockSessionService,
+        mockUserRepo,
+        mockPermissionRepo
+      );
       const c = createMockContext({
         authorization: `Bearer ${validToken}`,
         'x-session-id': sessionId,
@@ -255,7 +303,12 @@ describe('Identity Middlewares', () => {
         throw new Error('Touch failed');
       });
 
-      const middleware = authMiddleware(mockTokenService, mockSessionService, mockUserRepo, mockPermissionRepo);
+      const middleware = authMiddleware(
+        mockTokenService,
+        mockSessionService,
+        mockUserRepo,
+        mockPermissionRepo
+      );
       const c = createMockContext({
         authorization: `Bearer ${validToken}`,
         'x-session-id': sessionId,
@@ -277,7 +330,12 @@ describe('Identity Middlewares', () => {
       });
       spyOn(mockUserRepo, 'findById').mockImplementation(async () => suspendedUser);
 
-      const middleware = authMiddleware(mockTokenService, mockSessionService, mockUserRepo, mockPermissionRepo);
+      const middleware = authMiddleware(
+        mockTokenService,
+        mockSessionService,
+        mockUserRepo,
+        mockPermissionRepo
+      );
       const c = createMockContext({
         authorization: `Bearer ${validToken}`,
         'x-session-id': sessionId,
@@ -294,7 +352,12 @@ describe('Identity Middlewares', () => {
       });
       spyOn(mockUserRepo, 'findById').mockImplementation(async () => deletedUser);
 
-      const middleware = authMiddleware(mockTokenService, mockSessionService, mockUserRepo, mockPermissionRepo);
+      const middleware = authMiddleware(
+        mockTokenService,
+        mockSessionService,
+        mockUserRepo,
+        mockPermissionRepo
+      );
       const c = createMockContext({
         authorization: `Bearer ${validToken}`,
         'x-session-id': sessionId,
@@ -311,7 +374,12 @@ describe('Identity Middlewares', () => {
       });
       spyOn(mockUserRepo, 'findById').mockImplementation(async () => lockedUser);
 
-      const middleware = authMiddleware(mockTokenService, mockSessionService, mockUserRepo, mockPermissionRepo);
+      const middleware = authMiddleware(
+        mockTokenService,
+        mockSessionService,
+        mockUserRepo,
+        mockPermissionRepo
+      );
       const c = createMockContext({
         authorization: `Bearer ${validToken}`,
         'x-session-id': sessionId,
@@ -325,7 +393,12 @@ describe('Identity Middlewares', () => {
         throw new Error('Database connection failed');
       });
 
-      const middleware = authMiddleware(mockTokenService, mockSessionService, mockUserRepo, mockPermissionRepo);
+      const middleware = authMiddleware(
+        mockTokenService,
+        mockSessionService,
+        mockUserRepo,
+        mockPermissionRepo
+      );
       const c = createMockContext({
         authorization: `Bearer ${validToken}`,
         'x-session-id': sessionId,
@@ -337,7 +410,12 @@ describe('Identity Middlewares', () => {
 
   describe('optionalAuthMiddleware', () => {
     test('should bypass silently and call next() if no token header is provided', async () => {
-      const middleware = optionalAuthMiddleware(mockTokenService, mockSessionService, mockUserRepo, mockPermissionRepo);
+      const middleware = optionalAuthMiddleware(
+        mockTokenService,
+        mockSessionService,
+        mockUserRepo,
+        mockPermissionRepo
+      );
       const c = createMockContext({}, {});
 
       let nextCalled = false;
@@ -350,7 +428,12 @@ describe('Identity Middlewares', () => {
     });
 
     test('should set context user if a valid token is provided', async () => {
-      const middleware = optionalAuthMiddleware(mockTokenService, mockSessionService, mockUserRepo, mockPermissionRepo);
+      const middleware = optionalAuthMiddleware(
+        mockTokenService,
+        mockSessionService,
+        mockUserRepo,
+        mockPermissionRepo
+      );
       const c = createMockContext({
         authorization: `Bearer ${validToken}`,
         'x-session-id': sessionId,
@@ -368,7 +451,12 @@ describe('Identity Middlewares', () => {
 
     test('should bypass silently and call next() if token signature is invalid', async () => {
       spyOn(mockTokenService, 'verifyAccessToken').mockImplementation(async () => null);
-      const middleware = optionalAuthMiddleware(mockTokenService, mockSessionService, mockUserRepo, mockPermissionRepo);
+      const middleware = optionalAuthMiddleware(
+        mockTokenService,
+        mockSessionService,
+        mockUserRepo,
+        mockPermissionRepo
+      );
       const c = createMockContext({ authorization: 'Bearer invalid' });
 
       let nextCalled = false;
@@ -382,7 +470,12 @@ describe('Identity Middlewares', () => {
 
     test('should bypass silently if user not found or inactive', async () => {
       spyOn(mockUserRepo, 'findById').mockImplementation(async () => null);
-      const middleware = optionalAuthMiddleware(mockTokenService, mockSessionService, mockUserRepo, mockPermissionRepo);
+      const middleware = optionalAuthMiddleware(
+        mockTokenService,
+        mockSessionService,
+        mockUserRepo,
+        mockPermissionRepo
+      );
       const c = createMockContext({ authorization: `Bearer ${validToken}` });
 
       let nextCalled = false;
@@ -396,7 +489,12 @@ describe('Identity Middlewares', () => {
 
     test('should bypass silently if session is inactive', async () => {
       spyOn(mockSessionService, 'isSessionActive').mockImplementation(async () => false);
-      const middleware = optionalAuthMiddleware(mockTokenService, mockSessionService, mockUserRepo, mockPermissionRepo);
+      const middleware = optionalAuthMiddleware(
+        mockTokenService,
+        mockSessionService,
+        mockUserRepo,
+        mockPermissionRepo
+      );
       const c = createMockContext({
         authorization: `Bearer ${validToken}`,
         'x-session-id': sessionId,
@@ -418,7 +516,12 @@ describe('Identity Middlewares', () => {
       });
       spyOn(mockUserRepo, 'findById').mockImplementation(async () => mismatchedUser);
 
-      const middleware = optionalAuthMiddleware(mockTokenService, mockSessionService, mockUserRepo, mockPermissionRepo);
+      const middleware = optionalAuthMiddleware(
+        mockTokenService,
+        mockSessionService,
+        mockUserRepo,
+        mockPermissionRepo
+      );
       const c = createMockContext({ authorization: `Bearer ${validToken}` });
 
       let nextCalled = false;
@@ -455,9 +558,7 @@ describe('Identity Middlewares', () => {
 
       test('should throw AuthenticationError if user is missing in context', async () => {
         const c = createMockContext({}, {});
-        await expect(requireAuthenticated(c, async () => {})).rejects.toThrow(
-          'Unauthorized'
-        );
+        await expect(requireAuthenticated(c, async () => {})).rejects.toThrow('Unauthorized');
       });
     });
 

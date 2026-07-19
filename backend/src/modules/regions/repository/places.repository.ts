@@ -1,8 +1,8 @@
-import type { ITouristPlacesRepository, ListPlacesOptions } from './places-repository.interface';
-import type { TouristPlace } from '../domain/place.entity';
 import { db } from '@/lib/database/client';
 import { touristPlaces } from '@/lib/database/schema';
-import { eq, and, isNull, sql } from 'drizzle-orm';
+import { and, eq, isNull, sql } from 'drizzle-orm';
+import type { TouristPlace } from '../domain/place.entity';
+import type { ITouristPlacesRepository, ListPlacesOptions } from './places-repository.interface';
 import { TouristPlaceMapper } from './places.mapper';
 
 export class DrizzleTouristPlacesRepository implements ITouristPlacesRepository {

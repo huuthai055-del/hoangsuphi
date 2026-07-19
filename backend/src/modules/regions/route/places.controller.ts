@@ -1,16 +1,16 @@
 import type { Context } from 'hono';
-import type { PlacesService } from '../service/places.service';
 import type { TouristPlace } from '../domain/place.entity';
 import type {
   CreatePlaceRequestDto,
-  UpdatePlaceRequestDto,
   ListPlacesQueryDto,
-  PlaceNearbyQueryDto,
   PlaceIdParamsDto,
-  PlaceSlugParamsDto,
+  PlaceNearbyQueryDto,
   PlaceResponseDto,
+  PlaceSlugParamsDto,
   PlaceSummaryResponseDto,
+  UpdatePlaceRequestDto,
 } from '../dto/places.dto';
+import type { PlacesService } from '../service/places.service';
 
 export class PlacesController {
   constructor(private readonly placesService: PlacesService) {}

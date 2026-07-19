@@ -1,6 +1,6 @@
-- [ ] Delete `user-roles-repository.interface.ts` and `user-roles.repository.ts`.
-- [ ] Modify `identity.context.ts` to make `roles` property optional.
-- [ ] Modify `auth.middleware.ts` to define USER_STATUS/AUTH_MESSAGES constants, remove role repository injection, only query permissions, and set roles to `[]`.
+- [x] Delete `user-roles-repository.interface.ts` and `user-roles.repository.ts`.
+- [x] Modify `identity.context.ts` to make `roles` property optional.
+- [x] Modify `auth.middleware.ts` to define USER_STATUS/AUTH_MESSAGES constants, remove role repository injection, only query permissions, and set roles to `[]`.
 - [ ] Modify `optional-auth.middleware.ts` to remove role repository injection and only load permissions.
 - [ ] Modify `permission.middleware.ts` to completely remove IUserRoleRepository and use standardized AUTH_MESSAGES constants.
 - [ ] Update `identity.route.ts` to remove user role repository dependency.

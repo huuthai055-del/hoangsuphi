@@ -66,13 +66,27 @@ export class TopListItem {
 
   // ─── Getters ────────────────────────────────────────────────────────────────
 
-  public get id(): string { return this.props.id; }
-  public get topListId(): string { return this.props.topListId; }
-  public get ownerType(): TopListItemOwnerType { return this.props.ownerType; }
-  public get ownerId(): string { return this.props.ownerId; }
-  public get displayOrder(): number { return this.props.displayOrder; }
-  public get createdAt(): Date { return this.props.createdAt; }
-  public get updatedAt(): Date { return this.props.updatedAt; }
+  public get id(): string {
+    return this.props.id;
+  }
+  public get topListId(): string {
+    return this.props.topListId;
+  }
+  public get ownerType(): TopListItemOwnerType {
+    return this.props.ownerType;
+  }
+  public get ownerId(): string {
+    return this.props.ownerId;
+  }
+  public get displayOrder(): number {
+    return this.props.displayOrder;
+  }
+  public get createdAt(): Date {
+    return this.props.createdAt;
+  }
+  public get updatedAt(): Date {
+    return this.props.updatedAt;
+  }
 
   // ─── Mutations ───────────────────────────────────────────────────────────────
 

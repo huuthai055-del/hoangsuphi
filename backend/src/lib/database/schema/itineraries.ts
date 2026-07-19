@@ -1,12 +1,27 @@
-import { pgTable, uuid, varchar, integer, timestamp, text, pgEnum, uniqueIndex, index, check } from 'drizzle-orm/pg-core';
-import { sql } from 'drizzle-orm';
-import { users } from './users';
 import { generateUuidV7 } from '@/common/utils/uuid';
+import { sql } from 'drizzle-orm';
+import {
+  check,
+  index,
+  integer,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+  varchar,
+} from 'drizzle-orm/pg-core';
+import { users } from './users';
 
 // 1. Enums
 export const itineraryVisibilityEnum = pgEnum('itinerary_visibility', ['PUBLIC', 'PRIVATE']);
 export const itineraryStatusEnum = pgEnum('itinerary_status', ['DRAFT', 'PUBLISHED', 'ARCHIVED']);
-export const itineraryItemOwnerTypeEnum = pgEnum('itinerary_item_owner_type', ['PLACE', 'BUSINESS', 'ATTRACTION']);
+export const itineraryItemOwnerTypeEnum = pgEnum('itinerary_item_owner_type', [
+  'PLACE',
+  'BUSINESS',
+  'ATTRACTION',
+]);
 
 // 2. Itineraries Table
 export const itineraries = pgTable(
@@ -61,8 +76,14 @@ export const itineraryItems = pgTable(
   },
   (table) => ({
     // Check constraints for values
-    dayNumberCheck: check('itinerary_items_day_number_check', sql`${table.dayNumber} >= 1 AND ${table.dayNumber} <= 365`),
-    displayOrderCheck: check('itinerary_items_display_order_check', sql`${table.displayOrder} >= 1`),
+    dayNumberCheck: check(
+      'itinerary_items_day_number_check',
+      sql`${table.dayNumber} >= 1 AND ${table.dayNumber} <= 365`
+    ),
+    displayOrderCheck: check(
+      'itinerary_items_display_order_check',
+      sql`${table.displayOrder} >= 1`
+    ),
 
     // Unique index to prevent duplicate ownerType and ownerId in the same itinerary
     itineraryItemUniqIdx: uniqueIndex('itinerary_items_uniq_idx').on(

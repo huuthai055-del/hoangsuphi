@@ -1,7 +1,7 @@
-import { env } from '@/config/env';
+import { AuthenticationError, NotFoundError, ValidationError } from '@/common/errors/http.errors';
 import { parseDurationToSeconds } from '@/common/utils/duration';
-import { ValidationError, AuthenticationError, NotFoundError } from '@/common/errors/http.errors';
 import { generateUuidV7, isValidUuid } from '@/common/utils/uuid';
+import { env } from '@/config/env';
 
 export interface UserSessionModel {
   id: string;
@@ -134,7 +134,10 @@ export class SessionService implements ISessionService {
     return session;
   }
 
-  public async createRefreshToken(input: CreateRefreshTokenInput, tx?: unknown): Promise<RefreshTokenModel> {
+  public async createRefreshToken(
+    input: CreateRefreshTokenInput,
+    tx?: unknown
+  ): Promise<RefreshTokenModel> {
     if (!input.userId || !input.sessionId || !input.tokenHash || !input.jwtId || !input.familyId) {
       throw new ValidationError('Missing required properties for refresh token creation');
     }
@@ -178,7 +181,10 @@ export class SessionService implements ISessionService {
    * The transaction boundary and error handling/rollback logic must be
    * managed at the caller level (AuthService layer) that coordinates database transactions.
    */
-  public async rotateRefreshToken(input: RotateTokenInput, tx?: unknown): Promise<RefreshTokenModel> {
+  public async rotateRefreshToken(
+    input: RotateTokenInput,
+    tx?: unknown
+  ): Promise<RefreshTokenModel> {
     if (!input.oldTokenHash || !input.newTokenHash || !input.newJwtId) {
       throw new ValidationError('Missing required parameters for token rotation');
     }
@@ -269,7 +275,11 @@ export class SessionService implements ISessionService {
     await this.tokenRepo.revokeAllSessionTokens(sessionId, tx);
   }
 
-  public async revokeAllSessions(userId: string, reason = 'logout_all', tx?: unknown): Promise<void> {
+  public async revokeAllSessions(
+    userId: string,
+    reason = 'logout_all',
+    tx?: unknown
+  ): Promise<void> {
     if (!userId) {
       throw new ValidationError('UserId is required');
     }

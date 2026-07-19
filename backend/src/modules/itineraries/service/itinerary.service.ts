@@ -1,25 +1,26 @@
-import { Itinerary, type ItineraryVisibility } from '../domain/itinerary.entity';
-import type { ItineraryItem, ItineraryItemOwnerType } from '../domain/itinerary-item.entity';
-import type { IItineraryRepository, ItineraryFilters } from '../repository/itinerary-repository.interface';
-import { generateUuidV7 } from '@/common/utils/uuid';
-import {
-  NotFoundError,
-  ConflictError,
-  ValidationError,
-} from '@/common/errors/http.errors';
+import { ConflictError, NotFoundError, ValidationError } from '@/common/errors/http.errors';
 import {
   DuplicateKeyRepositoryError,
   EntityNotFoundRepositoryError,
 } from '@/common/errors/repository.errors';
-import { ItineraryDomainError } from '../domain/itinerary.errors';
-import { runInTransaction } from '@/lib/database/client';
 import type { PaginatedResult, PaginationOptions } from '@/common/types/pagination';
+import { generateUuidV7 } from '@/common/utils/uuid';
+import { runInTransaction } from '@/lib/database/client';
 import { logger } from '@/lib/logger';
 import { requestStore } from '@/lib/logger/context';
+import type { ItineraryItem, ItineraryItemOwnerType } from '../domain/itinerary-item.entity';
+import { Itinerary, type ItineraryVisibility } from '../domain/itinerary.entity';
+import { ItineraryDomainError } from '../domain/itinerary.errors';
+import type {
+  IItineraryRepository,
+  ItineraryFilters,
+} from '../repository/itinerary-repository.interface';
 
 function mapDomainError(err: Error): Error {
   if (err instanceof DuplicateKeyRepositoryError) {
-    return new ConflictError('Unique constraint violated: Itinerary already exists', { cause: err });
+    return new ConflictError('Unique constraint violated: Itinerary already exists', {
+      cause: err,
+    });
   }
   if (err instanceof EntityNotFoundRepositoryError) {
     return new NotFoundError(err.message, { cause: err });
@@ -230,15 +231,18 @@ export class ItineraryService {
     try {
       const result = await runInTransaction(async (tx) => {
         const itinerary = await this.loadItineraryOrThrow(id, tx);
-        
+
         const itemId = props.id || generateUuidV7();
-        const item = itinerary.addItem({
-          id: itemId,
-          ownerType: props.ownerType,
-          ownerId: props.ownerId,
-          dayNumber: props.dayNumber,
-          note: props.note,
-        }, now);
+        const item = itinerary.addItem(
+          {
+            id: itemId,
+            ownerType: props.ownerType,
+            ownerId: props.ownerId,
+            dayNumber: props.dayNumber,
+            note: props.note,
+          },
+          now
+        );
 
         await this.itineraryRepo.update(itinerary, tx);
         return item;

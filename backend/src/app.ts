@@ -1,7 +1,7 @@
+import { errorHandlerMiddleware } from '@/middleware/error';
 import { Hono } from 'hono';
 import { registerMiddlewares } from './app/register-middlewares';
 import { registerRoutes } from './app/register-routes';
-import { errorHandlerMiddleware } from '@/middleware/error';
 
 export function createApp() {
   const app = new Hono();

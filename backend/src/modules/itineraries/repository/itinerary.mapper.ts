@@ -1,5 +1,5 @@
-import { Itinerary } from '../domain/itinerary.entity';
 import type { ItineraryItemProps } from '../domain/itinerary-item.entity';
+import { Itinerary } from '../domain/itinerary.entity';
 
 export interface RawItinerary {
   id: string;

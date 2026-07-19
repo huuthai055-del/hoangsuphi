@@ -1,14 +1,14 @@
 import type { Context } from 'hono';
-import type { TagsService } from '../service/tags.service';
-import { mapTagToResponse } from './mappers/tags.mapper';
 import type {
   CreateTagRequestDto,
-  UpdateTagRequestDto,
-  TagIdParamsDto,
-  TagSlugParamsDto,
   ListTagsQueryDto,
   SearchTagsQueryDto,
+  TagIdParamsDto,
+  TagSlugParamsDto,
+  UpdateTagRequestDto,
 } from '../dto/tags.dto';
+import type { TagsService } from '../service/tags.service';
+import { mapTagToResponse } from './mappers/tags.mapper';
 
 export class TagsController {
   constructor(private readonly service: TagsService) {}

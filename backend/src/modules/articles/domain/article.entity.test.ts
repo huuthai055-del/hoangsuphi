@@ -1,6 +1,6 @@
-import { describe, test, expect } from 'bun:test';
-import { Article } from './article.entity';
+import { describe, expect, test } from 'bun:test';
 import { ArticleDomainError } from './article-errors';
+import { Article } from './article.entity';
 
 describe('Article Domain Entity', () => {
   const id = '019f4bc4-f550-7d52-bba4-3b6258b55703';
@@ -13,7 +13,16 @@ describe('Article Domain Entity', () => {
   const thumbnailId = '019f4bc4-f550-7d52-bba4-3b6258b55706';
 
   test('should create a valid article', () => {
-    const article = Article.create(id, title, slug, excerpt, content, categoryId, authorId, thumbnailId);
+    const article = Article.create(
+      id,
+      title,
+      slug,
+      excerpt,
+      content,
+      categoryId,
+      authorId,
+      thumbnailId
+    );
     expect(article.id).toBe(id);
     expect(article.title).toBe(title);
     expect(article.slug).toBe(slug);
@@ -22,9 +31,15 @@ describe('Article Domain Entity', () => {
   });
 
   test('should validate input constraints upon creation', () => {
-    expect(() => Article.create('', title, slug, excerpt, content, categoryId, authorId)).toThrow(ArticleDomainError);
-    expect(() => Article.create(id, '', slug, excerpt, content, categoryId, authorId)).toThrow(ArticleDomainError);
-    expect(() => Article.create(id, title, 'invalid slug!', excerpt, content, categoryId, authorId)).toThrow(ArticleDomainError);
+    expect(() => Article.create('', title, slug, excerpt, content, categoryId, authorId)).toThrow(
+      ArticleDomainError
+    );
+    expect(() => Article.create(id, '', slug, excerpt, content, categoryId, authorId)).toThrow(
+      ArticleDomainError
+    );
+    expect(() =>
+      Article.create(id, title, 'invalid slug!', excerpt, content, categoryId, authorId)
+    ).toThrow(ArticleDomainError);
   });
 
   test('should update article details', () => {

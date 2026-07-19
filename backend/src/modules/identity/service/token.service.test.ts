@@ -1,8 +1,8 @@
-import { describe, test, expect, beforeEach, afterEach } from 'bun:test';
-import { TokenService, type AccessTokenPayload, type RefreshTokenPayload } from './token.service';
-import { sign } from 'hono/jwt';
-import { env } from '@/config/env';
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { parseDurationToSeconds } from '@/common/utils/duration';
+import { env } from '@/config/env';
+import { sign } from 'hono/jwt';
+import { type AccessTokenPayload, type RefreshTokenPayload, TokenService } from './token.service';
 
 describe('TokenService', () => {
   let service: TokenService;

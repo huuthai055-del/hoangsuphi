@@ -1,5 +1,5 @@
-import { Review } from '../domain/reviews.entity';
 import { Favorite } from '../domain/favorites.entity';
+import { Review } from '../domain/reviews.entity';
 
 export interface RawReview {
   id: string;

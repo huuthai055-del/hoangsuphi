@@ -1,10 +1,7 @@
-import { expect, test, describe } from 'bun:test';
-import { Itinerary } from './itinerary.entity';
+import { describe, expect, test } from 'bun:test';
 import { ItineraryItem } from './itinerary-item.entity';
-import {
-  DuplicateItineraryItemError,
-  EmptyItineraryError,
-} from './itinerary.errors';
+import { Itinerary } from './itinerary.entity';
+import { DuplicateItineraryItemError, EmptyItineraryError } from './itinerary.errors';
 
 describe('Itinerary Item Domain Entity', () => {
   test('should create itinerary item successfully with valid inputs', () => {
@@ -186,7 +183,12 @@ describe('Itinerary Aggregate Root Domain Entity', () => {
     });
 
     itinerary.addItem({ id: 'item-1', ownerType: 'PLACE', ownerId: 'p1', dayNumber: 1 });
-    const item2 = itinerary.addItem({ id: 'item-2', ownerType: 'BUSINESS', ownerId: 'b2', dayNumber: 1 });
+    const item2 = itinerary.addItem({
+      id: 'item-2',
+      ownerType: 'BUSINESS',
+      ownerId: 'b2',
+      dayNumber: 1,
+    });
     itinerary.addItem({ id: 'item-3', ownerType: 'ATTRACTION', ownerId: 'a3', dayNumber: 1 });
 
     itinerary.removeItem(item2.id);

@@ -1,5 +1,5 @@
-import type { Itinerary } from '../domain/itinerary.entity';
 import type { PaginatedResult, PaginationOptions } from '@/common/types/pagination';
+import type { Itinerary } from '../domain/itinerary.entity';
 
 export interface ItineraryFilters {
   status?: string;

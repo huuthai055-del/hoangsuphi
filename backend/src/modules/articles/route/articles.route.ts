@@ -1,30 +1,38 @@
-import { Hono } from 'hono';
 import { container } from '@/common/di/container';
+import { validateBody, validateParams, validateQuery } from '@/middleware/validator';
+import { requirePermission } from '@/modules/identity/middleware/permission.middleware';
+import { Hono } from 'hono';
+import type { MiddlewareHandler } from 'hono';
 import {
-  CreateArticleSchema,
-  UpdateArticleSchema,
-  SearchArticlesQuerySchema,
   ArticleIdParamsSchema,
   ArticleSlugParamsSchema,
   BindTagsSchema,
-  RemoveTagsSchema,
+  CreateArticleSchema,
   RejectArticleSchema,
+  RemoveTagsSchema,
+  SearchArticlesQuerySchema,
+  UpdateArticleSchema,
 } from '../dto/articles.dto';
-import { validateBody, validateQuery, validateParams } from '@/middleware/validator';
-import { requirePermission } from '@/modules/identity/middleware/permission.middleware';
-import type { MiddlewareHandler } from 'hono';
 import type { ArticlesController } from './articles.controller';
 
 const articlesRouter = new Hono();
 
-const authGuard: MiddlewareHandler = (c, next) => container.resolve<MiddlewareHandler>('AuthGuard')(c, next);
-const getController = (): ArticlesController => container.resolve<ArticlesController>('ArticlesController');
+const authGuard: MiddlewareHandler = (c, next) =>
+  container.resolve<MiddlewareHandler>('AuthGuard')(c, next);
+const getController = (): ArticlesController =>
+  container.resolve<ArticlesController>('ArticlesController');
 
 // Public Routes
 articlesRouter.get('/', validateQuery(SearchArticlesQuerySchema), (c) => getController().list(c));
-articlesRouter.get('/slug/:slug', validateParams(ArticleSlugParamsSchema), (c) => getController().getBySlug(c));
-articlesRouter.post('/:id/views', validateParams(ArticleIdParamsSchema), (c) => getController().recordView(c));
-articlesRouter.get('/:id', validateParams(ArticleIdParamsSchema), (c) => getController().getById(c));
+articlesRouter.get('/slug/:slug', validateParams(ArticleSlugParamsSchema), (c) =>
+  getController().getBySlug(c)
+);
+articlesRouter.post('/:id/views', validateParams(ArticleIdParamsSchema), (c) =>
+  getController().recordView(c)
+);
+articlesRouter.get('/:id', validateParams(ArticleIdParamsSchema), (c) =>
+  getController().getById(c)
+);
 
 // Admin / Author / Publisher Routes
 articlesRouter.post(

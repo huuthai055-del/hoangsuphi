@@ -21,11 +21,18 @@ export const WeatherQuerySchema = z
     lat: z
       .string({ required_error: 'Latitude is required' })
       .transform((val) => Number.parseFloat(val))
-      .pipe(z.number().min(-90, 'Latitude must be at least -90').max(90, 'Latitude must be at most 90')),
+      .pipe(
+        z.number().min(-90, 'Latitude must be at least -90').max(90, 'Latitude must be at most 90')
+      ),
     lon: z
       .string({ required_error: 'Longitude is required' })
       .transform((val) => Number.parseFloat(val))
-      .pipe(z.number().min(-180, 'Longitude must be at least -180').max(180, 'Longitude must be at most 180')),
+      .pipe(
+        z
+          .number()
+          .min(-180, 'Longitude must be at least -180')
+          .max(180, 'Longitude must be at most 180')
+      ),
   })
   .strict();
 
@@ -36,11 +43,18 @@ export const ForecastQuerySchema = z
     lat: z
       .string({ required_error: 'Latitude is required' })
       .transform((val) => Number.parseFloat(val))
-      .pipe(z.number().min(-90, 'Latitude must be at least -90').max(90, 'Latitude must be at most 90')),
+      .pipe(
+        z.number().min(-90, 'Latitude must be at least -90').max(90, 'Latitude must be at most 90')
+      ),
     lon: z
       .string({ required_error: 'Longitude is required' })
       .transform((val) => Number.parseFloat(val))
-      .pipe(z.number().min(-180, 'Longitude must be at least -180').max(180, 'Longitude must be at most 180')),
+      .pipe(
+        z
+          .number()
+          .min(-180, 'Longitude must be at least -180')
+          .max(180, 'Longitude must be at most 180')
+      ),
     days: z
       .string()
       .optional()

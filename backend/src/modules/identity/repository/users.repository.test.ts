@@ -1,4 +1,4 @@
-import { describe, test, expect, mock, beforeEach } from 'bun:test';
+import { beforeEach, describe, expect, mock, test } from 'bun:test';
 
 // 1. Setup global resolve value for the thenable DB chain
 let mockResolveValue: any = undefined;
@@ -40,10 +40,10 @@ mock.module('@/lib/database/client', () => {
   };
 });
 
-// Import production code under test after mocking db
-import { DrizzleUserRepository } from './users.repository';
 import { User } from '../domain/user.entity';
 import { UserMapper } from './users.mapper';
+// Import production code under test after mocking db
+import { DrizzleUserRepository } from './users.repository';
 
 describe('DrizzleUserRepository', () => {
   let repository: DrizzleUserRepository;

@@ -1,17 +1,17 @@
-import { expect, test, describe } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import { Faq } from './faq.entity';
-import { TopList } from './top-list.entity';
-import { TopListItem } from './top-list-item.entity';
 import {
-  FaqDomainError,
-  InvalidFaqStateError,
-  ImmutableFaqError,
-  TopListDomainError,
   DuplicateTopListItemError,
-  InvalidTopListStateError,
   EmptyTopListError,
+  FaqDomainError,
+  ImmutableFaqError,
   ImmutableTopListError,
+  InvalidFaqStateError,
+  InvalidTopListStateError,
+  TopListDomainError,
 } from './faq.errors';
+import { TopListItem } from './top-list-item.entity';
+import { TopList } from './top-list.entity';
 
 // ─── FAQ Entity Tests ─────────────────────────────────────────────────────────
 
@@ -34,18 +34,26 @@ describe('Faq Domain Entity', () => {
   });
 
   test('should throw FaqDomainError if question is empty', () => {
-    expect(() => Faq.create({ id: 'faq-01', question: '', answer: 'Some answer', createdBy: 'user-01' }))
-      .toThrow(FaqDomainError);
+    expect(() =>
+      Faq.create({ id: 'faq-01', question: '', answer: 'Some answer', createdBy: 'user-01' })
+    ).toThrow(FaqDomainError);
   });
 
   test('should throw FaqDomainError if answer is empty', () => {
-    expect(() => Faq.create({ id: 'faq-01', question: 'Q?', answer: '   ', createdBy: 'user-01' }))
-      .toThrow(FaqDomainError);
+    expect(() =>
+      Faq.create({ id: 'faq-01', question: 'Q?', answer: '   ', createdBy: 'user-01' })
+    ).toThrow(FaqDomainError);
   });
 
   test('should throw FaqDomainError if displayOrder < 1', () => {
     expect(() =>
-      Faq.create({ id: 'faq-01', question: 'Q?', answer: 'A', displayOrder: 0, createdBy: 'user-01' })
+      Faq.create({
+        id: 'faq-01',
+        question: 'Q?',
+        answer: 'A',
+        displayOrder: 0,
+        createdBy: 'user-01',
+      })
     ).toThrow(FaqDomainError);
   });
 
@@ -107,12 +115,28 @@ describe('Faq Domain Entity', () => {
 
   test('should support equality comparison', () => {
     const faqA = Faq.rehydrate({
-      id: 'faq-01', question: 'Q?', answer: 'A', category: null, displayOrder: 1,
-      status: 'DRAFT', createdBy: 'user-01', createdAt: new Date(), updatedAt: new Date(), deletedAt: null,
+      id: 'faq-01',
+      question: 'Q?',
+      answer: 'A',
+      category: null,
+      displayOrder: 1,
+      status: 'DRAFT',
+      createdBy: 'user-01',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
     });
     const faqB = Faq.rehydrate({
-      id: 'faq-01', question: 'Other?', answer: 'Other A', category: null, displayOrder: 2,
-      status: 'PUBLISHED', createdBy: 'user-01', createdAt: new Date(), updatedAt: new Date(), deletedAt: null,
+      id: 'faq-01',
+      question: 'Other?',
+      answer: 'Other A',
+      category: null,
+      displayOrder: 2,
+      status: 'PUBLISHED',
+      createdBy: 'user-01',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
     });
 
     expect(faqA.equals(faqB)).toBe(true);
@@ -138,19 +162,47 @@ describe('TopListItem Domain Entity', () => {
 
   test('should throw TopListDomainError if displayOrder < 1', () => {
     expect(() =>
-      TopListItem.create({ id: 'item-01', topListId: 'list-01', ownerType: 'PLACE', ownerId: 'place-01', displayOrder: 0 })
+      TopListItem.create({
+        id: 'item-01',
+        topListId: 'list-01',
+        ownerType: 'PLACE',
+        ownerId: 'place-01',
+        displayOrder: 0,
+      })
     ).toThrow(TopListDomainError);
   });
 
   test('should throw TopListDomainError for invalid ownerType', () => {
     expect(() =>
-      TopListItem.create({ id: 'item-01', topListId: 'list-01', ownerType: 'HOTEL' as any, ownerId: 'h-01', displayOrder: 1 })
+      TopListItem.create({
+        id: 'item-01',
+        topListId: 'list-01',
+        ownerType: 'HOTEL' as any,
+        ownerId: 'h-01',
+        displayOrder: 1,
+      })
     ).toThrow(TopListDomainError);
   });
 
   test('should support equality comparison by ID', () => {
-    const a = TopListItem.rehydrate({ id: 'item-01', topListId: 'list-01', ownerType: 'PLACE', ownerId: 'p1', displayOrder: 1, createdAt: new Date(), updatedAt: new Date() });
-    const b = TopListItem.rehydrate({ id: 'item-01', topListId: 'list-01', ownerType: 'BUSINESS', ownerId: 'b1', displayOrder: 3, createdAt: new Date(), updatedAt: new Date() });
+    const a = TopListItem.rehydrate({
+      id: 'item-01',
+      topListId: 'list-01',
+      ownerType: 'PLACE',
+      ownerId: 'p1',
+      displayOrder: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    const b = TopListItem.rehydrate({
+      id: 'item-01',
+      topListId: 'list-01',
+      ownerType: 'BUSINESS',
+      ownerId: 'b1',
+      displayOrder: 3,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
     expect(a.equals(b)).toBe(true);
   });
 });
@@ -205,7 +257,12 @@ describe('TopList Aggregate Root Domain Entity', () => {
     ).toThrow(TopListDomainError);
     // Consecutive hyphens
     expect(() =>
-      TopList.create({ id: 'list-01', title: 'Title', slug: 'double--hyphen', createdBy: 'user-01' })
+      TopList.create({
+        id: 'list-01',
+        title: 'Title',
+        slug: 'double--hyphen',
+        createdBy: 'user-01',
+      })
     ).toThrow(TopListDomainError);
     // Only hyphens
     expect(() =>
@@ -214,12 +271,22 @@ describe('TopList Aggregate Root Domain Entity', () => {
   });
 
   test('should accept valid slug with lowercase letters, digits, and hyphens', () => {
-    const list = TopList.create({ id: 'list-01', title: 'Title', slug: 'best-100-places', createdBy: 'user-01' });
+    const list = TopList.create({
+      id: 'list-01',
+      title: 'Title',
+      slug: 'best-100-places',
+      createdBy: 'user-01',
+    });
     expect(list.slug).toBe('best-100-places');
   });
 
   test('should update title, description, and featured', () => {
-    const list = TopList.create({ id: 'list-01', title: 'Title', slug: 'slug', createdBy: 'user-01' });
+    const list = TopList.create({
+      id: 'list-01',
+      title: 'Title',
+      slug: 'slug',
+      createdBy: 'user-01',
+    });
 
     list.update({ title: 'New Title', description: 'A great list', featured: true });
 
@@ -229,7 +296,12 @@ describe('TopList Aggregate Root Domain Entity', () => {
   });
 
   test('should NOT update updatedAt when update() receives identical data (hasChanged guard)', () => {
-    const list = TopList.create({ id: 'list-01', title: 'Title', slug: 'slug', createdBy: 'user-01' });
+    const list = TopList.create({
+      id: 'list-01',
+      title: 'Title',
+      slug: 'slug',
+      createdBy: 'user-01',
+    });
     const originalUpdatedAt = list.updatedAt;
 
     // Pass exactly the same value — nothing changes
@@ -240,7 +312,13 @@ describe('TopList Aggregate Root Domain Entity', () => {
 
   test('should update updatedAt only when data actually changes', () => {
     const now = new Date('2025-01-01T00:00:00Z');
-    const list = TopList.create({ id: 'list-01', title: 'Title', slug: 'slug', createdBy: 'user-01', now });
+    const list = TopList.create({
+      id: 'list-01',
+      title: 'Title',
+      slug: 'slug',
+      createdBy: 'user-01',
+      now,
+    });
     const originalUpdatedAt = list.updatedAt;
 
     const later = new Date('2025-06-01T00:00:00Z');
@@ -252,7 +330,12 @@ describe('TopList Aggregate Root Domain Entity', () => {
   });
 
   test('should add items and auto-increment displayOrder', () => {
-    const list = TopList.create({ id: 'list-01', title: 'Title', slug: 'slug', createdBy: 'user-01' });
+    const list = TopList.create({
+      id: 'list-01',
+      title: 'Title',
+      slug: 'slug',
+      createdBy: 'user-01',
+    });
 
     const item1 = list.addItem({ id: 'item-1', ownerType: 'PLACE', ownerId: 'p1' });
     const item2 = list.addItem({ id: 'item-2', ownerType: 'BUSINESS', ownerId: 'b1' });
@@ -263,16 +346,26 @@ describe('TopList Aggregate Root Domain Entity', () => {
   });
 
   test('should throw DuplicateTopListItemError on duplicate ownerType+ownerId', () => {
-    const list = TopList.create({ id: 'list-01', title: 'Title', slug: 'slug', createdBy: 'user-01' });
+    const list = TopList.create({
+      id: 'list-01',
+      title: 'Title',
+      slug: 'slug',
+      createdBy: 'user-01',
+    });
     list.addItem({ id: 'item-1', ownerType: 'PLACE', ownerId: 'p1' });
 
-    expect(() =>
-      list.addItem({ id: 'item-2', ownerType: 'PLACE', ownerId: 'p1' })
-    ).toThrow(DuplicateTopListItemError);
+    expect(() => list.addItem({ id: 'item-2', ownerType: 'PLACE', ownerId: 'p1' })).toThrow(
+      DuplicateTopListItemError
+    );
   });
 
   test('should remove item and compact displayOrder', () => {
-    const list = TopList.create({ id: 'list-01', title: 'Title', slug: 'slug', createdBy: 'user-01' });
+    const list = TopList.create({
+      id: 'list-01',
+      title: 'Title',
+      slug: 'slug',
+      createdBy: 'user-01',
+    });
     list.addItem({ id: 'item-1', ownerType: 'PLACE', ownerId: 'p1' });
     const item2 = list.addItem({ id: 'item-2', ownerType: 'BUSINESS', ownerId: 'b1' });
     list.addItem({ id: 'item-3', ownerType: 'ATTRACTION', ownerId: 'a1' });
@@ -288,14 +381,46 @@ describe('TopList Aggregate Root Domain Entity', () => {
   test('should compact displayOrder correctly when internal array is out of natural order', () => {
     // Simulate a scenario where items may be in unexpected order after rehydration
     const list = TopList.rehydrate({
-      id: 'list-01', title: 'Title', description: null, slug: 'slug', category: null,
-      featured: false, status: 'DRAFT', createdBy: 'user-01',
-      createdAt: new Date(), updatedAt: new Date(), deletedAt: null,
+      id: 'list-01',
+      title: 'Title',
+      description: null,
+      slug: 'slug',
+      category: null,
+      featured: false,
+      status: 'DRAFT',
+      createdBy: 'user-01',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
       items: [
         // Intentionally out of order: displayOrder 3 before 1
-        { id: 'item-3', topListId: 'list-01', ownerType: 'ATTRACTION', ownerId: 'a1', displayOrder: 3, createdAt: new Date(), updatedAt: new Date() },
-        { id: 'item-1', topListId: 'list-01', ownerType: 'PLACE', ownerId: 'p1', displayOrder: 1, createdAt: new Date(), updatedAt: new Date() },
-        { id: 'item-2', topListId: 'list-01', ownerType: 'BUSINESS', ownerId: 'b1', displayOrder: 2, createdAt: new Date(), updatedAt: new Date() },
+        {
+          id: 'item-3',
+          topListId: 'list-01',
+          ownerType: 'ATTRACTION',
+          ownerId: 'a1',
+          displayOrder: 3,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: 'item-1',
+          topListId: 'list-01',
+          ownerType: 'PLACE',
+          ownerId: 'p1',
+          displayOrder: 1,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: 'item-2',
+          topListId: 'list-01',
+          ownerType: 'BUSINESS',
+          ownerId: 'b1',
+          displayOrder: 2,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       ],
     });
 
@@ -309,7 +434,12 @@ describe('TopList Aggregate Root Domain Entity', () => {
   });
 
   test('should reorder items validating sequential continuity', () => {
-    const list = TopList.create({ id: 'list-01', title: 'Title', slug: 'slug', createdBy: 'user-01' });
+    const list = TopList.create({
+      id: 'list-01',
+      title: 'Title',
+      slug: 'slug',
+      createdBy: 'user-01',
+    });
     list.addItem({ id: 'item-1', ownerType: 'PLACE', ownerId: 'p1' });
     list.addItem({ id: 'item-2', ownerType: 'BUSINESS', ownerId: 'b1' });
 
@@ -323,52 +453,90 @@ describe('TopList Aggregate Root Domain Entity', () => {
   });
 
   test('should throw TopListDomainError if reorder list is incomplete', () => {
-    const list = TopList.create({ id: 'list-01', title: 'Title', slug: 'slug', createdBy: 'user-01' });
+    const list = TopList.create({
+      id: 'list-01',
+      title: 'Title',
+      slug: 'slug',
+      createdBy: 'user-01',
+    });
     list.addItem({ id: 'item-1', ownerType: 'PLACE', ownerId: 'p1' });
     list.addItem({ id: 'item-2', ownerType: 'BUSINESS', ownerId: 'b1' });
 
-    expect(() =>
-      list.reorderItems([{ id: 'item-1', displayOrder: 1 }])
-    ).toThrow('Reorder list must contain all items in the top list exactly');
+    expect(() => list.reorderItems([{ id: 'item-1', displayOrder: 1 }])).toThrow(
+      'Reorder list must contain all items in the top list exactly'
+    );
   });
 
   test('should throw TopListDomainError if reorder display order is non-sequential', () => {
-    const list = TopList.create({ id: 'list-01', title: 'Title', slug: 'slug', createdBy: 'user-01' });
+    const list = TopList.create({
+      id: 'list-01',
+      title: 'Title',
+      slug: 'slug',
+      createdBy: 'user-01',
+    });
     list.addItem({ id: 'item-1', ownerType: 'PLACE', ownerId: 'p1' });
     list.addItem({ id: 'item-2', ownerType: 'BUSINESS', ownerId: 'b1' });
 
     expect(() =>
-      list.reorderItems([{ id: 'item-1', displayOrder: 1 }, { id: 'item-2', displayOrder: 3 }])
+      list.reorderItems([
+        { id: 'item-1', displayOrder: 1 },
+        { id: 'item-2', displayOrder: 3 },
+      ])
     ).toThrow('Display order must be sequential starting from 1');
   });
 
   test('should throw EmptyTopListError if publishing empty top list', () => {
-    const list = TopList.create({ id: 'list-01', title: 'Title', slug: 'slug', createdBy: 'user-01' });
+    const list = TopList.create({
+      id: 'list-01',
+      title: 'Title',
+      slug: 'slug',
+      createdBy: 'user-01',
+    });
     expect(() => list.publish()).toThrow(EmptyTopListError);
   });
 
   test('should publish top list with items successfully', () => {
-    const list = TopList.create({ id: 'list-01', title: 'Title', slug: 'slug', createdBy: 'user-01' });
+    const list = TopList.create({
+      id: 'list-01',
+      title: 'Title',
+      slug: 'slug',
+      createdBy: 'user-01',
+    });
     list.addItem({ id: 'item-1', ownerType: 'PLACE', ownerId: 'p1' });
     list.publish();
     expect(list.status).toBe('PUBLISHED');
   });
 
   test('should throw InvalidTopListStateError if publishing non-DRAFT top list', () => {
-    const list = TopList.create({ id: 'list-01', title: 'Title', slug: 'slug', createdBy: 'user-01' });
+    const list = TopList.create({
+      id: 'list-01',
+      title: 'Title',
+      slug: 'slug',
+      createdBy: 'user-01',
+    });
     list.addItem({ id: 'item-1', ownerType: 'PLACE', ownerId: 'p1' });
     list.publish();
     expect(() => list.publish()).toThrow(InvalidTopListStateError);
   });
 
   test('should archive top list from DRAFT or PUBLISHED', () => {
-    const list = TopList.create({ id: 'list-01', title: 'Title', slug: 'slug', createdBy: 'user-01' });
+    const list = TopList.create({
+      id: 'list-01',
+      title: 'Title',
+      slug: 'slug',
+      createdBy: 'user-01',
+    });
     list.archive();
     expect(list.status).toBe('ARCHIVED');
   });
 
   test('should throw InvalidTopListStateError if already archived (explicit transition message)', () => {
-    const list = TopList.create({ id: 'list-01', title: 'Title', slug: 'slug', createdBy: 'user-01' });
+    const list = TopList.create({
+      id: 'list-01',
+      title: 'Title',
+      slug: 'slug',
+      createdBy: 'user-01',
+    });
     list.archive();
     let err: unknown;
     try {
@@ -383,19 +551,31 @@ describe('TopList Aggregate Root Domain Entity', () => {
   });
 
   test('should soft delete top list and block all mutations', () => {
-    const list = TopList.create({ id: 'list-01', title: 'Title', slug: 'slug', createdBy: 'user-01' });
+    const list = TopList.create({
+      id: 'list-01',
+      title: 'Title',
+      slug: 'slug',
+      createdBy: 'user-01',
+    });
     list.softDelete();
 
     expect(list.deletedAt).not.toBeNull();
     expect(() => list.update({ title: 'New' })).toThrow(ImmutableTopListError);
-    expect(() => list.addItem({ id: 'i1', ownerType: 'PLACE', ownerId: 'p1' })).toThrow(ImmutableTopListError);
+    expect(() => list.addItem({ id: 'i1', ownerType: 'PLACE', ownerId: 'p1' })).toThrow(
+      ImmutableTopListError
+    );
     expect(() => list.publish()).toThrow(ImmutableTopListError);
   });
 
   test('should be idempotent: calling softDelete() twice preserves the original deletedAt', () => {
     const now1 = new Date('2025-01-01T00:00:00Z');
     const now2 = new Date('2025-06-01T00:00:00Z');
-    const list = TopList.create({ id: 'list-01', title: 'Title', slug: 'slug', createdBy: 'user-01' });
+    const list = TopList.create({
+      id: 'list-01',
+      title: 'Title',
+      slug: 'slug',
+      createdBy: 'user-01',
+    });
 
     list.softDelete(now1);
     const firstDeletedAt = list.deletedAt;
@@ -408,7 +588,12 @@ describe('TopList Aggregate Root Domain Entity', () => {
   });
 
   test('should throw ImmutableTopListError when modifying archived top list', () => {
-    const list = TopList.create({ id: 'list-01', title: 'Title', slug: 'slug', createdBy: 'user-01' });
+    const list = TopList.create({
+      id: 'list-01',
+      title: 'Title',
+      slug: 'slug',
+      createdBy: 'user-01',
+    });
     list.archive();
     expect(() => list.update({ title: 'New' })).toThrow(ImmutableTopListError);
   });

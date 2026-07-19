@@ -1,5 +1,9 @@
 import type { Article } from '../../domain/article.entity';
-import type { ArticleResponseDto, ArticleSummaryResponseDto, ArticleListResponseDto } from '../../dto/articles.dto';
+import type {
+  ArticleListResponseDto,
+  ArticleResponseDto,
+  ArticleSummaryResponseDto,
+} from '../../dto/articles.dto';
 
 export function mapArticleToResponse(article: Article): ArticleResponseDto {
   return {

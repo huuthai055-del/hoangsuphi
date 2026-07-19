@@ -1,16 +1,12 @@
-import { expect, test, describe, beforeEach, mock } from 'bun:test';
-import { ItineraryService } from './itinerary.service';
-import type { IItineraryRepository } from '../repository/itinerary-repository.interface';
-import { Itinerary } from '../domain/itinerary.entity';
-import {
-  NotFoundError,
-  ConflictError,
-  ValidationError,
-} from '@/common/errors/http.errors';
+import { beforeEach, describe, expect, mock, test } from 'bun:test';
+import { ConflictError, NotFoundError, ValidationError } from '@/common/errors/http.errors';
 import {
   DuplicateKeyRepositoryError,
   EntityNotFoundRepositoryError,
 } from '@/common/errors/repository.errors';
+import { Itinerary } from '../domain/itinerary.entity';
+import type { IItineraryRepository } from '../repository/itinerary-repository.interface';
+import { ItineraryService } from './itinerary.service';
 
 describe('Itinerary Service Layer Tests', () => {
   let mockItineraryRepo: IItineraryRepository;
@@ -101,7 +97,9 @@ describe('Itinerary Service Layer Tests', () => {
     });
 
     test('should map DuplicateKeyRepositoryError to ConflictError', async () => {
-      mockCreate.mockImplementation(() => Promise.reject(new DuplicateKeyRepositoryError('Duplicate')));
+      mockCreate.mockImplementation(() =>
+        Promise.reject(new DuplicateKeyRepositoryError('Duplicate'))
+      );
 
       await expect(
         service.createItinerary({ title: 'Duplicate', createdBy: 'user-01' })
@@ -109,9 +107,9 @@ describe('Itinerary Service Layer Tests', () => {
     });
 
     test('should map empty title domain error to ValidationError', async () => {
-      await expect(
-        service.createItinerary({ title: '', createdBy: 'user-01' })
-      ).rejects.toThrow(ValidationError);
+      await expect(service.createItinerary({ title: '', createdBy: 'user-01' })).rejects.toThrow(
+        ValidationError
+      );
     });
   });
 
@@ -131,15 +129,17 @@ describe('Itinerary Service Layer Tests', () => {
     test('should throw NotFoundError if itinerary does not exist', async () => {
       mockFindById.mockImplementation(() => Promise.resolve(null));
 
-      await expect(
-        service.updateItineraryInfo('non-existent', { title: 'Ghost' })
-      ).rejects.toThrow(NotFoundError);
+      await expect(service.updateItineraryInfo('non-existent', { title: 'Ghost' })).rejects.toThrow(
+        NotFoundError
+      );
     });
 
     test('should throw EntityNotFoundRepositoryError on update persistence failure', async () => {
       const aggregate = Itinerary.rehydrate({ ...sampleRawItinerary, items: [] });
       mockFindById.mockImplementation(() => Promise.resolve(aggregate));
-      mockUpdate.mockImplementation(() => Promise.reject(new EntityNotFoundRepositoryError('Not found')));
+      mockUpdate.mockImplementation(() =>
+        Promise.reject(new EntityNotFoundRepositoryError('Not found'))
+      );
 
       await expect(
         service.updateItineraryInfo(sampleRawItinerary.id, { title: 'Updated title' })
@@ -165,7 +165,9 @@ describe('Itinerary Service Layer Tests', () => {
       const aggregate = Itinerary.rehydrate({ ...sampleRawItinerary, items: [] });
       mockFindById.mockImplementation(() => Promise.resolve(aggregate));
 
-      await expect(service.publishItinerary(sampleRawItinerary.id)).rejects.toThrow(ValidationError);
+      await expect(service.publishItinerary(sampleRawItinerary.id)).rejects.toThrow(
+        ValidationError
+      );
     });
   });
 

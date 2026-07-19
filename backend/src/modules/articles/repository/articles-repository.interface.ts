@@ -1,6 +1,6 @@
+import type { TransactionClient } from '@/lib/database/client';
 import type { Article, ArticleStatus } from '../domain/article.entity';
 import type { Tag } from '../domain/tag.entity';
-import type { TransactionClient } from '@/lib/database/client';
 
 export interface PaginatedResult<T> {
   items: T[];
@@ -43,7 +43,7 @@ export interface IArticlesRepository {
   findBySlug(slug: string, options?: { includeDeleted?: boolean }): Promise<Article | null>;
   exists(id: string): Promise<boolean>;
   existsBySlug(slug: string): Promise<boolean>;
-  
+
   save(article: Article, tx?: TransactionClient): Promise<void>;
   update(article: Article, tx?: TransactionClient): Promise<void>;
   softDelete(id: string, tx?: TransactionClient): Promise<void>;
@@ -57,7 +57,10 @@ export interface IArticlesRepository {
 
   count(filter: SearchArticlesFilter): Promise<number>;
   incrementViewCount(id: string, tx?: TransactionClient): Promise<void>;
-  findArticlesByTag(tagId: string, pagination?: PaginationOptions): Promise<PaginatedResult<Article>>;
+  findArticlesByTag(
+    tagId: string,
+    pagination?: PaginationOptions
+  ): Promise<PaginatedResult<Article>>;
 
   // Tag relations
   findTagsByArticleId(articleId: string): Promise<Tag[]>;

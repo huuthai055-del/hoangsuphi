@@ -1,12 +1,12 @@
 import type { Context } from 'hono';
-import type { CategoriesService } from '../service/categories.service';
-import { mapCategoryToResponse } from './mappers/categories.mapper';
 import type {
+  CategoryCodeParamsDto,
+  CategoryIdParamsDto,
   CreateCategoryRequestDto,
   UpdateCategoryRequestDto,
-  CategoryIdParamsDto,
-  CategoryCodeParamsDto,
 } from '../dto/categories.dto';
+import type { CategoriesService } from '../service/categories.service';
+import { mapCategoryToResponse } from './mappers/categories.mapper';
 
 export class CategoriesController {
   constructor(private readonly service: CategoriesService) {}

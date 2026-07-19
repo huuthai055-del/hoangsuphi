@@ -13,16 +13,16 @@ mock.module('@/lib/database/client', () => {
   };
 });
 
-import { expect, test, describe, beforeEach } from 'bun:test';
-import {
-  RegionsService,
-  type CreateRegionCommand,
-  type UpdateRegionCommand,
-} from './regions.service';
-import type { IRegionsRepository } from '../repository/regions-repository.interface';
-import type { ITouristPlacesRepository } from '../repository/places-repository.interface';
+import { beforeEach, describe, expect, test } from 'bun:test';
 import { Region } from '../domain/region.aggregate';
 import { LtreePath } from '../domain/value-objects/ltree-path.vo';
+import type { ITouristPlacesRepository } from '../repository/places-repository.interface';
+import type { IRegionsRepository } from '../repository/regions-repository.interface';
+import {
+  type CreateRegionCommand,
+  RegionsService,
+  type UpdateRegionCommand,
+} from './regions.service';
 
 describe('RegionsService', () => {
   let findByIdMock: ReturnType<typeof mock>;

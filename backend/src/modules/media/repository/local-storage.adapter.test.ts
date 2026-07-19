@@ -1,7 +1,7 @@
-import { expect, test, describe, afterAll } from 'bun:test';
-import { LocalStorageAdapter } from './local-storage.adapter';
+import { afterAll, describe, expect, test } from 'bun:test';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
+import { LocalStorageAdapter } from './local-storage.adapter';
 
 describe('LocalStorageAdapter', () => {
   const tmpUploadDir = path.join(process.cwd(), 'public', 'uploads_test_tmp');

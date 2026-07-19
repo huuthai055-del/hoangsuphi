@@ -46,7 +46,7 @@ export class ItineraryItem {
     if (!props.ownerId || !props.ownerId.trim()) {
       throw new ItineraryDomainError('Owner ID is required');
     }
-    
+
     ItineraryItem.validate(props.dayNumber, props.displayOrder);
 
     const validOwnerTypes: ItineraryItemOwnerType[] = ['PLACE', 'BUSINESS', 'ATTRACTION'];

@@ -11,6 +11,3 @@ export * from './reviews';
 export * from './itineraries';
 export * from './faqs';
 export * from './notifications';
-
-
-

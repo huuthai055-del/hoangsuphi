@@ -1,10 +1,10 @@
 import {
-  InvalidUserEmailError,
-  InvalidPasswordHashError,
-  UserAccountDeletedError,
-  InvalidUserStatusTransitionError,
   InvalidFailedLoginAttemptsError,
+  InvalidPasswordHashError,
   InvalidPermissionsVersionError,
+  InvalidUserEmailError,
+  InvalidUserStatusTransitionError,
+  UserAccountDeletedError,
 } from './user.errors';
 
 export type UserStatus =
@@ -59,7 +59,9 @@ export class User {
     }
 
     if (!props.passwordHash || props.passwordHash.trim().length < 10) {
-      throw new InvalidPasswordHashError('Password hash must be a valid hash format (length >= 10)');
+      throw new InvalidPasswordHashError(
+        'Password hash must be a valid hash format (length >= 10)'
+      );
     }
 
     if (props.failedLoginAttempts < 0) {
@@ -157,7 +159,9 @@ export class User {
   public verifyEmail(): void {
     this.ensureNotDeleted();
     if (this._status !== 'pending_verification') {
-      throw new InvalidUserStatusTransitionError('User email is already verified or not pending verification');
+      throw new InvalidUserStatusTransitionError(
+        'User email is already verified or not pending verification'
+      );
     }
     this._status = 'active';
     this.touch();
@@ -198,10 +202,7 @@ export class User {
     this.touch();
   }
 
-  public increaseFailedLoginAttempts(
-    maxAttempts = 5,
-    lockoutDurationMs = 15 * 60 * 1000
-  ): void {
+  public increaseFailedLoginAttempts(maxAttempts = 5, lockoutDurationMs = 15 * 60 * 1000): void {
     this.ensureNotDeleted();
     this._failedLoginAttempts += 1;
     this._lastFailedLoginAt = new Date();
@@ -221,7 +222,9 @@ export class User {
   public changePassword(newPasswordHash: string): void {
     this.ensureNotDeleted();
     if (!newPasswordHash || newPasswordHash.trim().length < 10) {
-      throw new InvalidPasswordHashError('Password hash must be a valid hash format (length >= 10)');
+      throw new InvalidPasswordHashError(
+        'Password hash must be a valid hash format (length >= 10)'
+      );
     }
     this._passwordHash = newPasswordHash;
     this._lastPasswordChangedAt = new Date();
@@ -235,7 +238,9 @@ export class User {
       return; // Idempotency
     }
     if (this.isLocked()) {
-      throw new InvalidUserStatusTransitionError('Cannot activate a locked user account directly, please unlock first');
+      throw new InvalidUserStatusTransitionError(
+        'Cannot activate a locked user account directly, please unlock first'
+      );
     }
     this._status = 'active';
     this.touch();

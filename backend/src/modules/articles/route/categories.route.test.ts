@@ -177,7 +177,7 @@ mock.module('@/modules/articles/repository/articles.repository', () => {
   };
 });
 
-import { expect, test, describe, beforeEach } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'bun:test';
 import type { Hono } from 'hono';
 import { Category } from '../domain/category.entity';
 
@@ -311,7 +311,7 @@ describe('Categories API Routing & Controller', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer valid-token',
+          Authorization: 'Bearer valid-token',
         },
         body: JSON.stringify({
           code: '',
@@ -327,7 +327,7 @@ describe('Categories API Routing & Controller', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer valid-token',
+          Authorization: 'Bearer valid-token',
         },
         body: JSON.stringify({
           code: 'cam-nang',
@@ -345,7 +345,7 @@ describe('Categories API Routing & Controller', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer valid-token',
+          Authorization: 'Bearer valid-token',
         },
         body: JSON.stringify({
           code: 'new-cat',
@@ -369,7 +369,7 @@ describe('Categories API Routing & Controller', () => {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer valid-token',
+          Authorization: 'Bearer valid-token',
         },
         body: JSON.stringify({
           name: 'Updated Name',
@@ -386,7 +386,7 @@ describe('Categories API Routing & Controller', () => {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer valid-token',
+          Authorization: 'Bearer valid-token',
         },
         body: JSON.stringify({
           name: 'Updated Category Name',
@@ -408,7 +408,7 @@ describe('Categories API Routing & Controller', () => {
       const res = await app.request(`/api/v1/categories/${categoryId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': 'Bearer valid-token',
+          Authorization: 'Bearer valid-token',
         },
       });
       expect(res.status).toBe(404);
@@ -421,7 +421,7 @@ describe('Categories API Routing & Controller', () => {
       const res = await app.request(`/api/v1/categories/${categoryId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': 'Bearer valid-token',
+          Authorization: 'Bearer valid-token',
         },
       });
 

@@ -1,6 +1,16 @@
-import { pgTable, uuid, varchar, boolean, timestamp, index, uniqueIndex, primaryKey, text } from 'drizzle-orm/pg-core';
-import { articles } from './articles';
 import { generateUuidV7 } from '@/common/utils/uuid';
+import {
+  boolean,
+  index,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+  varchar,
+} from 'drizzle-orm/pg-core';
+import { articles } from './articles';
 
 export const tags = pgTable(
   'tags',

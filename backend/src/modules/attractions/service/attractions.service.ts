@@ -1,15 +1,15 @@
+import { ConflictError, NotFoundError, ValidationError } from '@/common/errors/http.errors';
+import { slugify } from '@/common/utils/slug';
+import { generateUuidV7 } from '@/common/utils/uuid';
+import { logger } from '@/lib/logger';
+import { requestStore } from '@/lib/logger/context';
+import { GPSLocation } from '@/modules/regions/domain/value-objects/gps-location.vo';
 import type { IRegionsRepository } from '@/modules/regions/repository/regions-repository.interface';
+import { Attraction } from '../domain/attraction.entity';
 import type {
   IAttractionsRepository,
   ListAttractionsOptions,
 } from '../repository/attractions-repository.interface';
-import { Attraction } from '../domain/attraction.entity';
-import { GPSLocation } from '@/modules/regions/domain/value-objects/gps-location.vo';
-import { generateUuidV7 } from '@/common/utils/uuid';
-import { slugify } from '@/common/utils/slug';
-import { logger } from '@/lib/logger';
-import { requestStore } from '@/lib/logger/context';
-import { NotFoundError, ConflictError, ValidationError } from '@/common/errors/http.errors';
 
 export interface CreateAttractionCommand {
   id?: string;
@@ -55,7 +55,9 @@ export class AttractionsService {
     return attraction;
   }
 
-  public async listAttractions(options: ListAttractionsOptions): Promise<{ items: Attraction[]; total: number }> {
+  public async listAttractions(
+    options: ListAttractionsOptions
+  ): Promise<{ items: Attraction[]; total: number }> {
     const [items, total] = await Promise.all([
       this.attractionsRepo.list(options),
       this.attractionsRepo.count(options),

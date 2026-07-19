@@ -1,8 +1,8 @@
-import type { IWeatherProvider } from '../interfaces/weather-provider.interface';
-import type { CurrentWeather, Forecast } from '../dto/weather.dto';
-import { ValidationError, ExternalServiceError } from '@/common/errors/http.errors';
+import { ExternalServiceError, ValidationError } from '@/common/errors/http.errors';
 import { logger } from '@/lib/logger';
 import { requestStore } from '@/lib/logger/context';
+import type { CurrentWeather, Forecast } from '../dto/weather.dto';
+import type { IWeatherProvider } from '../interfaces/weather-provider.interface';
 
 /** Maximum time (ms) to wait for the upstream weather provider. */
 const PROVIDER_TIMEOUT_MS = 5_000;
@@ -37,7 +37,10 @@ export class WeatherService {
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       try {
         const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Weather provider request timed out')), PROVIDER_TIMEOUT_MS)
+          setTimeout(
+            () => reject(new Error('Weather provider request timed out')),
+            PROVIDER_TIMEOUT_MS
+          )
         );
         return await Promise.race([fn(), timeoutPromise]);
       } catch (err) {
@@ -86,24 +89,20 @@ export class WeatherService {
 
   public async getCurrentWeather(latitude: number, longitude: number): Promise<CurrentWeather> {
     this.validateCoordinates(latitude, longitude);
-    return this.callWithResiliency(
-      () => this.provider.getCurrentWeather(latitude, longitude),
-      { lat: latitude, lng: longitude }
-    );
+    return this.callWithResiliency(() => this.provider.getCurrentWeather(latitude, longitude), {
+      lat: latitude,
+      lng: longitude,
+    });
   }
 
-  public async getForecast(
-    latitude: number,
-    longitude: number,
-    days = 3
-  ): Promise<Forecast[]> {
+  public async getForecast(latitude: number, longitude: number, days = 3): Promise<Forecast[]> {
     this.validateCoordinates(latitude, longitude);
     if (days < 1 || days > 16) {
       throw new ValidationError('Forecast days must be between 1 and 16 days');
     }
-    return this.callWithResiliency(
-      () => this.provider.getForecast(latitude, longitude, days),
-      { lat: latitude, lng: longitude }
-    );
+    return this.callWithResiliency(() => this.provider.getForecast(latitude, longitude, days), {
+      lat: latitude,
+      lng: longitude,
+    });
   }
 }

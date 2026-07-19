@@ -1,6 +1,6 @@
-import { describe, test, expect } from 'bun:test';
-import { Category, type CategoryProps } from './category.entity';
+import { describe, expect, test } from 'bun:test';
 import { ArticleDomainError } from './article-errors';
+import { Category, type CategoryProps } from './category.entity';
 
 describe('Category Entity', () => {
   const id = '019f4bc4-f550-7d52-bba4-3b6258b55701';

@@ -1,8 +1,8 @@
 import { createMiddleware } from 'hono/factory';
-import type { ITokenService } from '../service/token.service';
-import type { ISessionService } from '../service/session.service';
-import type { IUserRepository } from '../repository/users-repository.interface';
 import type { IPermissionRepository } from '../repository/permissions-repository.interface';
+import type { IUserRepository } from '../repository/users-repository.interface';
+import type { ISessionService } from '../service/session.service';
+import type { ITokenService } from '../service/token.service';
 import type { AuthenticatedUser } from './identity.context';
 
 /**

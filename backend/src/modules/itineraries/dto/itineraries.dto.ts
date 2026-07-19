@@ -27,7 +27,12 @@ export const CreateItineraryRequestSchema = z
       .trim()
       .min(1, 'Title must not be empty')
       .max(100, 'Title must not exceed 100 characters'),
-    description: z.string().trim().max(1000, 'Description must not exceed 1000 characters').optional().nullable(),
+    description: z
+      .string()
+      .trim()
+      .max(1000, 'Description must not exceed 1000 characters')
+      .optional()
+      .nullable(),
     visibility: ItineraryVisibilitySchema.optional(),
   })
   .strict();
@@ -42,7 +47,12 @@ export const UpdateItineraryRequestSchema = z
       .min(1, 'Title must not be empty')
       .max(100, 'Title must not exceed 100 characters')
       .optional(),
-    description: z.string().trim().max(1000, 'Description must not exceed 1000 characters').optional().nullable(),
+    description: z
+      .string()
+      .trim()
+      .max(1000, 'Description must not exceed 1000 characters')
+      .optional()
+      .nullable(),
     visibility: ItineraryVisibilitySchema.optional(),
   })
   .strict();
@@ -61,13 +71,15 @@ export type AddItineraryItemRequestDto = z.infer<typeof AddItineraryItemRequestS
 
 export const ReorderItineraryItemsRequestSchema = z
   .object({
-    items: z.array(
-      z.object({
-        id: z.string().trim().uuid('Item ID must be a valid UUID'),
-        dayNumber: z.number().int().min(1, 'Day number must be at least 1'),
-        displayOrder: z.number().int().min(1, 'Display order must be at least 1'),
-      })
-    ).min(1, 'Reorder list must contain at least one item'),
+    items: z
+      .array(
+        z.object({
+          id: z.string().trim().uuid('Item ID must be a valid UUID'),
+          dayNumber: z.number().int().min(1, 'Day number must be at least 1'),
+          displayOrder: z.number().int().min(1, 'Display order must be at least 1'),
+        })
+      )
+      .min(1, 'Reorder list must contain at least one item'),
   })
   .strict();
 

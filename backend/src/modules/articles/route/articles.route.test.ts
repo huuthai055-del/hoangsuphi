@@ -177,7 +177,7 @@ mock.module('@/modules/articles/repository/tags.repository', () => {
   };
 });
 
-import { expect, test, describe, beforeEach } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'bun:test';
 import type { Hono } from 'hono';
 import { Article } from '../domain/article.entity';
 import { Tag } from '../domain/tag.entity';
@@ -193,15 +193,16 @@ describe('Articles API Routing & Controller', () => {
 
   // Articles Mocks
   const mockFindById = mock((_id: string, _options?: any) => Promise.resolve<Article | null>(null));
-  const mockFindBySlug = mock((_slug: string, _options?: any) => Promise.resolve<Article | null>(null));
+  const mockFindBySlug = mock((_slug: string, _options?: any) =>
+    Promise.resolve<Article | null>(null)
+  );
   const mockExists = mock((_id: string) => Promise.resolve<boolean>(false));
   const mockExistsBySlug = mock((_slug: string) => Promise.resolve<boolean>(false));
   const mockSave = mock((_article: Article, _tx?: any) => Promise.resolve());
   const mockUpdate = mock((_article: Article, _tx?: any) => Promise.resolve());
   const mockSoftDelete = mock((_id: string, _tx?: any) => Promise.resolve());
-  const mockSearch = mock(
-    (_filter: any, _pagination: any, _sort: any) =>
-      Promise.resolve<{ items: Article[]; total: number }>({ items: [], total: 0 })
+  const mockSearch = mock((_filter: any, _pagination: any, _sort: any) =>
+    Promise.resolve<{ items: Article[]; total: number }>({ items: [], total: 0 })
   );
   const mockIncrementViewCount = mock((_id: string) => Promise.resolve());
   const mockAddTags = mock((_id: string, _tagIds: string[], _tx?: any) => Promise.resolve());
@@ -252,14 +253,7 @@ describe('Articles API Routing & Controller', () => {
   const tagName = 'Ruộng bậc thang';
   const tagDesc = 'Thẻ dành cho các bài viết về ruộng bậc thang Hoang Su Phi.';
 
-  const sampleTag = Tag.create(
-    tagId,
-    tagName,
-    tagSlug,
-    tagDesc,
-    true,
-    new Date()
-  );
+  const sampleTag = Tag.create(tagId, tagName, tagSlug, tagDesc, true, new Date());
 
   const articleId = '019f4bc4-f550-7d52-bba4-3b6258b55703';
   const authorId = '00000000-0000-0000-0000-000000000001';
@@ -359,7 +353,7 @@ describe('Articles API Routing & Controller', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer valid-token',
+          Authorization: 'Bearer valid-token',
         },
         body: JSON.stringify({
           title: '',
@@ -378,7 +372,7 @@ describe('Articles API Routing & Controller', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer valid-token',
+          Authorization: 'Bearer valid-token',
         },
         body: JSON.stringify({
           title: 'New Article Title',
@@ -403,7 +397,7 @@ describe('Articles API Routing & Controller', () => {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer valid-token',
+          Authorization: 'Bearer valid-token',
         },
         body: JSON.stringify({
           title: 'Updated Title',
@@ -420,7 +414,7 @@ describe('Articles API Routing & Controller', () => {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer valid-token',
+          Authorization: 'Bearer valid-token',
         },
         body: JSON.stringify({
           title: 'Updated Article Title',
@@ -443,7 +437,7 @@ describe('Articles API Routing & Controller', () => {
       const res = await app.request(`/api/v1/articles/${articleId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': 'Bearer valid-token',
+          Authorization: 'Bearer valid-token',
         },
       });
       expect(res.status).toBe(404);
@@ -456,7 +450,7 @@ describe('Articles API Routing & Controller', () => {
       const res = await app.request(`/api/v1/articles/${articleId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': 'Bearer valid-token',
+          Authorization: 'Bearer valid-token',
         },
       });
 
@@ -473,7 +467,7 @@ describe('Articles API Routing & Controller', () => {
       const res = await app.request(`/api/v1/articles/${articleId}/submit`, {
         method: 'POST',
         headers: {
-          'Authorization': 'Bearer valid-token',
+          Authorization: 'Bearer valid-token',
         },
       });
 
@@ -493,7 +487,7 @@ describe('Articles API Routing & Controller', () => {
       const res = await app.request(`/api/v1/articles/${articleId}/publish`, {
         method: 'POST',
         headers: {
-          'Authorization': 'Bearer valid-token',
+          Authorization: 'Bearer valid-token',
         },
       });
 
@@ -514,7 +508,7 @@ describe('Articles API Routing & Controller', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer valid-token',
+          Authorization: 'Bearer valid-token',
         },
         body: JSON.stringify({ reason: 'Contains spelling errors' }),
       });
@@ -535,7 +529,7 @@ describe('Articles API Routing & Controller', () => {
       const res = await app.request(`/api/v1/articles/${articleId}/archive`, {
         method: 'POST',
         headers: {
-          'Authorization': 'Bearer valid-token',
+          Authorization: 'Bearer valid-token',
         },
       });
 
@@ -555,7 +549,7 @@ describe('Articles API Routing & Controller', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer valid-token',
+          Authorization: 'Bearer valid-token',
         },
         body: JSON.stringify({ tagIds: [tagId] }),
       });
@@ -571,7 +565,7 @@ describe('Articles API Routing & Controller', () => {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer valid-token',
+          Authorization: 'Bearer valid-token',
         },
         body: JSON.stringify({ tagIds: [tagId] }),
       });

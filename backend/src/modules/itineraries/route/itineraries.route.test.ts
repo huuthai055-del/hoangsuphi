@@ -1,9 +1,9 @@
-import { expect, test, describe, beforeEach, mock } from 'bun:test';
-import type { Hono } from 'hono';
-import { Itinerary } from '../domain/itinerary.entity';
-import { ItineraryItem } from '../domain/itinerary-item.entity';
-import { ItinerariesController } from './itineraries.controller';
+import { beforeEach, describe, expect, mock, test } from 'bun:test';
 import { container } from '@/common/di/container';
+import type { Hono } from 'hono';
+import { ItineraryItem } from '../domain/itinerary-item.entity';
+import { Itinerary } from '../domain/itinerary.entity';
+import { ItinerariesController } from './itineraries.controller';
 
 describe('Itineraries API Routing & Controller', () => {
   let app: Hono;
@@ -199,10 +199,13 @@ describe('Itineraries API Routing & Controller', () => {
       mockGetItinerary.mockImplementation(() => Promise.resolve(itinerary));
       mockRemoveItemFromItinerary.mockImplementation(() => Promise.resolve());
 
-      const res = await app.request(`/api/v1/itineraries/${itinerary.id}/items/${sampleItineraryItemProps.id}`, {
-        method: 'DELETE',
-        headers: { Authorization: 'Bearer valid-token' },
-      });
+      const res = await app.request(
+        `/api/v1/itineraries/${itinerary.id}/items/${sampleItineraryItemProps.id}`,
+        {
+          method: 'DELETE',
+          headers: { Authorization: 'Bearer valid-token' },
+        }
+      );
 
       expect(res.status).toBe(200);
     });
@@ -219,9 +222,7 @@ describe('Itineraries API Routing & Controller', () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          items: [
-            { id: sampleItineraryItemProps.id, dayNumber: 1, displayOrder: 2 },
-          ],
+          items: [{ id: sampleItineraryItemProps.id, dayNumber: 1, displayOrder: 2 }],
         }),
       });
 
@@ -255,7 +256,15 @@ describe('Itineraries API Routing & Controller', () => {
     });
     test('GET /api/v1/itineraries - non-admin without userId scopes to own itineraries', async () => {
       mockListItineraries.mockImplementation(() =>
-        Promise.resolve({ items: [], total: 0, page: 1, pageSize: 10, totalPages: 0, hasNext: false, hasPrevious: false })
+        Promise.resolve({
+          items: [],
+          total: 0,
+          page: 1,
+          pageSize: 10,
+          totalPages: 0,
+          hasNext: false,
+          hasPrevious: false,
+        })
       );
 
       const res = await app.request('/api/v1/itineraries', {
@@ -272,7 +281,15 @@ describe('Itineraries API Routing & Controller', () => {
 
     test('GET /api/v1/itineraries?userId=other - non-admin viewing another user must see PUBLIC only', async () => {
       mockListItineraries.mockImplementation(() =>
-        Promise.resolve({ items: [], total: 0, page: 1, pageSize: 10, totalPages: 0, hasNext: false, hasPrevious: false })
+        Promise.resolve({
+          items: [],
+          total: 0,
+          page: 1,
+          pageSize: 10,
+          totalPages: 0,
+          hasNext: false,
+          hasPrevious: false,
+        })
       );
 
       const otherId = '00000000-0000-0000-0000-000000000099';

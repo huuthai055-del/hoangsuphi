@@ -1,5 +1,5 @@
-import type { InferSelectModel } from 'drizzle-orm';
 import type { permissions } from '@/lib/database/schema/references';
+import type { InferSelectModel } from 'drizzle-orm';
 
 export type PermissionDbModel = InferSelectModel<typeof permissions>;
 

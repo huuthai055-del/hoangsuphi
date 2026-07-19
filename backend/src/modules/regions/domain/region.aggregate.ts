@@ -1,13 +1,13 @@
-import type { LtreePath } from './value-objects/ltree-path.vo';
-import { GPSLocation } from './value-objects/gps-location.vo';
 import {
+  InvalidRegionLevelError,
   InvalidRegionNameError,
   InvalidRegionSlugError,
-  InvalidRegionLevelError,
-  RegionLocationMismatchError,
-  RegionAccountDeletedError,
   InvalidRegionStatusTransitionError,
+  RegionAccountDeletedError,
+  RegionLocationMismatchError,
 } from './region.errors';
+import { GPSLocation } from './value-objects/gps-location.vo';
+import type { LtreePath } from './value-objects/ltree-path.vo';
 
 export type RegionLevel = 0 | 1 | 2 | 3 | 4 | 5; // 0=Country, 1=Province, 2=District, 3=Commune, 4=Village, 5=Point/Place
 
@@ -86,7 +86,9 @@ export class Region {
       lng = geom.lng;
     } else if (latitude !== null || longitude !== null) {
       if (latitude === null || longitude === null) {
-        throw new RegionLocationMismatchError('Both latitude and longitude must be provided together');
+        throw new RegionLocationMismatchError(
+          'Both latitude and longitude must be provided together'
+        );
       }
     }
 
@@ -203,6 +205,9 @@ export class Region {
     }
     if (!newSlug || !/^[a-z0-9_-]+$/.test(newSlug)) {
       throw new InvalidRegionSlugError('Region slug must be in valid format (^[a-z0-9_-]+$)');
+    }
+    if (this._status === 'active' && this._slug !== newSlug) {
+      throw new InvalidRegionSlugError('Slug is immutable once region is active');
     }
     this._name = newName;
     this._slug = newSlug;

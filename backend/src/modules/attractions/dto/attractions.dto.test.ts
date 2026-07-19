@@ -1,11 +1,11 @@
-import { expect, test, describe } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import {
-  CreateAttractionSchema,
-  UpdateAttractionSchema,
-  ListAttractionsQuerySchema,
-  AttractionNearbyQuerySchema,
   AttractionIdParamsSchema,
+  AttractionNearbyQuerySchema,
   AttractionSlugParamsSchema,
+  CreateAttractionSchema,
+  ListAttractionsQuerySchema,
+  UpdateAttractionSchema,
 } from './attractions.dto';
 
 describe('CreateAttractionSchema', () => {

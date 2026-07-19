@@ -1,6 +1,6 @@
-import { describe, test, expect } from 'bun:test';
-import { PasswordService } from './password.service';
+import { describe, expect, test } from 'bun:test';
 import { ValidationError } from '@/common/errors/http.errors';
+import { PasswordService } from './password.service';
 
 describe('PasswordService', () => {
   const service = new PasswordService();

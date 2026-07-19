@@ -1,16 +1,16 @@
 import type { Context } from 'hono';
-import type { AttractionsService } from '../service/attractions.service';
 import type { Attraction } from '../domain/attraction.entity';
 import type {
-  CreateAttractionRequestDto,
-  UpdateAttractionRequestDto,
-  ListAttractionsQueryDto,
-  AttractionNearbyQueryDto,
   AttractionIdParamsDto,
-  AttractionSlugParamsDto,
+  AttractionNearbyQueryDto,
   AttractionResponseDto,
+  AttractionSlugParamsDto,
   AttractionSummaryResponseDto,
+  CreateAttractionRequestDto,
+  ListAttractionsQueryDto,
+  UpdateAttractionRequestDto,
 } from '../dto/attractions.dto';
+import type { AttractionsService } from '../service/attractions.service';
 
 export class AttractionsController {
   constructor(private readonly service: AttractionsService) {}

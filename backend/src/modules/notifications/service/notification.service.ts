@@ -1,33 +1,40 @@
+import { Roles } from '@/common/constants/roles';
+import {
+  AuthorizationError,
+  ConflictError,
+  NotFoundError,
+  ValidationError,
+} from '@/common/errors/http.errors';
+import {
+  DuplicateKeyRepositoryError,
+  EntityNotFoundRepositoryError,
+} from '@/common/errors/repository.errors';
+import type { PaginatedResult, PaginationOptions } from '@/common/types/pagination';
+import { generateUuidV7 } from '@/common/utils/uuid';
+import { runInTransaction } from '@/lib/database/client';
+import { logger } from '@/lib/logger';
+import { requestStore } from '@/lib/logger/context';
 import type { Notification, NotificationType } from '../domain/notification.entity';
 import { Notification as NotificationClass } from '../domain/notification.entity';
+import {
+  ImmutableNotificationError,
+  InvalidNotificationMessageError,
+  InvalidNotificationStateError,
+  InvalidNotificationTitleError,
+  InvalidNotificationUserError,
+  NotificationDomainError,
+} from '../domain/notification.errors';
 import type {
   INotificationRepository,
   NotificationFilters,
   NotificationSortField,
 } from '../repository/notification-repository.interface';
-import { generateUuidV7 } from '@/common/utils/uuid';
-import { NotFoundError, ConflictError, ValidationError, AuthorizationError } from '@/common/errors/http.errors';
-import { Roles } from '@/common/constants/roles';
-import {
-  DuplicateKeyRepositoryError,
-  EntityNotFoundRepositoryError,
-} from '@/common/errors/repository.errors';
-import {
-  NotificationDomainError,
-  InvalidNotificationTitleError,
-  InvalidNotificationMessageError,
-  InvalidNotificationUserError,
-  InvalidNotificationStateError,
-  ImmutableNotificationError,
-} from '../domain/notification.errors';
-import { runInTransaction } from '@/lib/database/client';
-import { logger } from '@/lib/logger';
-import { requestStore } from '@/lib/logger/context';
-import type { PaginatedResult, PaginationOptions } from '@/common/types/pagination';
 
 function mapDomainError(err: Error): Error {
   if (err instanceof DuplicateKeyRepositoryError) {
-    return new ConflictError('Unique constraint violated: Notification already exists', { cause: err });
+    return new ConflictError('Unique constraint violated: Notification already exists', {
+      cause: err,
+    });
   }
   if (err instanceof EntityNotFoundRepositoryError) {
     return new NotFoundError(err.message, { cause: err });
@@ -87,7 +94,10 @@ export class NotificationService {
           now: input.now,
         });
         await this.repo.create(notif, tx);
-        logger.info({ traceId: store?.requestId, notificationId: notif.id, action: 'create_notification' }, `Notification created: ${notif.id}`);
+        logger.info(
+          { traceId: store?.requestId, notificationId: notif.id, action: 'create_notification' },
+          `Notification created: ${notif.id}`
+        );
         return notif;
       });
     } catch (err) {
@@ -95,7 +105,11 @@ export class NotificationService {
     }
   }
 
-  public async markRead(id: string, user: { id: string; roles: string[] }, now?: Date): Promise<Notification> {
+  public async markRead(
+    id: string,
+    user: { id: string; roles: string[] },
+    now?: Date
+  ): Promise<Notification> {
     const store = requestStore.getStore();
     try {
       return await runInTransaction(async (tx) => {
@@ -103,7 +117,10 @@ export class NotificationService {
         this.assertAccess(notif, user);
         notif.markAsRead(now);
         await this.repo.update(notif, tx);
-        logger.info({ traceId: store?.requestId, notificationId: notif.id, action: 'mark_read' }, `Notification marked read: ${notif.id}`);
+        logger.info(
+          { traceId: store?.requestId, notificationId: notif.id, action: 'mark_read' },
+          `Notification marked read: ${notif.id}`
+        );
         return notif;
       });
     } catch (err) {
@@ -111,7 +128,11 @@ export class NotificationService {
     }
   }
 
-  public async markUnread(id: string, user: { id: string; roles: string[] }, now?: Date): Promise<Notification> {
+  public async markUnread(
+    id: string,
+    user: { id: string; roles: string[] },
+    now?: Date
+  ): Promise<Notification> {
     const store = requestStore.getStore();
     try {
       return await runInTransaction(async (tx) => {
@@ -119,7 +140,10 @@ export class NotificationService {
         this.assertAccess(notif, user);
         notif.markAsUnread(now);
         await this.repo.update(notif, tx);
-        logger.info({ traceId: store?.requestId, notificationId: notif.id, action: 'mark_unread' }, `Notification marked unread: ${notif.id}`);
+        logger.info(
+          { traceId: store?.requestId, notificationId: notif.id, action: 'mark_unread' },
+          `Notification marked unread: ${notif.id}`
+        );
         return notif;
       });
     } catch (err) {
@@ -127,7 +151,11 @@ export class NotificationService {
     }
   }
 
-  public async dismiss(id: string, user: { id: string; roles: string[] }, now?: Date): Promise<Notification> {
+  public async dismiss(
+    id: string,
+    user: { id: string; roles: string[] },
+    now?: Date
+  ): Promise<Notification> {
     const store = requestStore.getStore();
     try {
       return await runInTransaction(async (tx) => {
@@ -135,7 +163,10 @@ export class NotificationService {
         this.assertAccess(notif, user);
         notif.dismiss(now);
         await this.repo.update(notif, tx);
-        logger.info({ traceId: store?.requestId, notificationId: notif.id, action: 'dismiss_notification' }, `Notification dismissed: ${notif.id}`);
+        logger.info(
+          { traceId: store?.requestId, notificationId: notif.id, action: 'dismiss_notification' },
+          `Notification dismissed: ${notif.id}`
+        );
         return notif;
       });
     } catch (err) {
@@ -143,7 +174,11 @@ export class NotificationService {
     }
   }
 
-  public async delete(id: string, user: { id: string; roles: string[] }, now?: Date): Promise<void> {
+  public async delete(
+    id: string,
+    user: { id: string; roles: string[] },
+    now?: Date
+  ): Promise<void> {
     const store = requestStore.getStore();
     try {
       await runInTransaction(async (tx) => {
@@ -151,7 +186,10 @@ export class NotificationService {
         this.assertAccess(notif, user);
         notif.softDelete(now);
         await this.repo.delete(notif, tx);
-        logger.info({ traceId: store?.requestId, notificationId: notif.id, action: 'delete_notification' }, `Notification deleted: ${notif.id}`);
+        logger.info(
+          { traceId: store?.requestId, notificationId: notif.id, action: 'delete_notification' },
+          `Notification deleted: ${notif.id}`
+        );
       });
     } catch (err) {
       throw mapDomainError(err as Error);

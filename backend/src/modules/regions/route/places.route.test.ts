@@ -208,11 +208,11 @@ mock.module('@/modules/attractions/repository/attractions.repository', () => {
   };
 });
 
-import { expect, test, describe, beforeEach } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'bun:test';
 import type { Hono } from 'hono';
 import { TouristPlace } from '../domain/place.entity';
-import { GPSLocation } from '../domain/value-objects/gps-location.vo';
 import { Region } from '../domain/region.aggregate';
+import { GPSLocation } from '../domain/value-objects/gps-location.vo';
 import { LtreePath } from '../domain/value-objects/ltree-path.vo';
 
 describe('Tourist Places API Routing & Controller', () => {
@@ -355,9 +355,9 @@ describe('Tourist Places API Routing & Controller', () => {
 
     const res = await app.request('/api/v1/places', {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer valid-token'
+        Authorization: 'Bearer valid-token',
       },
       body: JSON.stringify({
         regionId: '3a552ef3-40e1-7ca7-8000-000000000001',
@@ -377,9 +377,9 @@ describe('Tourist Places API Routing & Controller', () => {
   test('POST /api/v1/places - should fail with 400 validation error on bad coordinate input', async () => {
     const res = await app.request('/api/v1/places', {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer valid-token'
+        Authorization: 'Bearer valid-token',
       },
       body: JSON.stringify({
         regionId: '3a552ef3-40e1-7ca7-8000-000000000001',
@@ -398,9 +398,9 @@ describe('Tourist Places API Routing & Controller', () => {
 
     const res = await app.request('/api/v1/places/3a552ef3-40e1-7ca7-8000-000000000002', {
       method: 'PATCH',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer valid-token'
+        Authorization: 'Bearer valid-token',
       },
       body: JSON.stringify({
         name: 'New Rice Terrace',
@@ -413,14 +413,35 @@ describe('Tourist Places API Routing & Controller', () => {
     expect(mockUpdatePlace).toHaveBeenCalled();
   });
 
+  test('PATCH /api/v1/places/:id - should fail with 400 when changing slug of an active place', async () => {
+    mockFindPlaceById.mockImplementation(() => Promise.resolve(mockPlace));
+
+    const res = await app.request('/api/v1/places/3a552ef3-40e1-7ca7-8000-000000000002', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer valid-token',
+      },
+      body: JSON.stringify({
+        slug: 'new-slug-rejected',
+      }),
+    });
+
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.type).toBe('https://hoangsuphi.vn/errors/place-domain-error');
+    expect(body.code).toBe('PLC_DOM_001');
+    expect(body.detail).toBe('Slug is immutable once place is active');
+  });
+
   test('DELETE /api/v1/places/:id - should soft delete a place and return 204', async () => {
     mockFindPlaceById.mockImplementation(() => Promise.resolve(mockPlace));
 
     const res = await app.request('/api/v1/places/3a552ef3-40e1-7ca7-8000-000000000002', {
       method: 'DELETE',
       headers: {
-        'Authorization': 'Bearer valid-token'
-      }
+        Authorization: 'Bearer valid-token',
+      },
     });
 
     expect(res.status).toBe(204);
@@ -446,8 +467,8 @@ describe('Tourist Places API Routing & Controller', () => {
     const res = await app.request('/api/v1/places/3a552ef3-40e1-7ca7-8000-000000000002/activate', {
       method: 'PATCH',
       headers: {
-        'Authorization': 'Bearer valid-token'
-      }
+        Authorization: 'Bearer valid-token',
+      },
     });
 
     expect(res.status).toBe(200);
@@ -464,8 +485,8 @@ describe('Tourist Places API Routing & Controller', () => {
       {
         method: 'PATCH',
         headers: {
-          'Authorization': 'Bearer valid-token'
-        }
+          Authorization: 'Bearer valid-token',
+        },
       }
     );
 

@@ -1,10 +1,14 @@
-import { ItineraryItem, type ItineraryItemOwnerType, type ItineraryItemProps } from './itinerary-item.entity';
 import {
-  ItineraryDomainError,
+  ItineraryItem,
+  type ItineraryItemOwnerType,
+  type ItineraryItemProps,
+} from './itinerary-item.entity';
+import {
   DuplicateItineraryItemError,
-  InvalidItineraryStateError,
   EmptyItineraryError,
   ImmutableItineraryError,
+  InvalidItineraryStateError,
+  ItineraryDomainError,
 } from './itinerary.errors';
 
 export type ItineraryVisibility = 'PUBLIC' | 'PRIVATE';
@@ -62,7 +66,9 @@ export class Itinerary {
     });
   }
 
-  public static rehydrate(props: Omit<ItineraryProps, 'items'> & { items: ItineraryItemProps[] }): Itinerary {
+  public static rehydrate(
+    props: Omit<ItineraryProps, 'items'> & { items: ItineraryItemProps[] }
+  ): Itinerary {
     return new Itinerary({
       ...props,
       items: props.items.map((itemProps) => ItineraryItem.rehydrate(itemProps)),
@@ -169,7 +175,8 @@ export class Itinerary {
 
     // Determine automatic displayOrder (max displayOrder in this dayNumber + 1)
     const itemsInDay = this.props.items.filter((item) => item.dayNumber === props.dayNumber);
-    const maxOrder = itemsInDay.length > 0 ? Math.max(...itemsInDay.map((item) => item.displayOrder)) : 0;
+    const maxOrder =
+      itemsInDay.length > 0 ? Math.max(...itemsInDay.map((item) => item.displayOrder)) : 0;
     const nextOrder = maxOrder + 1;
 
     const updateTime = now || new Date();
@@ -236,14 +243,18 @@ export class Itinerary {
 
     // 1. Reorder list must cover exactly all existing items
     if (itemIdOrders.length !== this.props.items.length) {
-      throw new ItineraryDomainError('Reorder list must contain all items in the itinerary exactly');
+      throw new ItineraryDomainError(
+        'Reorder list must contain all items in the itinerary exactly'
+      );
     }
 
     // 2. Check if all IDs exist in the itinerary
     const currentItemIds = new Set(this.props.items.map((i) => i.id));
     for (const order of itemIdOrders) {
       if (!currentItemIds.has(order.id)) {
-        throw new ItineraryDomainError(`Item with ID ${order.id} does not belong to this itinerary`);
+        throw new ItineraryDomainError(
+          `Item with ID ${order.id} does not belong to this itinerary`
+        );
       }
     }
 
@@ -294,7 +305,9 @@ export class Itinerary {
     this.ensureMutable();
 
     if (this.props.status !== 'DRAFT') {
-      throw new InvalidItineraryStateError(`Cannot publish itinerary from status: ${this.props.status}`);
+      throw new InvalidItineraryStateError(
+        `Cannot publish itinerary from status: ${this.props.status}`
+      );
     }
 
     if (this.props.items.length === 0) {

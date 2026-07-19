@@ -1,5 +1,5 @@
-import type { Region } from '../domain/region.aggregate';
 import type { TransactionClient } from '@/lib/database/client';
+import type { Region } from '../domain/region.aggregate';
 
 export interface ListRegionsOptions {
   page?: number;

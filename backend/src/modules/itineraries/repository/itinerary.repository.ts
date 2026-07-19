@@ -1,31 +1,24 @@
-import { db, type TransactionClient } from '@/lib/database/client';
-import { eq, and, isNull, sql, desc, asc, inArray } from 'drizzle-orm';
-import type { SQL } from 'drizzle-orm';
-import type {
-  IItineraryRepository,
-  ItineraryFilters,
-} from './itinerary-repository.interface';
-import type { Itinerary } from '../domain/itinerary.entity';
+import {
+  CheckConstraintViolationRepositoryError,
+  ConstraintViolationRepositoryError,
+  DatabaseOperationRepositoryError,
+  DuplicateKeyRepositoryError,
+  EntityNotFoundRepositoryError,
+  NotNullViolationRepositoryError,
+  RepositoryError,
+  TransactionConflictRepositoryError,
+} from '@/common/errors/repository.errors';
+import type { PaginatedResult, PaginationOptions } from '@/common/types/pagination';
+import { type TransactionClient, db } from '@/lib/database/client';
 import {
   itineraries as itinerariesSchema,
   itineraryItems as itineraryItemsSchema,
 } from '@/lib/database/schema/itineraries';
-import {
-  ItineraryMapper,
-  type RawItinerary,
-  type RawItineraryItem,
-} from './itinerary.mapper';
-import {
-  RepositoryError,
-  DuplicateKeyRepositoryError,
-  EntityNotFoundRepositoryError,
-  DatabaseOperationRepositoryError,
-  ConstraintViolationRepositoryError,
-  NotNullViolationRepositoryError,
-  CheckConstraintViolationRepositoryError,
-  TransactionConflictRepositoryError,
-} from '@/common/errors/repository.errors';
-import type { PaginatedResult, PaginationOptions } from '@/common/types/pagination';
+import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
+import type { SQL } from 'drizzle-orm';
+import type { Itinerary } from '../domain/itinerary.entity';
+import type { IItineraryRepository, ItineraryFilters } from './itinerary-repository.interface';
+import { ItineraryMapper, type RawItinerary, type RawItineraryItem } from './itinerary.mapper';
 
 function mapDbError(err: unknown, operation: string, details?: Record<string, unknown>): never {
   if (err instanceof RepositoryError) {
@@ -106,7 +99,7 @@ export class DrizzleItineraryRepository implements IItineraryRepository {
   public async findById(id: string, tx?: unknown): Promise<Itinerary | null> {
     try {
       const client = this.getClient(tx);
-      
+
       const [raw] = await client
         .select()
         .from(itinerariesSchema)
@@ -161,7 +154,9 @@ export class DrizzleItineraryRepository implements IItineraryRepository {
         .returning();
 
       if (!updated) {
-        throw new EntityNotFoundRepositoryError(`Itinerary not found for update with ID: ${itinerary.id}`);
+        throw new EntityNotFoundRepositoryError(
+          `Itinerary not found for update with ID: ${itinerary.id}`
+        );
       }
 
       // Sync items: Delete old items first to prevent unique index conflicts on displayOrder

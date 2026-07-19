@@ -1,8 +1,8 @@
-import { expect, test, describe, beforeEach, mock } from 'bun:test';
+import { beforeEach, describe, expect, mock, test } from 'bun:test';
+import { container } from '@/common/di/container';
 import type { Hono } from 'hono';
 import { Notification } from '../domain/notification.entity';
 import { NotificationsController } from './notifications.controller';
-import { container } from '@/common/di/container';
 
 describe('Notifications API Routing & Controller', () => {
   let app: Hono;
@@ -98,7 +98,9 @@ describe('Notifications API Routing & Controller', () => {
     test('PATCH /api/v1/notifications/:id/read - Mark Read Success', async () => {
       const notif = Notification.rehydrate(sampleNotificationProps);
       mockFindOne.mockImplementation(() => Promise.resolve(notif));
-      mockMarkRead.mockImplementation(() => Promise.resolve(Notification.rehydrate({ ...sampleNotificationProps, isRead: true })));
+      mockMarkRead.mockImplementation(() =>
+        Promise.resolve(Notification.rehydrate({ ...sampleNotificationProps, isRead: true }))
+      );
 
       const res = await app.request(`/api/v1/notifications/${notif.id}/read`, {
         method: 'PATCH',
@@ -113,7 +115,9 @@ describe('Notifications API Routing & Controller', () => {
     test('PATCH /api/v1/notifications/:id/unread - Mark Unread Success', async () => {
       const notif = Notification.rehydrate({ ...sampleNotificationProps, isRead: true });
       mockFindOne.mockImplementation(() => Promise.resolve(notif));
-      mockMarkUnread.mockImplementation(() => Promise.resolve(Notification.rehydrate(sampleNotificationProps)));
+      mockMarkUnread.mockImplementation(() =>
+        Promise.resolve(Notification.rehydrate(sampleNotificationProps))
+      );
 
       const res = await app.request(`/api/v1/notifications/${notif.id}/unread`, {
         method: 'PATCH',
@@ -128,7 +132,11 @@ describe('Notifications API Routing & Controller', () => {
     test('PATCH /api/v1/notifications/:id/dismiss - Dismiss Success', async () => {
       const notif = Notification.rehydrate(sampleNotificationProps);
       mockFindOne.mockImplementation(() => Promise.resolve(notif));
-      mockDismiss.mockImplementation(() => Promise.resolve(Notification.rehydrate({ ...sampleNotificationProps, dismissedAt: new Date() })));
+      mockDismiss.mockImplementation(() =>
+        Promise.resolve(
+          Notification.rehydrate({ ...sampleNotificationProps, dismissedAt: new Date() })
+        )
+      );
 
       const res = await app.request(`/api/v1/notifications/${notif.id}/dismiss`, {
         method: 'PATCH',

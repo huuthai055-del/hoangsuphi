@@ -1,7 +1,11 @@
-export class PlaceDomainError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'PlaceDomainError';
+import { AppError } from '@/common/errors/app.error';
+
+export class PlaceDomainError extends AppError {
+  readonly statusCode: number = 400;
+  readonly errorCode: string = 'PLC_DOM_001';
+
+  constructor(message: string, details?: Record<string, unknown>) {
+    super(message, details, { typeUri: 'https://hoangsuphi.vn/errors/place-domain-error' });
   }
 }
 

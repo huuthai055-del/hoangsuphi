@@ -9,18 +9,18 @@ mock.module('@/lib/database/client', () => {
   };
 });
 
-import { expect, test, describe, beforeEach } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'bun:test';
+import { Region } from '@/modules/regions/domain/region.aggregate';
+import { GPSLocation } from '@/modules/regions/domain/value-objects/gps-location.vo';
+import { LtreePath } from '@/modules/regions/domain/value-objects/ltree-path.vo';
+import type { IRegionsRepository } from '@/modules/regions/repository/regions-repository.interface';
+import { Attraction, type AttractionProps } from '../domain/attraction.entity';
+import type { IAttractionsRepository } from '../repository/attractions-repository.interface';
 import {
   AttractionsService,
   type CreateAttractionCommand,
   type UpdateAttractionCommand,
 } from './attractions.service';
-import type { IRegionsRepository } from '@/modules/regions/repository/regions-repository.interface';
-import type { IAttractionsRepository } from '../repository/attractions-repository.interface';
-import { Region } from '@/modules/regions/domain/region.aggregate';
-import { LtreePath } from '@/modules/regions/domain/value-objects/ltree-path.vo';
-import { Attraction, type AttractionProps } from '../domain/attraction.entity';
-import { GPSLocation } from '@/modules/regions/domain/value-objects/gps-location.vo';
 
 const createTestAttraction = (props: Partial<AttractionProps> = {}) => {
   return Attraction.rehydrate({
@@ -194,7 +194,7 @@ describe('AttractionsService', () => {
       status: 'active',
       createdAt: new Date(),
       updatedAt: new Date(),
-      deletedAt: null
+      deletedAt: null,
     });
     findAttractionBySlugMock.mockImplementation((_slug, includeDeleted) => {
       expect(includeDeleted).toBe(true);
@@ -248,7 +248,7 @@ describe('AttractionsService', () => {
       status: 'active',
       createdAt: new Date(),
       updatedAt: new Date(),
-      deletedAt: null
+      deletedAt: null,
     });
     findAttractionByIdMock.mockImplementation(() => Promise.resolve(existing));
 
@@ -278,7 +278,7 @@ describe('AttractionsService', () => {
       status: 'active',
       createdAt: new Date(),
       updatedAt: new Date(),
-      deletedAt: null
+      deletedAt: null,
     });
     findAttractionByIdMock.mockImplementation(() => Promise.resolve(existing));
 
@@ -299,7 +299,7 @@ describe('AttractionsService', () => {
       status: 'active',
       createdAt: new Date(),
       updatedAt: new Date(),
-      deletedAt: new Date()
+      deletedAt: new Date(),
     });
     findAttractionByIdMock.mockImplementation(() => Promise.resolve(deleted));
 
@@ -319,7 +319,7 @@ describe('AttractionsService', () => {
       status: 'inactive',
       createdAt: new Date(),
       updatedAt: new Date(),
-      deletedAt: null
+      deletedAt: null,
     });
     findAttractionByIdMock.mockImplementation(() => Promise.resolve(existing));
 
@@ -341,7 +341,7 @@ describe('AttractionsService', () => {
       status: 'inactive',
       createdAt: new Date(),
       updatedAt: new Date(),
-      deletedAt: new Date()
+      deletedAt: new Date(),
     });
     findAttractionByIdMock.mockImplementation(() => Promise.resolve(deleted));
 
@@ -363,7 +363,7 @@ describe('AttractionsService', () => {
       status: 'active',
       createdAt: new Date(),
       updatedAt: new Date(),
-      deletedAt: null
+      deletedAt: null,
     });
     findAttractionByIdMock.mockImplementation(() => Promise.resolve(existing));
 
@@ -385,7 +385,7 @@ describe('AttractionsService', () => {
       status: 'active',
       createdAt: new Date(),
       updatedAt: new Date(),
-      deletedAt: new Date()
+      deletedAt: new Date(),
     });
     findAttractionByIdMock.mockImplementation(() => Promise.resolve(deleted));
 
@@ -408,7 +408,7 @@ describe('AttractionsService', () => {
         status: 'active',
         createdAt: new Date(),
         updatedAt: new Date(),
-        deletedAt: null
+        deletedAt: null,
       }),
     ];
     findAttractionByRegionIdMock.mockImplementation(() => Promise.resolve(mockAttractionsList));
@@ -433,7 +433,7 @@ describe('AttractionsService', () => {
         status: 'inactive',
         createdAt: new Date(),
         updatedAt: new Date(),
-        deletedAt: null
+        deletedAt: null,
       });
 
       expect(attraction.isActive).toBe(false);

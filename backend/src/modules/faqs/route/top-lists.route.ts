@@ -1,17 +1,17 @@
-import { Hono } from 'hono';
-import { container } from '@/common/di/container';
 import { Permissions } from '@/common/constants/permissions';
+import { container } from '@/common/di/container';
+import { validateBody, validateParams, validateQuery } from '@/middleware/validator';
 import { requirePermission } from '@/modules/identity/middleware/permission.middleware';
+import { Hono } from 'hono';
 import {
-  TopListIdParamsSchema,
-  TopListItemIdParamsSchema,
-  CreateTopListRequestSchema,
-  UpdateTopListRequestSchema,
   AddTopListItemRequestSchema,
+  CreateTopListRequestSchema,
   ReorderTopListItemsRequestSchema,
   TopListFilterQuerySchema,
+  TopListIdParamsSchema,
+  TopListItemIdParamsSchema,
+  UpdateTopListRequestSchema,
 } from '../dto/top-lists.dto';
-import { validateBody, validateParams, validateQuery } from '@/middleware/validator';
 import type { TopListsController } from './top-lists.controller';
 
 import type { MiddlewareHandler } from 'hono';
@@ -19,20 +19,16 @@ import type { MiddlewareHandler } from 'hono';
 const topListsRouter = new Hono();
 
 // Dynamically resolve authGuard and controller from Container
-const authGuard: MiddlewareHandler = (c, next) => container.resolve<MiddlewareHandler>('AuthGuard')(c, next);
-const getController = (): TopListsController => container.resolve<TopListsController>('TopListsController');
+const authGuard: MiddlewareHandler = (c, next) =>
+  container.resolve<MiddlewareHandler>('AuthGuard')(c, next);
+const getController = (): TopListsController =>
+  container.resolve<TopListsController>('TopListsController');
 
 // Public Routes
-topListsRouter.get(
-  '/',
-  validateQuery(TopListFilterQuerySchema),
-  (c) => getController().list(c)
-);
+topListsRouter.get('/', validateQuery(TopListFilterQuerySchema), (c) => getController().list(c));
 
-topListsRouter.get(
-  '/:id',
-  validateParams(TopListIdParamsSchema),
-  (c) => getController().getById(c)
+topListsRouter.get('/:id', validateParams(TopListIdParamsSchema), (c) =>
+  getController().getById(c)
 );
 
 // Admin Routes

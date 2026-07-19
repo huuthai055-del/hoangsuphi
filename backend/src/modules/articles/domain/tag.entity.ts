@@ -59,7 +59,9 @@ export class Tag {
     }
     const cleanSlug = slug.trim();
     if (!SEO_SLUG_REGEX.test(cleanSlug)) {
-      throw new ArticleDomainError('Tag slug must be a valid SEO slug format (lowercase alphanumeric and single dashes, no leading/trailing dashes)');
+      throw new ArticleDomainError(
+        'Tag slug must be a valid SEO slug format (lowercase alphanumeric and single dashes, no leading/trailing dashes)'
+      );
     }
   }
 
@@ -116,13 +118,27 @@ export class Tag {
   }
 
   // Getters
-  public get id(): string { return this._id; }
-  public get name(): string { return this._name; }
-  public get slug(): string { return this._slug; }
-  public get description(): string | null { return this._description; }
-  public get isFeatured(): boolean { return this._isFeatured; }
-  public get createdAt(): Date { return this._createdAt; }
-  public get updatedAt(): Date { return this._updatedAt; }
+  public get id(): string {
+    return this._id;
+  }
+  public get name(): string {
+    return this._name;
+  }
+  public get slug(): string {
+    return this._slug;
+  }
+  public get description(): string | null {
+    return this._description;
+  }
+  public get isFeatured(): boolean {
+    return this._isFeatured;
+  }
+  public get createdAt(): Date {
+    return this._createdAt;
+  }
+  public get updatedAt(): Date {
+    return this._updatedAt;
+  }
 
   // Business Methods
   public rename(newName: string, now?: Date): void {

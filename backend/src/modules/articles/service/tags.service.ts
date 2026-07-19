@@ -1,10 +1,13 @@
-import type { ITagsRepository, ListTagsOptions } from '../repository/tags-repository.interface';
-import type { ILogger, IClock } from './interfaces';
-import { Tag } from '../domain/tag.entity';
-import { generateUuidV7 } from '@/common/utils/uuid';
+import { ConflictError, NotFoundError, ValidationError } from '@/common/errors/http.errors';
 import { slugify } from '@/common/utils/slug';
-import { NotFoundError, ConflictError, ValidationError } from '@/common/errors/http.errors';
-import { DuplicateKeyRepositoryError, EntityNotFoundRepositoryError } from '../repository/repository-errors';
+import { generateUuidV7 } from '@/common/utils/uuid';
+import { Tag } from '../domain/tag.entity';
+import {
+  DuplicateKeyRepositoryError,
+  EntityNotFoundRepositoryError,
+} from '../repository/repository-errors';
+import type { ITagsRepository, ListTagsOptions } from '../repository/tags-repository.interface';
+import type { IClock, ILogger } from './interfaces';
 
 export interface CreateTagCommand {
   id?: string;
@@ -36,20 +39,26 @@ export class TagsService {
     try {
       const result = await fn();
       const executionTime = Math.round(performance.now() - startTime);
-      this.logger.info({
-        ...context,
-        executionTime,
-        action,
-      }, `Tag action ${action} completed successfully`);
+      this.logger.info(
+        {
+          ...context,
+          executionTime,
+          action,
+        },
+        `Tag action ${action} completed successfully`
+      );
       return result;
     } catch (error) {
       const executionTime = Math.round(performance.now() - startTime);
-      this.logger.error({
-        ...context,
-        executionTime,
-        action,
-        error: error instanceof Error ? error.message : String(error),
-      }, `Tag action ${action} failed`);
+      this.logger.error(
+        {
+          ...context,
+          executionTime,
+          action,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        `Tag action ${action} failed`
+      );
       throw error;
     }
   }
@@ -89,51 +98,55 @@ export class TagsService {
   }
 
   public async createTag(command: CreateTagCommand): Promise<Tag> {
-    return this.executeWithLogging('create_tag', { name: command.name, slug: command.slug }, async () => {
-      const name = (command.name || '').trim();
-      if (!name) {
-        throw new ValidationError('Tag name cannot be blank');
-      }
-
-      let slug = '';
-      if (command.slug) {
-        slug = command.slug.trim();
-        if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
-          throw new ValidationError('Tag slug must be a valid SEO slug format');
+    return this.executeWithLogging(
+      'create_tag',
+      { name: command.name, slug: command.slug },
+      async () => {
+        const name = (command.name || '').trim();
+        if (!name) {
+          throw new ValidationError('Tag name cannot be blank');
         }
-      } else {
-        slug = slugify(name);
-        if (!slug) {
-          throw new ValidationError('Could not generate a valid SEO slug from name');
+
+        let slug = '';
+        if (command.slug) {
+          slug = command.slug.trim();
+          if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+            throw new ValidationError('Tag slug must be a valid SEO slug format');
+          }
+        } else {
+          slug = slugify(name);
+          if (!slug) {
+            throw new ValidationError('Could not generate a valid SEO slug from name');
+          }
         }
-      }
 
-      const exists = await this.tagsRepo.existsBySlug(slug);
-      if (exists) {
-        throw new ConflictError(`Tag slug already exists: ${slug}`);
-      }
-
-      const id = command.id ?? generateUuidV7();
-      const tag = Tag.create(
-        id,
-        name,
-        slug,
-        command.description ?? null,
-        command.isFeatured ?? false,
-        this.clock.now()
-      );
-
-      try {
-        await this.tagsRepo.save(tag);
-      } catch (err) {
-        if (err instanceof DuplicateKeyRepositoryError) {
+        const exists = await this.tagsRepo.existsBySlug(slug);
+        if (exists) {
           throw new ConflictError(`Tag slug already exists: ${slug}`);
         }
-        throw err;
-      }
 
-      return tag;
-    });
+        const id = command.id ?? generateUuidV7();
+        const tag = Tag.create(
+          id,
+          name,
+          slug,
+          command.description ?? null,
+          command.isFeatured ?? false,
+          this.clock.now()
+        );
+
+        try {
+          await this.tagsRepo.save(tag);
+        } catch (err) {
+          if (err instanceof DuplicateKeyRepositoryError) {
+            throw new ConflictError(`Tag slug already exists: ${slug}`);
+          }
+          throw err;
+        }
+
+        return tag;
+      }
+    );
   }
 
   public async updateTag(id: string, command: UpdateTagCommand): Promise<Tag> {

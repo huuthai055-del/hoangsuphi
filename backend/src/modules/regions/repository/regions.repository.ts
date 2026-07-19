@@ -1,8 +1,8 @@
-import type { IRegionsRepository, ListRegionsOptions } from './regions-repository.interface';
-import type { Region } from '../domain/region.aggregate';
-import { db, type TransactionClient } from '@/lib/database/client';
+import { type TransactionClient, db } from '@/lib/database/client';
 import { regions } from '@/lib/database/schema';
-import { eq, and, isNull, sql } from 'drizzle-orm';
+import { and, eq, isNull, sql } from 'drizzle-orm';
+import type { Region } from '../domain/region.aggregate';
+import type { IRegionsRepository, ListRegionsOptions } from './regions-repository.interface';
 import { RegionMapper } from './regions.mapper';
 
 export class DrizzleRegionsRepository implements IRegionsRepository {

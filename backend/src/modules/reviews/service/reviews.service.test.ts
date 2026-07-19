@@ -1,25 +1,28 @@
-import { expect, test, describe, beforeEach, mock } from 'bun:test';
-import { ReviewsService } from './reviews.service';
-import { FavoritesService } from './favorites.service';
-import type { IReviewsRepository, IFavoritesRepository } from '../repository/reviews-repository.interface';
-import { Review } from '../domain/reviews.entity';
-import { Favorite } from '../domain/favorites.entity';
+import { beforeEach, describe, expect, mock, test } from 'bun:test';
 import {
-  NotFoundError,
-  ConflictError,
-  ValidationError,
   AuthorizationError,
+  ConflictError,
+  NotFoundError,
+  ValidationError,
 } from '@/common/errors/http.errors';
 import {
   DuplicateKeyRepositoryError,
   EntityNotFoundRepositoryError,
 } from '@/common/errors/repository.errors';
+import { Favorite } from '../domain/favorites.entity';
+import { Review } from '../domain/reviews.entity';
+import type {
+  IFavoritesRepository,
+  IReviewsRepository,
+} from '../repository/reviews-repository.interface';
+import { FavoritesService } from './favorites.service';
+import { ReviewsService } from './reviews.service';
 
 describe('Reviews & Favorites Services', () => {
   // Reviews mock properties
   let reviewsRepo: IReviewsRepository;
   let reviewsService: ReviewsService;
-  
+
   let mockReviewCreate: ReturnType<typeof mock>;
   let mockReviewUpdate: ReturnType<typeof mock>;
   let mockReviewDelete: ReturnType<typeof mock>;
@@ -157,16 +160,14 @@ describe('Reviews & Favorites Services', () => {
 
       test('should throw ConflictError if duplicate review already exists', async () => {
         mockReviewExists.mockImplementation(() => Promise.resolve(true));
-        await expect(
-          reviewsService.createReview(sampleReviewProps)
-        ).rejects.toThrow(ConflictError);
+        await expect(reviewsService.createReview(sampleReviewProps)).rejects.toThrow(ConflictError);
       });
 
       test('should map DuplicateKeyRepositoryError to ConflictError', async () => {
-        mockReviewCreate.mockImplementation(() => Promise.reject(new DuplicateKeyRepositoryError('Duplicate key')));
-        await expect(
-          reviewsService.createReview(sampleReviewProps)
-        ).rejects.toThrow(ConflictError);
+        mockReviewCreate.mockImplementation(() =>
+          Promise.reject(new DuplicateKeyRepositoryError('Duplicate key'))
+        );
+        await expect(reviewsService.createReview(sampleReviewProps)).rejects.toThrow(ConflictError);
       });
     });
 
@@ -174,12 +175,16 @@ describe('Reviews & Favorites Services', () => {
       test('should update review when status is PENDING', async () => {
         const activeReview = generateTestReview('PENDING');
         mockReviewFindById.mockImplementation(() => Promise.resolve(activeReview));
-        
-        const updated = await reviewsService.updateReview('rev-01', { id: 'user-01', roles: [] }, {
-          title: 'New Title',
-          content: 'New content is long enough.',
-          rating: 2,
-        });
+
+        const updated = await reviewsService.updateReview(
+          'rev-01',
+          { id: 'user-01', roles: [] },
+          {
+            title: 'New Title',
+            content: 'New content is long enough.',
+            rating: 2,
+          }
+        );
 
         expect(updated.title).toBe('New Title');
         expect(updated.rating).toBe(2);
@@ -191,48 +196,66 @@ describe('Reviews & Favorites Services', () => {
         mockReviewFindById.mockImplementation(() => Promise.resolve(approvedReview));
 
         await expect(
-          reviewsService.updateReview('rev-01', { id: 'user-01', roles: [] }, {
-            title: 'New Title',
-            content: 'New content.',
-            rating: 3,
-          })
+          reviewsService.updateReview(
+            'rev-01',
+            { id: 'user-01', roles: [] },
+            {
+              title: 'New Title',
+              content: 'New content.',
+              rating: 3,
+            }
+          )
         ).rejects.toThrow(ValidationError);
       });
 
       test('should throw NotFoundError if review does not exist', async () => {
         await expect(
-          reviewsService.updateReview('rev-missing', { id: 'user-01', roles: [] }, {
-            title: 'New',
-            content: 'New',
-            rating: 3,
-          })
+          reviewsService.updateReview(
+            'rev-missing',
+            { id: 'user-01', roles: [] },
+            {
+              title: 'New',
+              content: 'New',
+              rating: 3,
+            }
+          )
         ).rejects.toThrow(NotFoundError);
       });
 
       test('should map EntityNotFoundRepositoryError on update failure', async () => {
         const activeReview = generateTestReview('PENDING');
         mockReviewFindById.mockImplementation(() => Promise.resolve(activeReview));
-        mockReviewUpdate.mockImplementation(() => Promise.reject(new EntityNotFoundRepositoryError('Not found')));
+        mockReviewUpdate.mockImplementation(() =>
+          Promise.reject(new EntityNotFoundRepositoryError('Not found'))
+        );
 
         await expect(
-          reviewsService.updateReview('rev-01', { id: 'user-01', roles: [] }, {
-            title: 'New',
-            content: 'New',
-            rating: 3,
-          })
+          reviewsService.updateReview(
+            'rev-01',
+            { id: 'user-01', roles: [] },
+            {
+              title: 'New',
+              content: 'New',
+              rating: 3,
+            }
+          )
         ).rejects.toThrow(NotFoundError);
       });
 
       test('should wrap ReviewDomainError into ValidationError', async () => {
         const activeReview = generateTestReview('PENDING');
         mockReviewFindById.mockImplementation(() => Promise.resolve(activeReview));
-        
+
         await expect(
-          reviewsService.updateReview('rev-01', { id: 'user-01', roles: [] }, {
-            title: 'New',
-            content: 'New',
-            rating: 99,
-          })
+          reviewsService.updateReview(
+            'rev-01',
+            { id: 'user-01', roles: [] },
+            {
+              title: 'New',
+              content: 'New',
+              rating: 99,
+            }
+          )
         ).rejects.toThrow(ValidationError);
       });
 
@@ -241,11 +264,15 @@ describe('Reviews & Favorites Services', () => {
         mockReviewFindById.mockImplementation(() => Promise.resolve(activeReview));
 
         await expect(
-          reviewsService.updateReview('rev-01', { id: 'user-hacker', roles: [] }, {
-            title: 'Hacked Title',
-            content: 'Attempted hack content here.',
-            rating: 1,
-          })
+          reviewsService.updateReview(
+            'rev-01',
+            { id: 'user-hacker', roles: [] },
+            {
+              title: 'Hacked Title',
+              content: 'Attempted hack content here.',
+              rating: 1,
+            }
+          )
         ).rejects.toThrow(AuthorizationError);
       });
     });
@@ -254,7 +281,7 @@ describe('Reviews & Favorites Services', () => {
       test('should approve review successfully', async () => {
         const activeReview = generateTestReview('PENDING');
         mockReviewFindById.mockImplementation(() => Promise.resolve(activeReview));
-        
+
         const approved = await reviewsService.approveReview('rev-01');
         expect(approved.status).toBe('APPROVED');
         expect(mockReviewUpdate).toHaveBeenCalled();
@@ -263,7 +290,7 @@ describe('Reviews & Favorites Services', () => {
       test('should reject review successfully', async () => {
         const activeReview = generateTestReview('PENDING');
         mockReviewFindById.mockImplementation(() => Promise.resolve(activeReview));
-        
+
         const rejected = await reviewsService.rejectReview('rev-01');
         expect(rejected.status).toBe('REJECTED');
         expect(mockReviewUpdate).toHaveBeenCalled();
@@ -273,15 +300,13 @@ describe('Reviews & Favorites Services', () => {
         const rejectedReview = generateTestReview('REJECTED');
         mockReviewFindById.mockImplementation(() => Promise.resolve(rejectedReview));
 
-        await expect(
-          reviewsService.approveReview('rev-01')
-        ).rejects.toThrow(ValidationError);
+        await expect(reviewsService.approveReview('rev-01')).rejects.toThrow(ValidationError);
       });
 
       test('should soft delete review successfully', async () => {
         const activeReview = generateTestReview('PENDING');
         mockReviewFindById.mockImplementation(() => Promise.resolve(activeReview));
-        
+
         await reviewsService.deleteReview('rev-01', { id: 'user-01', roles: [] });
         expect(activeReview.deletedAt).toBeDefined();
         expect(mockReviewUpdate).toHaveBeenCalled();
@@ -299,7 +324,9 @@ describe('Reviews & Favorites Services', () => {
       test('should throw NotFoundError if state transition target not found', async () => {
         await expect(reviewsService.approveReview('missing')).rejects.toThrow(NotFoundError);
         await expect(reviewsService.rejectReview('missing')).rejects.toThrow(NotFoundError);
-        await expect(reviewsService.deleteReview('missing', { id: 'user-01', roles: [] })).rejects.toThrow(NotFoundError);
+        await expect(
+          reviewsService.deleteReview('missing', { id: 'user-01', roles: [] })
+        ).rejects.toThrow(NotFoundError);
       });
     });
 
@@ -307,7 +334,7 @@ describe('Reviews & Favorites Services', () => {
       test('should get review by ID', async () => {
         const activeReview = generateTestReview('PENDING');
         mockReviewFindById.mockImplementation(() => Promise.resolve(activeReview));
-        
+
         const review = await reviewsService.getReview('rev-01');
         expect(review.id).toBe('rev-01');
       });
@@ -320,7 +347,7 @@ describe('Reviews & Favorites Services', () => {
         const activeReview = generateTestReview('PENDING');
         mockReviewFindMany.mockImplementation(() => Promise.resolve([activeReview]));
         mockReviewCount.mockImplementation(() => Promise.resolve(1));
-        
+
         const result = await reviewsService.listReviews({ filters: { status: 'PENDING' } });
         expect(result.items.length).toBe(1);
         expect(result.total).toBe(1);
@@ -336,14 +363,20 @@ describe('Reviews & Favorites Services', () => {
       test('should allow listing reviews by user for the owner themselves', async () => {
         const activeReview = generateTestReview('PENDING');
         mockReviewFindByUser.mockImplementation(() => Promise.resolve([activeReview]));
-        const userList = await reviewsService.listReviewsByUser('user-01', { id: 'user-01', roles: [] });
+        const userList = await reviewsService.listReviewsByUser('user-01', {
+          id: 'user-01',
+          roles: [],
+        });
         expect(userList.length).toBe(1);
       });
 
       test('should allow listing reviews by user for an admin', async () => {
         const activeReview = generateTestReview('PENDING');
         mockReviewFindByUser.mockImplementation(() => Promise.resolve([activeReview]));
-        const userList = await reviewsService.listReviewsByUser('user-01', { id: 'admin-01', roles: ['admin'] });
+        const userList = await reviewsService.listReviewsByUser('user-01', {
+          id: 'admin-01',
+          roles: ['admin'],
+        });
         expect(userList.length).toBe(1);
       });
 
@@ -424,7 +457,10 @@ describe('Reviews & Favorites Services', () => {
 
       test('should count favorites correctly', async () => {
         mockFavoriteCount.mockImplementation(() => Promise.resolve(3));
-        const count = await favoritesService.countFavorites({ ownerType: 'ARTICLE', ownerId: 'article-01' });
+        const count = await favoritesService.countFavorites({
+          ownerType: 'ARTICLE',
+          ownerId: 'article-01',
+        });
         expect(count).toBe(3);
       });
     });

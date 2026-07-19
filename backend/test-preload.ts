@@ -169,7 +169,9 @@ mock.module('@/modules/attractions/repository/attractions.repository', () => {
   };
 });
 
-// Mock Media repository globally
+// Mock Media repository for route/unit tests. The PostgreSQL integration suite
+// imports the real implementation through an isolated query-string specifier,
+// so enabling integration evidence cannot contaminate HTTP/unit tests.
 mock.module('@/modules/media/repository/media.repository', () => {
   return {
     DrizzleMediaRepository: class {
@@ -183,6 +185,11 @@ mock.module('@/modules/media/repository/media.repository', () => {
           ? (globalThis as any).mockMediaFindByHash(hash)
           : Promise.resolve(null);
       }
+      findScopedDuplicate(props: any) {
+        return (globalThis as any).mockMediaFindScopedDuplicate
+          ? (globalThis as any).mockMediaFindScopedDuplicate(props)
+          : Promise.resolve(null);
+      }
       save(media: any) {
         return (globalThis as any).mockMediaSave ? (globalThis as any).mockMediaSave(media) : Promise.resolve();
       }
@@ -191,6 +198,21 @@ mock.module('@/modules/media/repository/media.repository', () => {
       }
       delete(id: string) {
         return (globalThis as any).mockMediaDelete ? (globalThis as any).mockMediaDelete(id) : Promise.resolve();
+      }
+      transitionToProcessing(id: string) {
+        return (globalThis as any).mockMediaTransitionToProcessing
+          ? (globalThis as any).mockMediaTransitionToProcessing(id)
+          : Promise.resolve();
+      }
+      transitionToFailed(id: string) {
+        return (globalThis as any).mockMediaTransitionToFailed
+          ? (globalThis as any).mockMediaTransitionToFailed(id)
+          : Promise.resolve();
+      }
+      finalizeProcessedMedia(props: any) {
+        return (globalThis as any).mockMediaFinalizeProcessedMedia
+          ? (globalThis as any).mockMediaFinalizeProcessedMedia(props)
+          : Promise.resolve();
       }
       saveMetadata(mediaId: string, metadata: any) {
         return (globalThis as any).mockMediaSaveMetadata
@@ -319,6 +341,4 @@ mock.module('@/modules/media/repository/media.repository', () => {
 
 // Initial setup
 (globalThis as any).setupAuthSpy();
-
-
 

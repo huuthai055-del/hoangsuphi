@@ -1,16 +1,16 @@
-import type { Faq } from '../domain/faq.entity';
-import type { IFaqRepository, FaqFilters } from '../repository/faq-repository.interface';
-import { generateUuidV7 } from '@/common/utils/uuid';
-import { NotFoundError, ConflictError, ValidationError } from '@/common/errors/http.errors';
+import { ConflictError, NotFoundError, ValidationError } from '@/common/errors/http.errors';
 import {
   DuplicateKeyRepositoryError,
   EntityNotFoundRepositoryError,
 } from '@/common/errors/repository.errors';
-import { FaqDomainError } from '../domain/faq.errors';
+import type { PaginatedResult, PaginationOptions } from '@/common/types/pagination';
+import { generateUuidV7 } from '@/common/utils/uuid';
 import { runInTransaction } from '@/lib/database/client';
 import { logger } from '@/lib/logger';
 import { requestStore } from '@/lib/logger/context';
-import type { PaginatedResult, PaginationOptions } from '@/common/types/pagination';
+import type { Faq } from '../domain/faq.entity';
+import { FaqDomainError } from '../domain/faq.errors';
+import type { FaqFilters, IFaqRepository } from '../repository/faq-repository.interface';
 
 function mapDomainError(err: Error): Error {
   if (err instanceof DuplicateKeyRepositoryError) {
@@ -71,7 +71,10 @@ export class FaqService {
           now: input.now,
         });
         await this.faqRepo.create(faq, tx);
-        logger.info({ traceId: store?.requestId, faqId: faq.id, action: 'create_faq' }, `FAQ created: ${faq.id}`);
+        logger.info(
+          { traceId: store?.requestId, faqId: faq.id, action: 'create_faq' },
+          `FAQ created: ${faq.id}`
+        );
         return faq;
       });
     } catch (err) {
@@ -95,7 +98,10 @@ export class FaqService {
         const faq = await this.loadFaqOrThrow(id, tx);
         faq.update(input, now);
         await this.faqRepo.update(faq, tx);
-        logger.info({ traceId: store?.requestId, faqId: faq.id, action: 'update_faq' }, `FAQ updated: ${faq.id}`);
+        logger.info(
+          { traceId: store?.requestId, faqId: faq.id, action: 'update_faq' },
+          `FAQ updated: ${faq.id}`
+        );
         return faq;
       });
     } catch (err) {
@@ -110,7 +116,10 @@ export class FaqService {
         const faq = await this.loadFaqOrThrow(id, tx);
         faq.publish(now);
         await this.faqRepo.update(faq, tx);
-        logger.info({ traceId: store?.requestId, faqId: faq.id, action: 'publish_faq' }, `FAQ published: ${faq.id}`);
+        logger.info(
+          { traceId: store?.requestId, faqId: faq.id, action: 'publish_faq' },
+          `FAQ published: ${faq.id}`
+        );
         return faq;
       });
     } catch (err) {
@@ -125,7 +134,10 @@ export class FaqService {
         const faq = await this.loadFaqOrThrow(id, tx);
         faq.archive(now);
         await this.faqRepo.update(faq, tx);
-        logger.info({ traceId: store?.requestId, faqId: faq.id, action: 'archive_faq' }, `FAQ archived: ${faq.id}`);
+        logger.info(
+          { traceId: store?.requestId, faqId: faq.id, action: 'archive_faq' },
+          `FAQ archived: ${faq.id}`
+        );
         return faq;
       });
     } catch (err) {
@@ -140,7 +152,10 @@ export class FaqService {
         const faq = await this.loadFaqOrThrow(id, tx);
         faq.softDelete(now);
         await this.faqRepo.delete(id, tx);
-        logger.info({ traceId: store?.requestId, faqId: faq.id, action: 'delete_faq' }, `FAQ deleted: ${faq.id}`);
+        logger.info(
+          { traceId: store?.requestId, faqId: faq.id, action: 'delete_faq' },
+          `FAQ deleted: ${faq.id}`
+        );
       });
     } catch (err) {
       throw mapDomainError(err as Error);

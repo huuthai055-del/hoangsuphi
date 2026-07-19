@@ -1,6 +1,6 @@
-import type { Itinerary } from '../../domain/itinerary.entity';
 import type { ItineraryItem } from '../../domain/itinerary-item.entity';
-import type { ItineraryResponseDto, ItineraryItemResponseDto } from '../../dto/itineraries.dto';
+import type { Itinerary } from '../../domain/itinerary.entity';
+import type { ItineraryItemResponseDto, ItineraryResponseDto } from '../../dto/itineraries.dto';
 
 export function mapItineraryItemToResponse(item: ItineraryItem): ItineraryItemResponseDto {
   return {

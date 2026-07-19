@@ -1,18 +1,18 @@
+import { sql } from 'drizzle-orm';
 import {
-  pgTable,
-  uuid,
-  varchar,
-  integer,
   boolean,
-  timestamp,
-  pgEnum,
-  inet,
+  check,
   foreignKey,
   index,
+  inet,
+  integer,
+  pgEnum,
+  pgTable,
+  timestamp,
   uniqueIndex,
-  check,
+  uuid,
+  varchar,
 } from 'drizzle-orm/pg-core';
-import { sql } from 'drizzle-orm';
 
 export const roleEnum = pgEnum('user_role', ['admin', 'editor', 'viewer']);
 export const statusEnum = pgEnum('user_status', [

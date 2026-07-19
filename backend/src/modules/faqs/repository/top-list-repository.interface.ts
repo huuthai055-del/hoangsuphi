@@ -1,5 +1,5 @@
-import type { TopList } from '../domain/top-list.entity';
 import type { PaginatedResult, PaginationOptions } from '@/common/types/pagination';
+import type { TopList } from '../domain/top-list.entity';
 
 export interface TopListFilters {
   status?: string;

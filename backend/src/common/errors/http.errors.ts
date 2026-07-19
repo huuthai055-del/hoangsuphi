@@ -87,3 +87,24 @@ export class ExternalServiceError extends AppError {
     });
   }
 }
+
+// ─── Token Errors ────────────────────────────────────────────────────────────
+export class TokenInvalidOrExpiredError extends AppError {
+  readonly statusCode = 400;
+  readonly errorCode = 'TOKEN_INVALID_OR_EXPIRED';
+
+  constructor(message = 'Token xác minh không hợp lệ hoặc đã hết hạn.', details?: ErrorDetails) {
+    super(message, details, { typeUri: 'https://hoangsuphi.vn/errors/token-invalid-or-expired' });
+  }
+}
+
+export { TokenInvalidOrExpiredError as VerificationTokenInvalidOrExpiredError };
+
+export class EmailDeliveryUnavailableError extends AppError {
+  readonly statusCode = 503;
+  readonly errorCode = 'EMAIL_DELIVERY_UNAVAILABLE';
+
+  constructor(message = 'Không thể gửi email vào lúc này. Vui lòng thử lại sau.', details?: ErrorDetails) {
+    super(message, details, { typeUri: 'https://hoangsuphi.vn/errors/service-unavailable' });
+  }
+}

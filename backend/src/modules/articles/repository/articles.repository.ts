@@ -1,30 +1,30 @@
-import type {
-  IArticlesRepository,
-  SearchArticlesFilter,
-  PaginationOptions,
-  SortOptions,
-  PaginatedResult,
-  ArticleSortField,
-} from './articles-repository.interface';
-import type { Article } from '../domain/article.entity';
-import type { Tag } from '../domain/tag.entity';
-import { ArticleMapper, type RawArticle } from './articles.mapper';
-import { TagMapper } from './tags.mapper';
-import { db, type TransactionClient } from '@/lib/database/client';
-import { articles, articleTags, tags } from '@/lib/database/schema';
-import { eq, and, or, isNull, sql, gte, lte, desc, asc, count, inArray } from 'drizzle-orm';
+import { type TransactionClient, db } from '@/lib/database/client';
+import { articleTags, articles, tags } from '@/lib/database/schema';
+import { and, asc, count, desc, eq, gte, inArray, isNull, lte, or, sql } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
 import type { PgColumn } from 'drizzle-orm/pg-core';
+import type { Article } from '../domain/article.entity';
+import type { Tag } from '../domain/tag.entity';
+import type {
+  ArticleSortField,
+  IArticlesRepository,
+  PaginatedResult,
+  PaginationOptions,
+  SearchArticlesFilter,
+  SortOptions,
+} from './articles-repository.interface';
+import { ArticleMapper, type RawArticle } from './articles.mapper';
 import {
-  RepositoryError,
+  CheckConstraintViolationRepositoryError,
+  ConstraintViolationRepositoryError,
+  DatabaseOperationRepositoryError,
   DuplicateKeyRepositoryError,
   EntityNotFoundRepositoryError,
-  DatabaseOperationRepositoryError,
-  ConstraintViolationRepositoryError,
   NotNullViolationRepositoryError,
-  CheckConstraintViolationRepositoryError,
+  RepositoryError,
   TransactionConflictRepositoryError,
 } from './repository-errors';
+import { TagMapper } from './tags.mapper';
 
 const DEFAULT_PAGE_SIZE = 10;
 const MAX_PAGE_SIZE = 100;
@@ -264,7 +264,10 @@ export class DrizzleArticlesRepository implements IArticlesRepository {
   // Read operations
   // ---------------------------------------------------------------------------
 
-  public async findById(id: string, options?: { includeDeleted?: boolean }): Promise<Article | null> {
+  public async findById(
+    id: string,
+    options?: { includeDeleted?: boolean }
+  ): Promise<Article | null> {
     const conditions: SQL[] = [eq(articles.id, id)];
     if (!options?.includeDeleted) conditions.push(isNull(articles.deletedAt));
 
@@ -281,7 +284,10 @@ export class DrizzleArticlesRepository implements IArticlesRepository {
     }
   }
 
-  public async findBySlug(slug: string, options?: { includeDeleted?: boolean }): Promise<Article | null> {
+  public async findBySlug(
+    slug: string,
+    options?: { includeDeleted?: boolean }
+  ): Promise<Article | null> {
     const conditions: SQL[] = [eq(articles.slug, slug)];
     if (!options?.includeDeleted) conditions.push(isNull(articles.deletedAt));
 
@@ -460,7 +466,10 @@ export class DrizzleArticlesRepository implements IArticlesRepository {
     }
   }
 
-  public async findArticlesByTag(tagId: string, pagination?: PaginationOptions): Promise<PaginatedResult<Article>> {
+  public async findArticlesByTag(
+    tagId: string,
+    pagination?: PaginationOptions
+  ): Promise<PaginatedResult<Article>> {
     return this.search({ tagId }, pagination ?? {}, {});
   }
 
@@ -501,7 +510,15 @@ export class DrizzleArticlesRepository implements IArticlesRepository {
       const total = Number(countResult?.totalCount ?? 0);
 
       // 5. Select: uses DISTINCT ON when tag JOIN is active (prevents duplicate rows)
-      const results = await this.buildSelectQuery(client, filter, conditions, sortCol, sortOrder, pageSize, offset);
+      const results = await this.buildSelectQuery(
+        client,
+        filter,
+        conditions,
+        sortCol,
+        sortOrder,
+        pageSize,
+        offset
+      );
 
       const totalPages = Math.ceil(total / pageSize);
 
@@ -546,7 +563,11 @@ export class DrizzleArticlesRepository implements IArticlesRepository {
     }
   }
 
-  public async addTagsToArticle(articleId: string, tagIds: string[], tx?: TransactionClient): Promise<void> {
+  public async addTagsToArticle(
+    articleId: string,
+    tagIds: string[],
+    tx?: TransactionClient
+  ): Promise<void> {
     const uniqueIds = [...new Set(tagIds)];
     if (uniqueIds.length === 0) return;
 
@@ -558,7 +579,11 @@ export class DrizzleArticlesRepository implements IArticlesRepository {
     }
   }
 
-  public async removeTagsFromArticle(articleId: string, tagIds: string[], tx?: TransactionClient): Promise<void> {
+  public async removeTagsFromArticle(
+    articleId: string,
+    tagIds: string[],
+    tx?: TransactionClient
+  ): Promise<void> {
     const uniqueIds = [...new Set(tagIds)];
     if (uniqueIds.length === 0) return;
 
@@ -571,7 +596,11 @@ export class DrizzleArticlesRepository implements IArticlesRepository {
     }
   }
 
-  public async replaceTagsOfArticle(articleId: string, tagIds: string[], tx?: TransactionClient): Promise<void> {
+  public async replaceTagsOfArticle(
+    articleId: string,
+    tagIds: string[],
+    tx?: TransactionClient
+  ): Promise<void> {
     const uniqueIds = [...new Set(tagIds)];
 
     try {

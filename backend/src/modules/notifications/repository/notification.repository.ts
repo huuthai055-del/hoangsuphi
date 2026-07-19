@@ -1,39 +1,67 @@
-import { db, type TransactionClient } from '@/lib/database/client';
-import { eq, and, isNull, sql, desc, asc } from 'drizzle-orm';
-import type { SQL } from 'drizzle-orm';
-import type { INotificationRepository, NotificationFilters, NotificationSortField } from './notification-repository.interface';
-import type { Notification } from '../domain/notification.entity';
-import { notifications as notificationsSchema } from '@/lib/database/schema/notifications';
-import { NotificationMapper, type RawNotification } from './notification.mapper';
 import {
-  RepositoryError,
+  CheckConstraintViolationRepositoryError,
+  ConstraintViolationRepositoryError,
+  DatabaseOperationRepositoryError,
   DuplicateKeyRepositoryError,
   EntityNotFoundRepositoryError,
-  DatabaseOperationRepositoryError,
-  ConstraintViolationRepositoryError,
   NotNullViolationRepositoryError,
-  CheckConstraintViolationRepositoryError,
+  RepositoryError,
   TransactionConflictRepositoryError,
 } from '@/common/errors/repository.errors';
 import type { PaginatedResult, PaginationOptions } from '@/common/types/pagination';
+import { type TransactionClient, db } from '@/lib/database/client';
+import { notifications as notificationsSchema } from '@/lib/database/schema/notifications';
+import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
+import type { SQL } from 'drizzle-orm';
+import type { Notification } from '../domain/notification.entity';
+import type {
+  INotificationRepository,
+  NotificationFilters,
+  NotificationSortField,
+} from './notification-repository.interface';
+import { NotificationMapper, type RawNotification } from './notification.mapper';
 
 function mapDbError(err: unknown, operation: string, details?: Record<string, unknown>): never {
   if (err instanceof RepositoryError) throw err;
   const pgErr = err as { code?: string; constraint?: string; column?: string };
   switch (pgErr.code) {
     case '23505':
-      throw new DuplicateKeyRepositoryError(`${operation} failed: unique constraint violated`, { constraint: pgErr.constraint, ...details }, err as Error);
+      throw new DuplicateKeyRepositoryError(
+        `${operation} failed: unique constraint violated`,
+        { constraint: pgErr.constraint, ...details },
+        err as Error
+      );
     case '23503':
-      throw new ConstraintViolationRepositoryError(`${operation} failed: foreign key constraint violated`, { constraint: pgErr.constraint, ...details }, err as Error);
+      throw new ConstraintViolationRepositoryError(
+        `${operation} failed: foreign key constraint violated`,
+        { constraint: pgErr.constraint, ...details },
+        err as Error
+      );
     case '23502':
-      throw new NotNullViolationRepositoryError(`${operation} failed: not-null constraint violated`, { column: pgErr.column, ...details }, err as Error);
+      throw new NotNullViolationRepositoryError(
+        `${operation} failed: not-null constraint violated`,
+        { column: pgErr.column, ...details },
+        err as Error
+      );
     case '23514':
-      throw new CheckConstraintViolationRepositoryError(`${operation} failed: check constraint violated`, { constraint: pgErr.constraint, ...details }, err as Error);
+      throw new CheckConstraintViolationRepositoryError(
+        `${operation} failed: check constraint violated`,
+        { constraint: pgErr.constraint, ...details },
+        err as Error
+      );
     case '40001':
     case '40P01':
-      throw new TransactionConflictRepositoryError(`${operation} failed: transaction conflict`, details, err as Error);
+      throw new TransactionConflictRepositoryError(
+        `${operation} failed: transaction conflict`,
+        details,
+        err as Error
+      );
     default:
-      throw new DatabaseOperationRepositoryError(`${operation} failed: raw database error`, details, err as Error);
+      throw new DatabaseOperationRepositoryError(
+        `${operation} failed: raw database error`,
+        details,
+        err as Error
+      );
   }
 }
 
@@ -106,11 +134,15 @@ export class DrizzleNotificationRepository implements INotificationRepository {
           dismissedAt: raw.dismissedAt,
           updatedAt: raw.updatedAt,
         })
-        .where(and(eq(notificationsSchema.id, notification.id), isNull(notificationsSchema.deletedAt)))
+        .where(
+          and(eq(notificationsSchema.id, notification.id), isNull(notificationsSchema.deletedAt))
+        )
         .returning();
 
       if (!updated) {
-        throw new EntityNotFoundRepositoryError(`Notification not found for update with ID: ${notification.id}`);
+        throw new EntityNotFoundRepositoryError(
+          `Notification not found for update with ID: ${notification.id}`
+        );
       }
     } catch (err) {
       mapDbError(err, 'update', { id: notification.id });
@@ -125,11 +157,15 @@ export class DrizzleNotificationRepository implements INotificationRepository {
           deletedAt: notification.deletedAt,
           updatedAt: notification.updatedAt,
         })
-        .where(and(eq(notificationsSchema.id, notification.id), isNull(notificationsSchema.deletedAt)))
+        .where(
+          and(eq(notificationsSchema.id, notification.id), isNull(notificationsSchema.deletedAt))
+        )
         .returning();
 
       if (!updated) {
-        throw new EntityNotFoundRepositoryError(`Notification not found for deletion with ID: ${notification.id}`);
+        throw new EntityNotFoundRepositoryError(
+          `Notification not found for deletion with ID: ${notification.id}`
+        );
       }
     } catch (err) {
       mapDbError(err, 'delete', { id: notification.id });

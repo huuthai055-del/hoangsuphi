@@ -4,7 +4,13 @@ export class RepositoryError extends AppError {
   readonly statusCode: number;
   readonly errorCode: string;
 
-  constructor(message: string, statusCode: number, errorCode: string, details?: Record<string, unknown>, cause?: Error) {
+  constructor(
+    message: string,
+    statusCode: number,
+    errorCode: string,
+    details?: Record<string, unknown>,
+    cause?: Error
+  ) {
     super(message, details, { cause });
     this.statusCode = statusCode;
     this.errorCode = errorCode;

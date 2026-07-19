@@ -1,19 +1,19 @@
-import type { ITagsRepository, ListTagsOptions } from './tags-repository.interface';
-import type { Tag } from '../domain/tag.entity';
-import { TagMapper } from './tags.mapper';
-import { db, type TransactionClient } from '@/lib/database/client';
+import { type TransactionClient, db } from '@/lib/database/client';
 import { tags } from '@/lib/database/schema';
-import { eq, inArray, and, sql, asc } from 'drizzle-orm';
+import { and, asc, eq, inArray, sql } from 'drizzle-orm';
+import type { Tag } from '../domain/tag.entity';
 import {
-  RepositoryError,
+  CheckConstraintViolationRepositoryError,
+  ConstraintViolationRepositoryError,
+  DatabaseOperationRepositoryError,
   DuplicateKeyRepositoryError,
   EntityNotFoundRepositoryError,
-  DatabaseOperationRepositoryError,
-  ConstraintViolationRepositoryError,
   NotNullViolationRepositoryError,
-  CheckConstraintViolationRepositoryError,
+  RepositoryError,
   TransactionConflictRepositoryError,
 } from './repository-errors';
+import type { ITagsRepository, ListTagsOptions } from './tags-repository.interface';
+import { TagMapper } from './tags.mapper';
 
 function mapDbError(err: unknown, operation: string, details?: Record<string, unknown>): never {
   if (err instanceof RepositoryError) {
@@ -22,18 +22,42 @@ function mapDbError(err: unknown, operation: string, details?: Record<string, un
   const pgErr = err as { code?: string; constraint?: string; column?: string };
   switch (pgErr.code) {
     case '23505':
-      throw new DuplicateKeyRepositoryError(`${operation} failed: unique constraint violated`, { constraint: pgErr.constraint, ...details }, err as Error);
+      throw new DuplicateKeyRepositoryError(
+        `${operation} failed: unique constraint violated`,
+        { constraint: pgErr.constraint, ...details },
+        err as Error
+      );
     case '23503':
-      throw new ConstraintViolationRepositoryError(`${operation} failed: foreign key constraint violated`, { constraint: pgErr.constraint, ...details }, err as Error);
+      throw new ConstraintViolationRepositoryError(
+        `${operation} failed: foreign key constraint violated`,
+        { constraint: pgErr.constraint, ...details },
+        err as Error
+      );
     case '23502':
-      throw new NotNullViolationRepositoryError(`${operation} failed: not-null constraint violated`, { column: pgErr.column, ...details }, err as Error);
+      throw new NotNullViolationRepositoryError(
+        `${operation} failed: not-null constraint violated`,
+        { column: pgErr.column, ...details },
+        err as Error
+      );
     case '23514':
-      throw new CheckConstraintViolationRepositoryError(`${operation} failed: check constraint violated`, { constraint: pgErr.constraint, ...details }, err as Error);
+      throw new CheckConstraintViolationRepositoryError(
+        `${operation} failed: check constraint violated`,
+        { constraint: pgErr.constraint, ...details },
+        err as Error
+      );
     case '40001':
     case '40P01':
-      throw new TransactionConflictRepositoryError(`${operation} failed: transaction conflict`, details, err as Error);
+      throw new TransactionConflictRepositoryError(
+        `${operation} failed: transaction conflict`,
+        details,
+        err as Error
+      );
     default:
-      throw new DatabaseOperationRepositoryError(`${operation} failed: unexpected database error`, details, err as Error);
+      throw new DatabaseOperationRepositoryError(
+        `${operation} failed: unexpected database error`,
+        details,
+        err as Error
+      );
   }
 }
 
@@ -95,18 +119,13 @@ export class DrizzleTagsRepository implements ITagsRepository {
         conditions.push(eq(tags.isFeatured, true));
       }
 
-      const query = this.getClient()
-        .select(tagSelection)
-        .from(tags);
+      const query = this.getClient().select(tagSelection).from(tags);
 
       if (conditions.length > 0) {
         query.where(and(...conditions));
       }
 
-      const results = await query
-        .orderBy(asc(tags.name))
-        .limit(limit)
-        .offset(offset);
+      const results = await query.orderBy(asc(tags.name)).limit(limit).offset(offset);
 
       return results.map((row) => TagMapper.toDomain(row));
     } catch (err: unknown) {

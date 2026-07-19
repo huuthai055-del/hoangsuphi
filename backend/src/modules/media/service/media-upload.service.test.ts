@@ -1,13 +1,13 @@
-import { expect, test, describe, beforeEach, mock } from 'bun:test';
-import { MediaUploadService } from './media-upload.service';
-import type { IMediaRepository } from '../repository/media-repository.interface';
-import type { IMediaStorage } from '../domain/storage.interface';
-import { Media } from '../domain/media.entity';
+import { beforeEach, describe, expect, mock, test } from 'bun:test';
 import {
+  FileTooLargeError,
   MediaValidationError,
   UnsupportedMediaTypeError,
-  FileTooLargeError,
 } from '../domain/media-errors';
+import { Media } from '../domain/media.entity';
+import type { IMediaStorage } from '../domain/storage.interface';
+import type { IMediaRepository } from '../repository/media-repository.interface';
+import { MediaUploadService } from './media-upload.service';
 import { MediaValidationPolicy } from './media-validation.policy';
 import { StorageKeyGenerator } from './storage-key.generator';
 
@@ -42,13 +42,19 @@ describe('MediaUploadService', () => {
     mediaRepo = {
       findById: findByIdMock,
       findByHash: findByHashMock,
+      findScopedDuplicate: mock(() => Promise.resolve(null)),
       save: saveMock,
       update: updateMock,
       delete: deleteMock,
+      transitionToProcessing: mock(() => Promise.resolve()),
+      transitionToFailed: mock(() => Promise.resolve()),
+      finalizeProcessedMedia: mock(() => Promise.resolve()),
       saveMetadata: mock(() => Promise.resolve()),
       saveVariant: mock(() => Promise.resolve()),
       getMetadata: mock(() => Promise.resolve(null)),
       getVariants: mock(() => Promise.resolve([])),
+      listPurgeCandidates: mock(() => Promise.resolve([])),
+      hardDeletePurged: mock(() => Promise.resolve()),
     };
 
     // Storage mocks
@@ -70,13 +76,23 @@ describe('MediaUploadService', () => {
 
   describe('Validation & Flow Guarding', () => {
     test('should throw MediaValidationError if filename contains path traversal', async () => {
-      await expect(
-        service.upload({
-          fileName: '../escaped-file.png',
-          mimeType: validMimeType,
-          fileBuffer: validBuffer,
-        })
-      ).rejects.toThrow(MediaValidationError);
+      for (const fileName of [
+        '../escaped-file.png',
+        '..\\escaped-file.png',
+        '/tmp/escaped-file.png',
+        'C:\\temp\\escaped-file.png',
+      ]) {
+        await expect(
+          service.upload({
+            fileName,
+            mimeType: validMimeType,
+            fileBuffer: validBuffer,
+          })
+        ).rejects.toThrow(MediaValidationError);
+      }
+
+      expect(saveMock).not.toHaveBeenCalled();
+      expect(uploadStorageMock).not.toHaveBeenCalled();
     });
 
     test('should throw UnsupportedMediaTypeError for unmapped MIME types', async () => {
@@ -108,18 +124,35 @@ describe('MediaUploadService', () => {
       expect(() => MediaValidationPolicy.validateFileName('???')).toThrow(MediaValidationError);
     });
 
+    test('should reject a sanitized filename longer than the database column limit', () => {
+      expect(() => MediaValidationPolicy.validateFileName(`${'a'.repeat(252)}.jpg`)).toThrow(
+        MediaValidationError
+      );
+    });
+
     test('should throw validation error if mimeType is empty', () => {
-      expect(() => MediaValidationPolicy.determineMediaTypeAndLimit('', 100)).toThrow(UnsupportedMediaTypeError);
+      expect(() => MediaValidationPolicy.determineMediaTypeAndLimit('', 100)).toThrow(
+        UnsupportedMediaTypeError
+      );
     });
 
     test('should validate large video and document limits', () => {
       // Limit for video is 50MB
-      expect(() => MediaValidationPolicy.determineMediaTypeAndLimit('video/mp4', 51 * 1024 * 1024)).toThrow(FileTooLargeError);
-      expect(MediaValidationPolicy.determineMediaTypeAndLimit('video/mp4', 40 * 1024 * 1024).mediaType).toBe('VIDEO');
+      expect(() =>
+        MediaValidationPolicy.determineMediaTypeAndLimit('video/mp4', 51 * 1024 * 1024)
+      ).toThrow(FileTooLargeError);
+      expect(
+        MediaValidationPolicy.determineMediaTypeAndLimit('video/mp4', 40 * 1024 * 1024).mediaType
+      ).toBe('VIDEO');
 
       // Limit for document is 20MB
-      expect(() => MediaValidationPolicy.determineMediaTypeAndLimit('application/pdf', 21 * 1024 * 1024)).toThrow(FileTooLargeError);
-      expect(MediaValidationPolicy.determineMediaTypeAndLimit('application/pdf', 10 * 1024 * 1024).mediaType).toBe('DOCUMENT');
+      expect(() =>
+        MediaValidationPolicy.determineMediaTypeAndLimit('application/pdf', 21 * 1024 * 1024)
+      ).toThrow(FileTooLargeError);
+      expect(
+        MediaValidationPolicy.determineMediaTypeAndLimit('application/pdf', 10 * 1024 * 1024)
+          .mediaType
+      ).toBe('DOCUMENT');
     });
 
     test('StorageKeyGenerator should generate structured key', () => {
@@ -141,6 +174,7 @@ describe('MediaUploadService', () => {
         fileSize: validBuffer.length,
         hash: 'e69888ad2287232230',
       });
+      existingMedia.markProcessing();
       existingMedia.markReady();
       findByHashMock.mockImplementation(() => Promise.resolve(existingMedia));
 

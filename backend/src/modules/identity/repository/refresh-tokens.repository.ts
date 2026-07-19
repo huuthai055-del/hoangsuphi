@@ -1,6 +1,6 @@
-import { eq, and } from 'drizzle-orm';
-import { db, type TransactionClient } from '@/lib/database/client';
+import { type TransactionClient, db } from '@/lib/database/client';
 import { refreshTokens } from '@/lib/database/schema/users';
+import { and, eq } from 'drizzle-orm';
 import type { IRefreshTokenRepository, RefreshTokenModel } from '../service/session.service';
 
 export class DrizzleRefreshTokenRepository implements IRefreshTokenRepository {

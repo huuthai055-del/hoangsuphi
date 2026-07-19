@@ -1,20 +1,25 @@
-import { Review, type OwnerType } from '../domain/reviews.entity';
-import type { IReviewsRepository, ReviewFilters, ReviewPagination, ReviewSort } from '../repository/reviews-repository.interface';
-import { generateUuidV7 } from '@/common/utils/uuid';
 import {
-  NotFoundError,
-  ConflictError,
-  ValidationError,
   AuthorizationError,
+  ConflictError,
+  NotFoundError,
+  ValidationError,
 } from '@/common/errors/http.errors';
 import {
   DuplicateKeyRepositoryError,
   EntityNotFoundRepositoryError,
 } from '@/common/errors/repository.errors';
-import { ReviewDomainError } from '../domain/reviews.errors';
+import { generateUuidV7 } from '@/common/utils/uuid';
 import { runInTransaction } from '@/lib/database/client';
 import { logger } from '@/lib/logger';
 import { requestStore } from '@/lib/logger/context';
+import { type OwnerType, Review } from '../domain/reviews.entity';
+import { ReviewDomainError } from '../domain/reviews.errors';
+import type {
+  IReviewsRepository,
+  ReviewFilters,
+  ReviewPagination,
+  ReviewSort,
+} from '../repository/reviews-repository.interface';
 
 function mapDomainError(err: Error): Error {
   if (err instanceof DuplicateKeyRepositoryError) {
@@ -74,9 +79,16 @@ export class ReviewsService {
     try {
       return await runInTransaction(async (tx) => {
         // Enforce duplicate check inside transaction
-        const isDuplicate = await this.reviewsRepo.exists(props.userId, props.ownerType, props.ownerId, tx);
+        const isDuplicate = await this.reviewsRepo.exists(
+          props.userId,
+          props.ownerType,
+          props.ownerId,
+          tx
+        );
         if (isDuplicate) {
-          throw new ConflictError(`User ${props.userId} has already reviewed ${props.ownerType} with ID ${props.ownerId}`);
+          throw new ConflictError(
+            `User ${props.userId} has already reviewed ${props.ownerType} with ID ${props.ownerId}`
+          );
         }
 
         const review = Review.create({
@@ -165,7 +177,10 @@ export class ReviewsService {
         const review = await this.loadReviewOrThrow(reviewId, tx);
         review.approve(now);
         await this.reviewsRepo.update(review, tx);
-        logger.info({ traceId: store?.requestId, reviewId: review.id, action: 'approve_review' }, `Review approved: ${review.id}`);
+        logger.info(
+          { traceId: store?.requestId, reviewId: review.id, action: 'approve_review' },
+          `Review approved: ${review.id}`
+        );
         return review;
       });
     } catch (err) {
@@ -180,7 +195,10 @@ export class ReviewsService {
         const review = await this.loadReviewOrThrow(reviewId, tx);
         review.reject(now);
         await this.reviewsRepo.update(review, tx);
-        logger.info({ traceId: store?.requestId, reviewId: review.id, action: 'reject_review' }, `Review rejected: ${review.id}`);
+        logger.info(
+          { traceId: store?.requestId, reviewId: review.id, action: 'reject_review' },
+          `Review rejected: ${review.id}`
+        );
         return review;
       });
     } catch (err) {
@@ -200,7 +218,10 @@ export class ReviewsService {
         this.assertAccess(review, caller);
         review.softDelete(now);
         await this.reviewsRepo.update(review, tx);
-        logger.info({ traceId: store?.requestId, reviewId: review.id, action: 'delete_review' }, `Review soft-deleted: ${review.id}`);
+        logger.info(
+          { traceId: store?.requestId, reviewId: review.id, action: 'delete_review' },
+          `Review soft-deleted: ${review.id}`
+        );
       });
     } catch (err) {
       throw mapDomainError(err as Error);

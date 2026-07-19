@@ -1,8 +1,8 @@
-import { expect, test, describe, beforeEach, mock } from 'bun:test';
+import { beforeEach, describe, expect, mock, test } from 'bun:test';
+import { container } from '@/common/di/container';
 import type { Hono } from 'hono';
 import { Faq } from '../domain/faq.entity';
 import { FaqsController } from './faqs.controller';
-import { container } from '@/common/di/container';
 
 describe('FAQs API Routing & Controller', () => {
   let app: Hono;

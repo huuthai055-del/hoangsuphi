@@ -28,16 +28,22 @@
     "db:nearby:benchmark:seed": "bun src/modules/nearby/benchmark/run-nearby-benchmark.ts --seed",
     "db:nearby:benchmark": "bun src/modules/nearby/benchmark/run-nearby-benchmark.ts --run",
     "db:nearby:benchmark:cleanup": "bun src/modules/nearby/benchmark/run-nearby-benchmark.ts --cleanup",
+    "media:benchmark:sanity": "bun src/modules/media/benchmark/run-media-sanity.ts",
+    "media:migration:audit": "bun src/modules/media/benchmark/run-media-migration-audit.ts",
+    "media:purge": "bun src/modules/media/commands/purge-expired-media.ts",
     "db:studio": "drizzle-kit studio",
     "db:seed": "bun src/lib/database/seed.ts",
     "test": "bun test"
   },
   "dependencies": {
-    "hono": "^4.4.12",
+    "cloudinary": "^2.10.0",
     "drizzle-orm": "^0.31.2",
+    "hono": "^4.4.12",
+    "ioredis": "^5.11.1",
+    "pino": "^9.2.0",
     "postgres": "^3.4.4",
-    "zod": "^3.23.8",
-    "pino": "^9.2.0"
+    "sharp": "^0.35.3",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/bun": "1.3.14",

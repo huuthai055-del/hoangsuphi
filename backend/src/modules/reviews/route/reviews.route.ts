@@ -1,23 +1,23 @@
-import { Hono } from 'hono';
 import { container } from '@/common/di/container';
-import {
-  ReviewIdParamsSchema,
-  FavoriteIdParamsSchema,
-  OwnerParamsSchema,
-  UserIdParamsSchema,
-  CreateReviewRequestSchema,
-  UpdateReviewRequestSchema,
-  CreateFavoriteRequestSchema,
-  PaginationQuerySchema,
-  SearchQuerySchema,
-  ReviewFilterQuerySchema,
-  FavoriteFilterQuerySchema,
-} from '../dto/reviews.dto';
 import { validateBody, validateParams, validateQuery } from '@/middleware/validator';
 import { requirePermission } from '@/modules/identity/middleware/permission.middleware';
+import { Hono } from 'hono';
 import type { MiddlewareHandler } from 'hono';
-import type { ReviewsController } from './reviews.controller';
+import {
+  CreateFavoriteRequestSchema,
+  CreateReviewRequestSchema,
+  FavoriteFilterQuerySchema,
+  FavoriteIdParamsSchema,
+  OwnerParamsSchema,
+  PaginationQuerySchema,
+  ReviewFilterQuerySchema,
+  ReviewIdParamsSchema,
+  SearchQuerySchema,
+  UpdateReviewRequestSchema,
+  UserIdParamsSchema,
+} from '../dto/reviews.dto';
 import type { FavoritesController } from './favorites.controller';
+import type { ReviewsController } from './reviews.controller';
 
 const reviewsRouter = new Hono();
 
@@ -29,9 +29,12 @@ export function injectMockControllers(
   container.register('FavoritesController', mockFavoritesCtrl);
 }
 
-const authGuard: MiddlewareHandler = (c, next) => container.resolve<MiddlewareHandler>('AuthGuard')(c, next);
-const getReviewsController = (): ReviewsController => container.resolve<ReviewsController>('ReviewsController');
-const getFavoritesController = (): FavoritesController => container.resolve<FavoritesController>('FavoritesController');
+const authGuard: MiddlewareHandler = (c, next) =>
+  container.resolve<MiddlewareHandler>('AuthGuard')(c, next);
+const getReviewsController = (): ReviewsController =>
+  container.resolve<ReviewsController>('ReviewsController');
+const getFavoritesController = (): FavoritesController =>
+  container.resolve<FavoritesController>('FavoritesController');
 
 // -----------------------------------------------------------------------------
 // Reviews Routes

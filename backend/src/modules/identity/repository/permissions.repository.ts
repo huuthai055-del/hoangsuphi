@@ -1,5 +1,5 @@
 import { db } from '@/lib/database/client';
-import { userRoles, rolePermissions, permissions, roles } from '@/lib/database/schema/references';
+import { permissions, rolePermissions, roles, userRoles } from '@/lib/database/schema/references';
 import { eq } from 'drizzle-orm';
 import type { IPermissionRepository } from './permissions-repository.interface';
 import { PermissionMapper } from './permissions.mapper';

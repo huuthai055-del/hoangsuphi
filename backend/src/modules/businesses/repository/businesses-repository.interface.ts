@@ -1,5 +1,5 @@
-import type { Business } from '../domain/business.entity';
 import type { TransactionClient } from '@/lib/database/client';
+import type { Business } from '../domain/business.entity';
 
 export interface ListBusinessesOptions {
   page?: number;

@@ -1,5 +1,5 @@
-import { z } from 'zod';
 import { slugify } from '@/common/utils/slug';
+import { z } from 'zod';
 
 export const SEO_SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 

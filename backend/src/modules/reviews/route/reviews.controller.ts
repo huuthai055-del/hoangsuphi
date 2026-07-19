@@ -1,17 +1,17 @@
+import { AuthenticationError } from '@/common/errors/http.errors';
+import type { AuthenticatedUser } from '@/modules/identity/middleware/identity.context';
 import type { Context } from 'hono';
-import type { ReviewsService } from '../service/reviews.service';
-import { mapReviewToResponse } from './mappers/reviews.mapper';
 import type {
   CreateReviewRequestDto,
-  UpdateReviewRequestDto,
-  ReviewIdParamsDto,
   OwnerParamsDto,
-  ReviewFilterQueryDto,
   PaginationQueryDto,
+  ReviewFilterQueryDto,
+  ReviewIdParamsDto,
   SearchQueryDto,
+  UpdateReviewRequestDto,
 } from '../dto/reviews.dto';
-import type { AuthenticatedUser } from '@/modules/identity/middleware/identity.context';
-import { AuthenticationError } from '@/common/errors/http.errors';
+import type { ReviewsService } from '../service/reviews.service';
+import { mapReviewToResponse } from './mappers/reviews.mapper';
 
 function requireAuthenticatedUser(c: Context): AuthenticatedUser {
   const user = c.get('user');
@@ -96,28 +96,27 @@ export class ReviewsController {
     });
 
     const mapped = result.items.map(mapReviewToResponse);
-    return c.json({
-      data: mapped,
-      meta: {
-        total: result.total,
-        limit: pagination.limit,
-        offset: pagination.offset,
+    return c.json(
+      {
+        data: mapped,
+        meta: {
+          total: result.total,
+          limit: pagination.limit,
+          offset: pagination.offset,
+        },
       },
-    }, 200);
+      200
+    );
   };
 
   public listByOwner = async (c: Context) => {
     const params = c.get('validParams') as OwnerParamsDto;
     const pagination = c.get('validQuery') as PaginationQueryDto;
 
-    const reviews = await this.service.listReviewsByOwner(
-      params.ownerType,
-      params.ownerId,
-      {
-        limit: pagination.limit,
-        offset: pagination.offset,
-      }
-    );
+    const reviews = await this.service.listReviewsByOwner(params.ownerType, params.ownerId, {
+      limit: pagination.limit,
+      offset: pagination.offset,
+    });
 
     const mapped = reviews.map(mapReviewToResponse);
     return c.json({ data: mapped }, 200);

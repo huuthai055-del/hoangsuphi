@@ -1,8 +1,13 @@
-import { pgTable, uuid, timestamp, text, boolean, pgEnum, index } from 'drizzle-orm/pg-core';
-import { users } from './users';
 import { generateUuidV7 } from '@/common/utils/uuid';
+import { boolean, index, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { users } from './users';
 
-export const notificationTypeEnum = pgEnum('notification_type', ['INFO', 'SUCCESS', 'WARNING', 'ERROR']);
+export const notificationTypeEnum = pgEnum('notification_type', [
+  'INFO',
+  'SUCCESS',
+  'WARNING',
+  'ERROR',
+]);
 
 export const notifications = pgTable(
   'notifications',

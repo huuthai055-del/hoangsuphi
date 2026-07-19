@@ -1,36 +1,31 @@
-import { db, type TransactionClient } from '@/lib/database/client';
-import { eq, and, isNull, sql, desc, asc } from 'drizzle-orm';
+import {
+  CheckConstraintViolationRepositoryError,
+  ConstraintViolationRepositoryError,
+  DatabaseOperationRepositoryError,
+  DuplicateKeyRepositoryError,
+  EntityNotFoundRepositoryError,
+  NotNullViolationRepositoryError,
+  RepositoryError,
+  TransactionConflictRepositoryError,
+} from '@/common/errors/repository.errors';
+import { type TransactionClient, db } from '@/lib/database/client';
+import {
+  favorites as favoritesSchema,
+  reviews as reviewsSchema,
+} from '@/lib/database/schema/reviews';
+import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
+import type { Favorite } from '../domain/favorites.entity';
+import type { OwnerType, Review } from '../domain/reviews.entity';
 import type {
-  IReviewsRepository,
+  FavoriteFilters,
+  FavoritePagination,
   IFavoritesRepository,
+  IReviewsRepository,
   ReviewFilters,
   ReviewPagination,
   ReviewSort,
-  FavoriteFilters,
-  FavoritePagination,
 } from './reviews-repository.interface';
-import type { Review, OwnerType } from '../domain/reviews.entity';
-import type { Favorite } from '../domain/favorites.entity';
-import {
-  reviews as reviewsSchema,
-  favorites as favoritesSchema,
-} from '@/lib/database/schema/reviews';
-import {
-  ReviewsMapper,
-  FavoritesMapper,
-  type RawReview,
-  type RawFavorite,
-} from './reviews.mapper';
-import {
-  RepositoryError,
-  DuplicateKeyRepositoryError,
-  EntityNotFoundRepositoryError,
-  DatabaseOperationRepositoryError,
-  ConstraintViolationRepositoryError,
-  NotNullViolationRepositoryError,
-  CheckConstraintViolationRepositoryError,
-  TransactionConflictRepositoryError,
-} from '@/common/errors/repository.errors';
+import { FavoritesMapper, type RawFavorite, type RawReview, ReviewsMapper } from './reviews.mapper';
 
 function mapDbError(err: unknown, operation: string, details?: Record<string, unknown>): never {
   if (err instanceof RepositoryError) {
@@ -139,7 +134,12 @@ export class DrizzleReviewsRepository implements IReviewsRepository {
     }
   }
 
-  public async exists(userId: string, ownerType: OwnerType, ownerId: string, tx?: unknown): Promise<boolean> {
+  public async exists(
+    userId: string,
+    ownerType: OwnerType,
+    ownerId: string,
+    tx?: unknown
+  ): Promise<boolean> {
     try {
       const [row] = await this.getClient(tx)
         .select({ exists: sql`1` })
@@ -159,7 +159,11 @@ export class DrizzleReviewsRepository implements IReviewsRepository {
     }
   }
 
-  public async findByUser(userId: string, pagination?: ReviewPagination, tx?: unknown): Promise<Review[]> {
+  public async findByUser(
+    userId: string,
+    pagination?: ReviewPagination,
+    tx?: unknown
+  ): Promise<Review[]> {
     try {
       const query = this.getClient(tx)
         .select()
@@ -325,8 +329,7 @@ export class DrizzleReviewsRepository implements IReviewsRepository {
       const conditions = [isNull(reviewsSchema.deletedAt)];
 
       if (filters) {
-        const { ownerType, ownerId, userId, status, rating, createdAfter, createdBefore } =
-          filters;
+        const { ownerType, ownerId, userId, status, rating, createdAfter, createdBefore } = filters;
         if (ownerType) conditions.push(eq(reviewsSchema.ownerType, ownerType));
         if (ownerId) conditions.push(eq(reviewsSchema.ownerId, ownerId));
         if (userId) conditions.push(eq(reviewsSchema.userId, userId));
@@ -376,7 +379,12 @@ export class DrizzleFavoritesRepository implements IFavoritesRepository {
     }
   }
 
-  public async exists(userId: string, ownerType: OwnerType, ownerId: string, tx?: unknown): Promise<boolean> {
+  public async exists(
+    userId: string,
+    ownerType: OwnerType,
+    ownerId: string,
+    tx?: unknown
+  ): Promise<boolean> {
     try {
       const [row] = await this.getClient(tx)
         .select({ exists: sql`1` })

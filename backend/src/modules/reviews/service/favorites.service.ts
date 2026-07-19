@@ -1,14 +1,14 @@
+import { ValidationError } from '@/common/errors/http.errors';
+import { generateUuidV7 } from '@/common/utils/uuid';
+import { runInTransaction } from '@/lib/database/client';
 import { Favorite } from '../domain/favorites.entity';
 import type { OwnerType } from '../domain/reviews.entity';
+import { FavoriteDomainError } from '../domain/reviews.errors';
 import type {
-  IFavoritesRepository,
   FavoriteFilters,
   FavoritePagination,
+  IFavoritesRepository,
 } from '../repository/reviews-repository.interface';
-import { generateUuidV7 } from '@/common/utils/uuid';
-import { ValidationError } from '@/common/errors/http.errors';
-import { FavoriteDomainError } from '../domain/reviews.errors';
-import { runInTransaction } from '@/lib/database/client';
 
 export class FavoritesService {
   constructor(private readonly favoritesRepo: IFavoritesRepository) {}
@@ -22,13 +22,16 @@ export class FavoritesService {
     try {
       return await runInTransaction(async (tx) => {
         // Idempotent: If favorite already exists, return the existing favorite without throwing
-        const existing = await this.favoritesRepo.findMany({
-          filters: {
-            userId: props.userId,
-            ownerType: props.ownerType,
-            ownerId: props.ownerId,
+        const existing = await this.favoritesRepo.findMany(
+          {
+            filters: {
+              userId: props.userId,
+              ownerType: props.ownerType,
+              ownerId: props.ownerId,
+            },
           },
-        }, tx);
+          tx
+        );
 
         const [existingFavorite] = existing;
         if (existingFavorite) {
@@ -54,16 +57,23 @@ export class FavoritesService {
     }
   }
 
-  public async removeFavorite(userId: string, ownerType: OwnerType, ownerId: string): Promise<void> {
+  public async removeFavorite(
+    userId: string,
+    ownerType: OwnerType,
+    ownerId: string
+  ): Promise<void> {
     await runInTransaction(async (tx) => {
       // Idempotent: If favorite does not exist, do not throw
-      const existing = await this.favoritesRepo.findMany({
-        filters: {
-          userId,
-          ownerType,
-          ownerId,
+      const existing = await this.favoritesRepo.findMany(
+        {
+          filters: {
+            userId,
+            ownerType,
+            ownerId,
+          },
         },
-      }, tx);
+        tx
+      );
 
       const [favorite] = existing;
       if (!favorite) {
@@ -76,11 +86,14 @@ export class FavoritesService {
 
   public async removeFavoriteById(id: string, userId: string): Promise<void> {
     await runInTransaction(async (tx) => {
-      const existing = await this.favoritesRepo.findMany({
-        filters: {
-          userId,
+      const existing = await this.favoritesRepo.findMany(
+        {
+          filters: {
+            userId,
+          },
         },
-      }, tx);
+        tx
+      );
 
       const favorite = existing.find((f) => f.id === id);
       if (!favorite) {
@@ -91,7 +104,11 @@ export class FavoritesService {
     });
   }
 
-  public async checkFavorite(userId: string, ownerType: OwnerType, ownerId: string): Promise<boolean> {
+  public async checkFavorite(
+    userId: string,
+    ownerType: OwnerType,
+    ownerId: string
+  ): Promise<boolean> {
     return this.favoritesRepo.exists(userId, ownerType, ownerId);
   }
 

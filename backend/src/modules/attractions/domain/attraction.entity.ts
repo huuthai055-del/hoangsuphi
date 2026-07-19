@@ -48,18 +48,42 @@ export class Attraction {
   }
 
   // Getters
-  public get id(): string { return this._id; }
-  public get regionId(): string { return this._regionId; }
-  public get categoryId(): string { return this._categoryId; }
-  public get name(): string { return this._name; }
-  public get slug(): string { return this._slug; }
-  public get location(): GPSLocation { return this._location; }
-  public get description(): string | null { return this._description; }
-  public get coverUrl(): string | null { return this._coverUrl; }
-  public get status(): AttractionStatus { return this._status; }
-  public get createdAt(): Date { return this._createdAt; }
-  public get updatedAt(): Date { return this._updatedAt; }
-  public get deletedAt(): Date | null { return this._deletedAt; }
+  public get id(): string {
+    return this._id;
+  }
+  public get regionId(): string {
+    return this._regionId;
+  }
+  public get categoryId(): string {
+    return this._categoryId;
+  }
+  public get name(): string {
+    return this._name;
+  }
+  public get slug(): string {
+    return this._slug;
+  }
+  public get location(): GPSLocation {
+    return this._location;
+  }
+  public get description(): string | null {
+    return this._description;
+  }
+  public get coverUrl(): string | null {
+    return this._coverUrl;
+  }
+  public get status(): AttractionStatus {
+    return this._status;
+  }
+  public get createdAt(): Date {
+    return this._createdAt;
+  }
+  public get updatedAt(): Date {
+    return this._updatedAt;
+  }
+  public get deletedAt(): Date | null {
+    return this._deletedAt;
+  }
 
   // Validation
   private static validate(props: Partial<AttractionProps>): void {
@@ -115,20 +139,28 @@ export class Attraction {
     now?: Date
   ): void {
     if (props.regionId !== undefined) {
-      if (!props.regionId || props.regionId.trim() === '') throw new AttractionDomainError('Region ID is required');
+      if (!props.regionId || props.regionId.trim() === '')
+        throw new AttractionDomainError('Region ID is required');
       this._regionId = props.regionId;
     }
     if (props.categoryId !== undefined) {
-      if (!props.categoryId || props.categoryId.trim() === '') throw new AttractionDomainError('Category ID is required');
+      if (!props.categoryId || props.categoryId.trim() === '')
+        throw new AttractionDomainError('Category ID is required');
       this._categoryId = props.categoryId;
     }
     if (props.name !== undefined) {
-      if (!props.name || props.name.trim() === '') throw new AttractionDomainError('Attraction name is required');
+      if (!props.name || props.name.trim() === '')
+        throw new AttractionDomainError('Attraction name is required');
       this._name = props.name.trim();
     }
     if (props.slug !== undefined) {
-      if (!props.slug || props.slug.trim() === '') throw new AttractionDomainError('Attraction slug is required');
-      this._slug = props.slug.trim();
+      if (!props.slug || props.slug.trim() === '')
+        throw new AttractionDomainError('Attraction slug is required');
+      const cleanSlug = props.slug.trim();
+      if (this._status === 'active' && this._slug !== cleanSlug) {
+        throw new AttractionDomainError('Slug is immutable once attraction is active');
+      }
+      this._slug = cleanSlug;
     }
     if (props.location !== undefined) this._location = props.location;
     if (props.description !== undefined) this._description = props.description;

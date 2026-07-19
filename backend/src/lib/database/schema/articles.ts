@@ -1,7 +1,18 @@
-import { pgTable, uuid, varchar, integer, boolean, timestamp, pgEnum, index, uniqueIndex, text } from 'drizzle-orm/pg-core';
-import { sql } from 'drizzle-orm';
-import { users } from './users';
 import { generateUuidV7 } from '@/common/utils/uuid';
+import { sql } from 'drizzle-orm';
+import {
+  boolean,
+  index,
+  integer,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+  varchar,
+} from 'drizzle-orm/pg-core';
+import { users } from './users';
 
 /**
  * Status values for workflow management:
@@ -10,7 +21,12 @@ import { generateUuidV7 } from '@/common/utils/uuid';
  * - published: Publicly visible to all users
  * - archived: Taken down, historical view only
  */
-export const articleStatusEnum = pgEnum('article_status', ['draft', 'under_review', 'published', 'archived']);
+export const articleStatusEnum = pgEnum('article_status', [
+  'draft',
+  'under_review',
+  'published',
+  'archived',
+]);
 
 export const articleCategories = pgTable(
   'article_categories',

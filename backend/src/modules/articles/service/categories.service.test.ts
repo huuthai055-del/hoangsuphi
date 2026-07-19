@@ -13,12 +13,19 @@ mock.module('@/lib/database/client', () => {
   };
 });
 
-import { expect, test, describe, beforeEach } from 'bun:test';
-import { CategoriesService, type CreateCategoryCommand, type UpdateCategoryCommand } from './categories.service';
-import type { ICategoriesRepository } from '../repository/categories-repository.interface';
+import { beforeEach, describe, expect, test } from 'bun:test';
+import { ConflictError, NotFoundError, ValidationError } from '@/common/errors/http.errors';
 import { Category } from '../domain/category.entity';
-import { NotFoundError, ConflictError, ValidationError } from '@/common/errors/http.errors';
-import { DuplicateKeyRepositoryError, EntityNotFoundRepositoryError } from '../repository/repository-errors';
+import type { ICategoriesRepository } from '../repository/categories-repository.interface';
+import {
+  DuplicateKeyRepositoryError,
+  EntityNotFoundRepositoryError,
+} from '../repository/repository-errors';
+import {
+  CategoriesService,
+  type CreateCategoryCommand,
+  type UpdateCategoryCommand,
+} from './categories.service';
 
 describe('CategoriesService', () => {
   let findByIdMock: ReturnType<typeof mock>;
@@ -164,7 +171,9 @@ describe('CategoriesService', () => {
       };
 
       existsByCodeMock.mockImplementation(() => Promise.resolve(false));
-      saveMock.mockImplementation(() => Promise.reject(new DuplicateKeyRepositoryError('Duplicate key')));
+      saveMock.mockImplementation(() =>
+        Promise.reject(new DuplicateKeyRepositoryError('Duplicate key'))
+      );
 
       await expect(service.createCategory(cmd)).rejects.toThrow(ConflictError);
     });
@@ -207,7 +216,9 @@ describe('CategoriesService', () => {
     test('should map EntityNotFoundRepositoryError to NotFoundError', async () => {
       const mockCat = Category.create(catId, catCode, catName, catDesc);
       findByIdMock.mockImplementation(() => Promise.resolve(mockCat));
-      updateMock.mockImplementation(() => Promise.reject(new EntityNotFoundRepositoryError('Not found')));
+      updateMock.mockImplementation(() =>
+        Promise.reject(new EntityNotFoundRepositoryError('Not found'))
+      );
 
       const cmd: UpdateCategoryCommand = { name: 'New Name' };
       await expect(service.updateCategory(catId, cmd)).rejects.toThrow(NotFoundError);
@@ -230,7 +241,9 @@ describe('CategoriesService', () => {
 
     test('should map EntityNotFoundRepositoryError to NotFoundError', async () => {
       existsMock.mockImplementation(() => Promise.resolve(true));
-      deleteMock.mockImplementation(() => Promise.reject(new EntityNotFoundRepositoryError('Not found')));
+      deleteMock.mockImplementation(() =>
+        Promise.reject(new EntityNotFoundRepositoryError('Not found'))
+      );
 
       await expect(service.deleteCategory(catId)).rejects.toThrow(NotFoundError);
     });

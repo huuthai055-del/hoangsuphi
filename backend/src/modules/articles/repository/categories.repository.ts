@@ -1,17 +1,17 @@
-import type { ICategoriesRepository } from './categories-repository.interface';
-import type { Category } from '../domain/category.entity';
-import { CategoryMapper } from './categories.mapper';
-import { db, type TransactionClient } from '@/lib/database/client';
+import { type TransactionClient, db } from '@/lib/database/client';
 import { articleCategories } from '@/lib/database/schema';
-import { eq, sql, asc } from 'drizzle-orm';
+import { asc, eq, sql } from 'drizzle-orm';
+import type { Category } from '../domain/category.entity';
+import type { ICategoriesRepository } from './categories-repository.interface';
+import { CategoryMapper } from './categories.mapper';
 import {
-  RepositoryError,
+  CheckConstraintViolationRepositoryError,
+  ConstraintViolationRepositoryError,
+  DatabaseOperationRepositoryError,
   DuplicateKeyRepositoryError,
   EntityNotFoundRepositoryError,
-  DatabaseOperationRepositoryError,
-  ConstraintViolationRepositoryError,
   NotNullViolationRepositoryError,
-  CheckConstraintViolationRepositoryError,
+  RepositoryError,
   TransactionConflictRepositoryError,
 } from './repository-errors';
 
@@ -22,18 +22,42 @@ function mapDbError(err: unknown, operation: string, details?: Record<string, un
   const pgErr = err as { code?: string; constraint?: string; column?: string };
   switch (pgErr.code) {
     case '23505':
-      throw new DuplicateKeyRepositoryError(`${operation} failed: unique constraint violated`, { constraint: pgErr.constraint, ...details }, err as Error);
+      throw new DuplicateKeyRepositoryError(
+        `${operation} failed: unique constraint violated`,
+        { constraint: pgErr.constraint, ...details },
+        err as Error
+      );
     case '23503':
-      throw new ConstraintViolationRepositoryError(`${operation} failed: foreign key constraint violated`, { constraint: pgErr.constraint, ...details }, err as Error);
+      throw new ConstraintViolationRepositoryError(
+        `${operation} failed: foreign key constraint violated`,
+        { constraint: pgErr.constraint, ...details },
+        err as Error
+      );
     case '23502':
-      throw new NotNullViolationRepositoryError(`${operation} failed: not-null constraint violated`, { column: pgErr.column, ...details }, err as Error);
+      throw new NotNullViolationRepositoryError(
+        `${operation} failed: not-null constraint violated`,
+        { column: pgErr.column, ...details },
+        err as Error
+      );
     case '23514':
-      throw new CheckConstraintViolationRepositoryError(`${operation} failed: check constraint violated`, { constraint: pgErr.constraint, ...details }, err as Error);
+      throw new CheckConstraintViolationRepositoryError(
+        `${operation} failed: check constraint violated`,
+        { constraint: pgErr.constraint, ...details },
+        err as Error
+      );
     case '40001':
     case '40P01':
-      throw new TransactionConflictRepositoryError(`${operation} failed: transaction conflict`, details, err as Error);
+      throw new TransactionConflictRepositoryError(
+        `${operation} failed: transaction conflict`,
+        details,
+        err as Error
+      );
     default:
-      throw new DatabaseOperationRepositoryError(`${operation} failed: unexpected database error`, details, err as Error);
+      throw new DatabaseOperationRepositoryError(
+        `${operation} failed: unexpected database error`,
+        details,
+        err as Error
+      );
   }
 }
 

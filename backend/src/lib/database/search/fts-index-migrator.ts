@@ -2,8 +2,8 @@ import {
   SEARCH_FTS_CONFIGURATION_MARKER,
   SEARCH_FTS_INDEXES,
   SEARCH_FTS_WORD_TOKEN_TYPES,
-  type SearchFtsIndexDefinition,
   type SearchFieldWeight,
+  type SearchFtsIndexDefinition,
 } from './fts-index-manifest';
 
 export type SearchFtsMigrationMode = 'check' | 'apply';

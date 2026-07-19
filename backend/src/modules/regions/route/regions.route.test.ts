@@ -208,7 +208,7 @@ mock.module('@/modules/attractions/repository/attractions.repository', () => {
   };
 });
 
-import { expect, test, describe, beforeEach } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'bun:test';
 import type { Hono } from 'hono';
 import { Region } from '../domain/region.aggregate';
 import { LtreePath } from '../domain/value-objects/ltree-path.vo';
@@ -291,9 +291,9 @@ describe('Regions API Routing & Controller', () => {
   test('POST /api/v1/regions - should return validation error 400 for bad slug or level', async () => {
     const res = await app.request('/api/v1/regions', {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer valid-token'
+        Authorization: 'Bearer valid-token',
       },
       body: JSON.stringify({
         name: 'Test',

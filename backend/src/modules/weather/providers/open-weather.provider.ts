@@ -1,5 +1,5 @@
-import type { IWeatherProvider } from '../interfaces/weather-provider.interface';
 import type { CurrentWeather, Forecast } from '../dto/weather.dto';
+import type { IWeatherProvider } from '../interfaces/weather-provider.interface';
 
 /**
  * @stub MOCK IMPLEMENTATION — NOT PRODUCTION READY
@@ -28,7 +28,11 @@ export class OpenWeatherProvider implements IWeatherProvider {
     };
   }
 
-  public async getForecast(latitude: number, _longitude: number, days: number): Promise<Forecast[]> {
+  public async getForecast(
+    latitude: number,
+    _longitude: number,
+    days: number
+  ): Promise<Forecast[]> {
     const forecastList: Forecast[] = [];
     const baseTemp = 20 + (latitude % 10);
     for (let i = 0; i < days; i++) {

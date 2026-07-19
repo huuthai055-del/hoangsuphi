@@ -1,9 +1,9 @@
-import { expect, test, describe } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import {
   CreatePlaceSchema,
   ListPlacesQuerySchema,
-  PlaceNearbyQuerySchema,
   PlaceIdParamsSchema,
+  PlaceNearbyQuerySchema,
   PlaceSlugParamsSchema,
 } from './places.dto';
 

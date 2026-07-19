@@ -1,43 +1,43 @@
-import { Hono } from 'hono';
-import { z } from 'zod';
 import { container } from '@/common/di/container';
-import {
-  CreateAttractionSchema,
-  UpdateAttractionSchema,
-  ListAttractionsQuerySchema,
-  AttractionNearbyQuerySchema,
-  AttractionIdParamsSchema,
-  AttractionSlugParamsSchema,
-} from '../dto/attractions.dto';
-import { validateBody, validateQuery, validateParams } from '@/middleware/validator';
+import { validateBody, validateParams, validateQuery } from '@/middleware/validator';
 import { requirePermission } from '@/modules/identity/middleware/permission.middleware';
+import { Hono } from 'hono';
 import type { MiddlewareHandler } from 'hono';
+import { z } from 'zod';
+import {
+  AttractionIdParamsSchema,
+  AttractionNearbyQuerySchema,
+  AttractionSlugParamsSchema,
+  CreateAttractionSchema,
+  ListAttractionsQuerySchema,
+  UpdateAttractionSchema,
+} from '../dto/attractions.dto';
 import type { AttractionsController } from './attractions.controller';
 
 const attractionsRouter = new Hono();
 
-const authGuard: MiddlewareHandler = (c, next) => container.resolve<MiddlewareHandler>('AuthGuard')(c, next);
-const getController = (): AttractionsController => container.resolve<AttractionsController>('AttractionsController');
+const authGuard: MiddlewareHandler = (c, next) =>
+  container.resolve<MiddlewareHandler>('AuthGuard')(c, next);
+const getController = (): AttractionsController =>
+  container.resolve<AttractionsController>('AttractionsController');
 
 // ==========================================
 // PUBLIC ROUTES
 // ==========================================
 
 // GET /api/v1/attractions
-attractionsRouter.get('/', validateQuery(ListAttractionsQuerySchema), (c) => getController().list(c));
+attractionsRouter.get('/', validateQuery(ListAttractionsQuerySchema), (c) =>
+  getController().list(c)
+);
 
 // GET /api/v1/attractions/nearby
-attractionsRouter.get(
-  '/nearby',
-  validateQuery(AttractionNearbyQuerySchema),
-  (c) => getController().searchNearby(c)
+attractionsRouter.get('/nearby', validateQuery(AttractionNearbyQuerySchema), (c) =>
+  getController().searchNearby(c)
 );
 
 // GET /api/v1/attractions/slug/:slug
-attractionsRouter.get(
-  '/slug/:slug',
-  validateParams(AttractionSlugParamsSchema),
-  (c) => getController().getBySlug(c)
+attractionsRouter.get('/slug/:slug', validateParams(AttractionSlugParamsSchema), (c) =>
+  getController().getBySlug(c)
 );
 
 // GET /api/v1/attractions/region/:regionId
@@ -49,7 +49,9 @@ attractionsRouter.get(
 );
 
 // GET /api/v1/attractions/:id
-attractionsRouter.get('/:id', validateParams(AttractionIdParamsSchema), (c) => getController().getById(c));
+attractionsRouter.get('/:id', validateParams(AttractionIdParamsSchema), (c) =>
+  getController().getById(c)
+);
 
 // ==========================================
 // ADMIN ROUTES

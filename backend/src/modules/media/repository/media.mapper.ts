@@ -1,4 +1,4 @@
-import { Media, type MediaType, type MediaStatus } from '../domain/media.entity';
+import { Media, type MediaStatus, type MediaType } from '../domain/media.entity';
 
 export interface RawMedia {
   id: string;
@@ -9,6 +9,9 @@ export interface RawMedia {
   fileSize: number;
   hash: string;
   status: string;
+  storageProvider: string;
+  altText: string | null;
+  caption: string | null;
   ownerType: string | null;
   ownerId: string | null;
   uploadedBy: string | null;
@@ -28,6 +31,9 @@ export const MediaMapper = {
       fileSize: raw.fileSize,
       hash: raw.hash,
       status: raw.status as MediaStatus,
+      storageProvider: raw.storageProvider as 'LOCAL' | 'CLOUDINARY',
+      altText: raw.altText,
+      caption: raw.caption,
       ownerType: raw.ownerType,
       ownerId: raw.ownerId,
       uploadedBy: raw.uploadedBy,
@@ -48,6 +54,9 @@ export const MediaMapper = {
       fileSize: props.fileSize,
       hash: props.hash,
       status: props.status,
+      storageProvider: props.storageProvider,
+      altText: props.altText,
+      caption: props.caption,
       ownerType: props.ownerType,
       ownerId: props.ownerId,
       uploadedBy: props.uploadedBy,

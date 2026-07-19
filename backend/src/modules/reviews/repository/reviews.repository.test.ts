@@ -1,4 +1,4 @@
-import { describe, test, expect, mock, beforeEach } from 'bun:test';
+import { beforeEach, describe, expect, mock, test } from 'bun:test';
 
 // 1. Setup global resolve value for the thenable DB chain
 let mockResolveValue: any = undefined;
@@ -52,18 +52,18 @@ mock.module('@/lib/database/client', () => {
   };
 });
 
-import { DrizzleReviewsRepository, DrizzleFavoritesRepository } from './reviews.repository';
-import { Review } from '../domain/reviews.entity';
-import { Favorite } from '../domain/favorites.entity';
 import {
-  DuplicateKeyRepositoryError,
-  ConstraintViolationRepositoryError,
-  NotNullViolationRepositoryError,
   CheckConstraintViolationRepositoryError,
-  TransactionConflictRepositoryError,
+  ConstraintViolationRepositoryError,
   DatabaseOperationRepositoryError,
+  DuplicateKeyRepositoryError,
   EntityNotFoundRepositoryError,
+  NotNullViolationRepositoryError,
+  TransactionConflictRepositoryError,
 } from '@/common/errors/repository.errors';
+import { Favorite } from '../domain/favorites.entity';
+import { Review } from '../domain/reviews.entity';
+import { DrizzleFavoritesRepository, DrizzleReviewsRepository } from './reviews.repository';
 
 describe('Reviews & Favorites Repositories', () => {
   let reviewsRepo: DrizzleReviewsRepository;
@@ -95,7 +95,7 @@ describe('Reviews & Favorites Repositories', () => {
     reviewsRepo = new DrizzleReviewsRepository();
     favoritesRepo = new DrizzleFavoritesRepository();
     mockResolveValue = undefined;
-    
+
     selectSpy.mockClear();
     insertSpy.mockClear();
     updateSpy.mockClear();
@@ -171,17 +171,23 @@ describe('Reviews & Favorites Repositories', () => {
 
     test('should calculate average rating correctly', async () => {
       mockResolveValue = [{ avg: '4.25' }];
-      const avg = await reviewsRepo.averageRating(sampleRawReview.ownerType, sampleRawReview.ownerId);
+      const avg = await reviewsRepo.averageRating(
+        sampleRawReview.ownerType,
+        sampleRawReview.ownerId
+      );
       expect(avg).toBe(4.25);
     });
 
     test('should find reviews by user, owner and status shortcuts', async () => {
       mockResolveValue = [sampleRawReview];
-      
+
       const userRes = await reviewsRepo.findByUser(sampleRawReview.userId, { limit: 5, offset: 0 });
       expect(userRes.length).toBe(1);
 
-      const ownerRes = await reviewsRepo.findByOwner(sampleRawReview.ownerType, sampleRawReview.ownerId);
+      const ownerRes = await reviewsRepo.findByOwner(
+        sampleRawReview.ownerType,
+        sampleRawReview.ownerId
+      );
       expect(ownerRes.length).toBe(1);
 
       const approvedRes = await reviewsRepo.findApproved();
@@ -193,7 +199,7 @@ describe('Reviews & Favorites Repositories', () => {
 
     test('should findMany reviews with filters, sort (asc/desc) and search options', async () => {
       mockResolveValue = [sampleRawReview];
-      
+
       const resAsc = await reviewsRepo.findMany({
         filters: {
           ownerType: 'PLACE',
@@ -222,39 +228,62 @@ describe('Reviews & Favorites Repositories', () => {
       mockResolveValue = dbError;
 
       const review = Review.rehydrate(sampleRawReview);
-      await expect(reviewsRepo.create(review)).rejects.toThrow(CheckConstraintViolationRepositoryError);
+      await expect(reviewsRepo.create(review)).rejects.toThrow(
+        CheckConstraintViolationRepositoryError
+      );
     });
 
     test('should map other postgres errors appropriately', async () => {
-      const errUnique = new Error(); (errUnique as any).code = '23505';
-      const errFK = new Error(); (errFK as any).code = '23503';
-      const errNotNull = new Error(); (errNotNull as any).code = '23502';
-      const errTx = new Error(); (errTx as any).code = '40001';
-      const errGeneral = new Error(); (errGeneral as any).code = '99999';
+      const errUnique = new Error();
+      (errUnique as any).code = '23505';
+      const errFK = new Error();
+      (errFK as any).code = '23503';
+      const errNotNull = new Error();
+      (errNotNull as any).code = '23502';
+      const errTx = new Error();
+      (errTx as any).code = '40001';
+      const errGeneral = new Error();
+      (errGeneral as any).code = '99999';
 
       mockResolveValue = errUnique;
-      await expect(reviewsRepo.create(Review.rehydrate(sampleRawReview))).rejects.toThrow(DuplicateKeyRepositoryError);
+      await expect(reviewsRepo.create(Review.rehydrate(sampleRawReview))).rejects.toThrow(
+        DuplicateKeyRepositoryError
+      );
 
       mockResolveValue = errFK;
-      await expect(reviewsRepo.create(Review.rehydrate(sampleRawReview))).rejects.toThrow(ConstraintViolationRepositoryError);
+      await expect(reviewsRepo.create(Review.rehydrate(sampleRawReview))).rejects.toThrow(
+        ConstraintViolationRepositoryError
+      );
 
       mockResolveValue = errNotNull;
-      await expect(reviewsRepo.create(Review.rehydrate(sampleRawReview))).rejects.toThrow(NotNullViolationRepositoryError);
+      await expect(reviewsRepo.create(Review.rehydrate(sampleRawReview))).rejects.toThrow(
+        NotNullViolationRepositoryError
+      );
 
       mockResolveValue = errTx;
-      await expect(reviewsRepo.create(Review.rehydrate(sampleRawReview))).rejects.toThrow(TransactionConflictRepositoryError);
+      await expect(reviewsRepo.create(Review.rehydrate(sampleRawReview))).rejects.toThrow(
+        TransactionConflictRepositoryError
+      );
 
       mockResolveValue = errGeneral;
-      await expect(reviewsRepo.create(Review.rehydrate(sampleRawReview))).rejects.toThrow(DatabaseOperationRepositoryError);
+      await expect(reviewsRepo.create(Review.rehydrate(sampleRawReview))).rejects.toThrow(
+        DatabaseOperationRepositoryError
+      );
     });
 
     test('should cover database catch blocks for reviews', async () => {
       mockResolveValue = new Error('DB Crash');
 
-      await expect(reviewsRepo.exists('u', 'PLACE', 'o')).rejects.toThrow(DatabaseOperationRepositoryError);
+      await expect(reviewsRepo.exists('u', 'PLACE', 'o')).rejects.toThrow(
+        DatabaseOperationRepositoryError
+      );
       await expect(reviewsRepo.findByUser('u')).rejects.toThrow(DatabaseOperationRepositoryError);
-      await expect(reviewsRepo.findByOwner('PLACE', 'o')).rejects.toThrow(DatabaseOperationRepositoryError);
-      await expect(reviewsRepo.averageRating('PLACE', 'o')).rejects.toThrow(DatabaseOperationRepositoryError);
+      await expect(reviewsRepo.findByOwner('PLACE', 'o')).rejects.toThrow(
+        DatabaseOperationRepositoryError
+      );
+      await expect(reviewsRepo.averageRating('PLACE', 'o')).rejects.toThrow(
+        DatabaseOperationRepositoryError
+      );
       await expect(reviewsRepo.findMany({})).rejects.toThrow(DatabaseOperationRepositoryError);
       await expect(reviewsRepo.count()).rejects.toThrow(DatabaseOperationRepositoryError);
     });
@@ -291,11 +320,14 @@ describe('Reviews & Favorites Repositories', () => {
 
     test('should find favorites by user, owner and filtering options', async () => {
       mockResolveValue = [sampleRawFavorite];
-      
+
       const userRes = await favoritesRepo.findByUser(sampleRawFavorite.userId);
       expect(userRes.length).toBe(1);
 
-      const ownerRes = await favoritesRepo.findByOwner(sampleRawFavorite.ownerType, sampleRawFavorite.ownerId);
+      const ownerRes = await favoritesRepo.findByOwner(
+        sampleRawFavorite.ownerType,
+        sampleRawFavorite.ownerId
+      );
       expect(ownerRes.length).toBe(1);
 
       const searchRes = await favoritesRepo.findMany({
@@ -310,18 +342,27 @@ describe('Reviews & Favorites Repositories', () => {
 
     test('should count favorites correctly', async () => {
       mockResolveValue = [{ count: '5' }];
-      const total = await favoritesRepo.countByOwner(sampleRawFavorite.ownerType, sampleRawFavorite.ownerId);
+      const total = await favoritesRepo.countByOwner(
+        sampleRawFavorite.ownerType,
+        sampleRawFavorite.ownerId
+      );
       expect(total).toBe(5);
     });
 
     test('should cover database catch blocks for favorites', async () => {
       mockResolveValue = new Error('DB Crash');
 
-      await expect(favoritesRepo.create(Favorite.rehydrate(sampleRawFavorite))).rejects.toThrow(DatabaseOperationRepositoryError);
+      await expect(favoritesRepo.create(Favorite.rehydrate(sampleRawFavorite))).rejects.toThrow(
+        DatabaseOperationRepositoryError
+      );
       await expect(favoritesRepo.delete('id')).rejects.toThrow(DatabaseOperationRepositoryError);
-      await expect(favoritesRepo.exists('u', 'PLACE', 'o')).rejects.toThrow(DatabaseOperationRepositoryError);
+      await expect(favoritesRepo.exists('u', 'PLACE', 'o')).rejects.toThrow(
+        DatabaseOperationRepositoryError
+      );
       await expect(favoritesRepo.findByUser('u')).rejects.toThrow(DatabaseOperationRepositoryError);
-      await expect(favoritesRepo.findByOwner('PLACE', 'o')).rejects.toThrow(DatabaseOperationRepositoryError);
+      await expect(favoritesRepo.findByOwner('PLACE', 'o')).rejects.toThrow(
+        DatabaseOperationRepositoryError
+      );
       await expect(favoritesRepo.findMany({})).rejects.toThrow(DatabaseOperationRepositoryError);
       await expect(favoritesRepo.count()).rejects.toThrow(DatabaseOperationRepositoryError);
     });

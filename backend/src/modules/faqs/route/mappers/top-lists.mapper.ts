@@ -1,6 +1,6 @@
-import type { TopList } from '../../domain/top-list.entity';
 import type { TopListItem } from '../../domain/top-list-item.entity';
-import type { TopListResponseDto, TopListItemResponseDto } from '../../dto/top-lists.dto';
+import type { TopList } from '../../domain/top-list.entity';
+import type { TopListItemResponseDto, TopListResponseDto } from '../../dto/top-lists.dto';
 
 export function mapTopListItemToResponse(item: TopListItem): TopListItemResponseDto {
   return {

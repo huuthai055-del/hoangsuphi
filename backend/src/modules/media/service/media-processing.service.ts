@@ -1,14 +1,14 @@
-import type { IMediaRepository } from '../repository/media-repository.interface';
-import type { IMediaStorage } from '../domain/storage.interface';
-import type { IImageProcessor } from '../domain/image-processor.interface';
 import { runInTransaction } from '@/lib/database/client';
+import { logger } from '@/lib/logger';
+import type { IImageProcessor } from '../domain/image-processor.interface';
 import {
   ImageProcessingError,
+  MediaDomainError,
   StorageProcessingError,
   VariantGenerationError,
-  MediaDomainError,
 } from '../domain/media-errors';
-import { logger } from '@/lib/logger';
+import type { IMediaStorage } from '../domain/storage.interface';
+import type { IMediaRepository } from '../repository/media-repository.interface';
 
 export class MediaProcessingService {
   constructor(
@@ -48,15 +48,6 @@ export class MediaProcessingService {
       const dbMetadata: Record<string, unknown> = {
         width: metadata.width ?? null,
         height: metadata.height ?? null,
-        cameraMake: metadata.cameraMake ?? null,
-        cameraModel: metadata.cameraModel ?? null,
-        orientation: metadata.orientation ?? null,
-        gps: metadata.gps
-          ? {
-              latitude: metadata.gps.latitude,
-              longitude: metadata.gps.longitude,
-            }
-          : null,
         processedAt: new Date().toISOString(),
       };
 
@@ -130,22 +121,25 @@ export class MediaProcessingService {
       } catch (statusErr) {
         // Log separately: if we can't mark FAILED the DB row will be stuck in PROCESSING.
         logger.error(
-          { err: statusErr, mediaId: media.id },
+          {
+            errorClass: statusErr instanceof Error ? statusErr.name : 'UnknownError',
+            mediaId: media.id,
+          },
           'Failed to mark media as FAILED after processing crash — row may be stuck in PROCESSING'
         );
       }
 
       // Cleanup generated variant files safely using settled promises
-      await Promise.allSettled(uploadedVariantKeys.map((variantKey) => this.storage.delete(variantKey)));
+      await Promise.allSettled(
+        uploadedVariantKeys.map((variantKey) => this.storage.delete(variantKey))
+      );
 
       // Rethrow domain errors directly
       if (err instanceof MediaDomainError) {
         throw err;
       }
 
-      throw new VariantGenerationError(
-        `Failed to execute processing pipeline: ${err instanceof Error ? err.message : String(err)}`
-      );
+      throw new VariantGenerationError('Failed to execute processing pipeline');
     }
   }
 }

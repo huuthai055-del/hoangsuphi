@@ -13,13 +13,22 @@ mock.module('@/lib/database/client', () => {
   };
 });
 
-import { expect, test, describe, beforeEach } from 'bun:test';
-import { ArticlesService, type CreateArticleCommand, type UpdateArticleCommand } from './articles.service';
+import { beforeEach, describe, expect, test } from 'bun:test';
+import {
+  AuthorizationError,
+  ConflictError,
+  NotFoundError,
+  ValidationError,
+} from '@/common/errors/http.errors';
+import { Article } from '../domain/article.entity';
 import type { IArticlesRepository } from '../repository/articles-repository.interface';
 import type { ICategoriesRepository } from '../repository/categories-repository.interface';
 import type { ITagsRepository } from '../repository/tags-repository.interface';
-import { Article } from '../domain/article.entity';
-import { NotFoundError, ConflictError, ValidationError, AuthorizationError } from '@/common/errors/http.errors';
+import {
+  ArticlesService,
+  type CreateArticleCommand,
+  type UpdateArticleCommand,
+} from './articles.service';
 
 describe('ArticlesService & Locked Domain Integration', () => {
   let findByIdMock: ReturnType<typeof mock>;
@@ -137,7 +146,15 @@ describe('ArticlesService & Locked Domain Integration', () => {
 
   describe('getArticleById', () => {
     test('should return an article when found', async () => {
-      const article = Article.create(articleId, title, slug, excerpt, content, categoryId, authorId);
+      const article = Article.create(
+        articleId,
+        title,
+        slug,
+        excerpt,
+        content,
+        categoryId,
+        authorId
+      );
       findByIdMock.mockImplementation(() => Promise.resolve(article));
 
       const result = await service.getArticleById(articleId);
@@ -153,7 +170,15 @@ describe('ArticlesService & Locked Domain Integration', () => {
 
   describe('getArticleBySlug', () => {
     test('should return an article when found', async () => {
-      const article = Article.create(articleId, title, slug, excerpt, content, categoryId, authorId);
+      const article = Article.create(
+        articleId,
+        title,
+        slug,
+        excerpt,
+        content,
+        categoryId,
+        authorId
+      );
       findBySlugMock.mockImplementation(() => Promise.resolve(article));
 
       const result = await service.getArticleBySlug(slug);
@@ -227,7 +252,15 @@ describe('ArticlesService & Locked Domain Integration', () => {
 
   describe('updateArticle & Archived validation', () => {
     test('should update article successfully', async () => {
-      const article = Article.create(articleId, title, slug, excerpt, content, categoryId, authorId);
+      const article = Article.create(
+        articleId,
+        title,
+        slug,
+        excerpt,
+        content,
+        categoryId,
+        authorId
+      );
       findByIdMock.mockImplementation(() => Promise.resolve(article));
 
       const cmd: UpdateArticleCommand = {
@@ -247,59 +280,118 @@ describe('ArticlesService & Locked Domain Integration', () => {
     });
 
     test('should throw AuthorizationError when non-owner updates article', async () => {
-      const article = Article.create(articleId, title, slug, excerpt, content, categoryId, authorId);
+      const article = Article.create(
+        articleId,
+        title,
+        slug,
+        excerpt,
+        content,
+        categoryId,
+        authorId
+      );
       findByIdMock.mockImplementation(() => Promise.resolve(article));
 
       const cmd: UpdateArticleCommand = { title: 'New Title' };
-      await expect(service.updateArticle(articleId, cmd, { id: 'other-user-id', roles: [] })).rejects.toThrow(AuthorizationError);
+      await expect(
+        service.updateArticle(articleId, cmd, { id: 'other-user-id', roles: [] })
+      ).rejects.toThrow(AuthorizationError);
       expect(updateMock).not.toHaveBeenCalled();
     });
 
-    test('should allow admin to update another user\'s article', async () => {
-      const article = Article.create(articleId, title, slug, excerpt, content, categoryId, authorId);
+    test("should allow admin to update another user's article", async () => {
+      const article = Article.create(
+        articleId,
+        title,
+        slug,
+        excerpt,
+        content,
+        categoryId,
+        authorId
+      );
       findByIdMock.mockImplementation(() => Promise.resolve(article));
 
       const cmd: UpdateArticleCommand = { title: 'Admin Title' };
-      const result = await service.updateArticle(articleId, cmd, { id: 'admin-user-id', roles: ['admin'] });
+      const result = await service.updateArticle(articleId, cmd, {
+        id: 'admin-user-id',
+        roles: ['admin'],
+      });
       expect(result.title).toBe('Admin Title');
       expect(updateMock).toHaveBeenCalled();
     });
 
     test('should throw ValidationError when updating archived article', async () => {
-      const article = Article.create(articleId, title, slug, excerpt, content, categoryId, authorId);
+      const article = Article.create(
+        articleId,
+        title,
+        slug,
+        excerpt,
+        content,
+        categoryId,
+        authorId
+      );
       article.submitForReview();
       article.publish();
       article.archive();
       findByIdMock.mockImplementation(() => Promise.resolve(article));
 
       const cmd: UpdateArticleCommand = { title: 'Some Title' };
-      await expect(service.updateArticle(articleId, cmd, { id: authorId, roles: [] })).rejects.toThrow(ValidationError);
+      await expect(
+        service.updateArticle(articleId, cmd, { id: authorId, roles: [] })
+      ).rejects.toThrow(ValidationError);
     });
 
     test('should throw NotFoundError and not update article if category does not exist', async () => {
-      const article = Article.create(articleId, title, slug, excerpt, content, categoryId, authorId);
+      const article = Article.create(
+        articleId,
+        title,
+        slug,
+        excerpt,
+        content,
+        categoryId,
+        authorId
+      );
       findByIdMock.mockImplementation(() => Promise.resolve(article));
       catExistsMock.mockImplementation(() => Promise.resolve(false));
 
       const cmd: UpdateArticleCommand = { categoryId: 'non-existent-cat-id' };
-      await expect(service.updateArticle(articleId, cmd, { id: authorId, roles: [] })).rejects.toThrow(NotFoundError);
+      await expect(
+        service.updateArticle(articleId, cmd, { id: authorId, roles: [] })
+      ).rejects.toThrow(NotFoundError);
       expect(updateMock).not.toHaveBeenCalled();
     });
 
     test('should throw ConflictError and not update article if slug already exists', async () => {
-      const article = Article.create(articleId, title, slug, excerpt, content, categoryId, authorId);
+      const article = Article.create(
+        articleId,
+        title,
+        slug,
+        excerpt,
+        content,
+        categoryId,
+        authorId
+      );
       findByIdMock.mockImplementation(() => Promise.resolve(article));
       existsBySlugMock.mockImplementation(() => Promise.resolve(true));
 
       const cmd: UpdateArticleCommand = { slug: 'already-existing-slug' };
-      await expect(service.updateArticle(articleId, cmd, { id: authorId, roles: [] })).rejects.toThrow(ConflictError);
+      await expect(
+        service.updateArticle(articleId, cmd, { id: authorId, roles: [] })
+      ).rejects.toThrow(ConflictError);
       expect(updateMock).not.toHaveBeenCalled();
     });
   });
 
   describe('CMS Workflows & Workflow Invariants', () => {
     test('submitReview should transition draft to under_review', async () => {
-      const article = Article.create(articleId, title, slug, excerpt, content, categoryId, authorId);
+      const article = Article.create(
+        articleId,
+        title,
+        slug,
+        excerpt,
+        content,
+        categoryId,
+        authorId
+      );
       findByIdMock.mockImplementation(() => Promise.resolve(article));
 
       const result = await service.submitReview(articleId, { id: authorId, roles: [] });
@@ -308,14 +400,32 @@ describe('ArticlesService & Locked Domain Integration', () => {
     });
 
     test('submitReview should throw AuthorizationError if non-owner submits', async () => {
-      const article = Article.create(articleId, title, slug, excerpt, content, categoryId, authorId);
+      const article = Article.create(
+        articleId,
+        title,
+        slug,
+        excerpt,
+        content,
+        categoryId,
+        authorId
+      );
       findByIdMock.mockImplementation(() => Promise.resolve(article));
 
-      await expect(service.submitReview(articleId, { id: 'other-user-id', roles: [] })).rejects.toThrow(AuthorizationError);
+      await expect(
+        service.submitReview(articleId, { id: 'other-user-id', roles: [] })
+      ).rejects.toThrow(AuthorizationError);
     });
 
     test('archiveArticle should transition published to archived', async () => {
-      const article = Article.create(articleId, title, slug, excerpt, content, categoryId, authorId);
+      const article = Article.create(
+        articleId,
+        title,
+        slug,
+        excerpt,
+        content,
+        categoryId,
+        authorId
+      );
       article.submitForReview();
       article.publish();
       findByIdMock.mockImplementation(() => Promise.resolve(article));
@@ -326,25 +436,53 @@ describe('ArticlesService & Locked Domain Integration', () => {
     });
 
     test('archiveArticle should throw AuthorizationError if non-owner archives', async () => {
-      const article = Article.create(articleId, title, slug, excerpt, content, categoryId, authorId);
+      const article = Article.create(
+        articleId,
+        title,
+        slug,
+        excerpt,
+        content,
+        categoryId,
+        authorId
+      );
       article.submitForReview();
       article.publish();
       findByIdMock.mockImplementation(() => Promise.resolve(article));
 
-      await expect(service.archiveArticle(articleId, { id: 'other-user-id', roles: [] })).rejects.toThrow(AuthorizationError);
+      await expect(
+        service.archiveArticle(articleId, { id: 'other-user-id', roles: [] })
+      ).rejects.toThrow(AuthorizationError);
     });
 
     test('archiveArticle should throw ValidationError if article is draft', async () => {
-      const article = Article.create(articleId, title, slug, excerpt, content, categoryId, authorId);
+      const article = Article.create(
+        articleId,
+        title,
+        slug,
+        excerpt,
+        content,
+        categoryId,
+        authorId
+      );
       findByIdMock.mockImplementation(() => Promise.resolve(article));
 
-      await expect(service.archiveArticle(articleId, { id: authorId, roles: [] })).rejects.toThrow(ValidationError);
+      await expect(service.archiveArticle(articleId, { id: authorId, roles: [] })).rejects.toThrow(
+        ValidationError
+      );
     });
   });
 
   describe('deleteArticle & restoreArticle', () => {
     test('deleteArticle should soft-delete article successfully', async () => {
-      const article = Article.create(articleId, title, slug, excerpt, content, categoryId, authorId);
+      const article = Article.create(
+        articleId,
+        title,
+        slug,
+        excerpt,
+        content,
+        categoryId,
+        authorId
+      );
       findByIdMock.mockImplementation(() => Promise.resolve(article));
 
       await service.deleteArticle(articleId, { id: authorId, roles: [] });
@@ -352,23 +490,51 @@ describe('ArticlesService & Locked Domain Integration', () => {
     });
 
     test('deleteArticle should throw AuthorizationError if non-owner deletes', async () => {
-      const article = Article.create(articleId, title, slug, excerpt, content, categoryId, authorId);
+      const article = Article.create(
+        articleId,
+        title,
+        slug,
+        excerpt,
+        content,
+        categoryId,
+        authorId
+      );
       findByIdMock.mockImplementation(() => Promise.resolve(article));
 
-      await expect(service.deleteArticle(articleId, { id: 'other-user-id', roles: [] })).rejects.toThrow(AuthorizationError);
+      await expect(
+        service.deleteArticle(articleId, { id: 'other-user-id', roles: [] })
+      ).rejects.toThrow(AuthorizationError);
     });
 
     test('deleteArticle should throw ValidationError if article is already deleted', async () => {
-      const article = Article.create(articleId, title, slug, excerpt, content, categoryId, authorId);
+      const article = Article.create(
+        articleId,
+        title,
+        slug,
+        excerpt,
+        content,
+        categoryId,
+        authorId
+      );
       article.softDelete(); // set deletedAt
       findByIdMock.mockImplementation(() => Promise.resolve(article));
 
-      await expect(service.deleteArticle(articleId, { id: authorId, roles: [] })).rejects.toThrow(ValidationError);
+      await expect(service.deleteArticle(articleId, { id: authorId, roles: [] })).rejects.toThrow(
+        ValidationError
+      );
       expect(softDeleteMock).not.toHaveBeenCalled();
     });
 
     test('restoreArticle should restore article successfully without calling repository restore', async () => {
-      const article = Article.create(articleId, title, slug, excerpt, content, categoryId, authorId);
+      const article = Article.create(
+        articleId,
+        title,
+        slug,
+        excerpt,
+        content,
+        categoryId,
+        authorId
+      );
       article.softDelete(); // set deletedAt
       findByIdMock.mockImplementation(() => Promise.resolve(article));
 
@@ -379,18 +545,38 @@ describe('ArticlesService & Locked Domain Integration', () => {
     });
 
     test('restoreArticle should throw AuthorizationError if non-owner restores', async () => {
-      const article = Article.create(articleId, title, slug, excerpt, content, categoryId, authorId);
+      const article = Article.create(
+        articleId,
+        title,
+        slug,
+        excerpt,
+        content,
+        categoryId,
+        authorId
+      );
       article.softDelete(); // set deletedAt
       findByIdMock.mockImplementation(() => Promise.resolve(article));
 
-      await expect(service.restoreArticle(articleId, { id: 'other-user-id', roles: [] })).rejects.toThrow(AuthorizationError);
+      await expect(
+        service.restoreArticle(articleId, { id: 'other-user-id', roles: [] })
+      ).rejects.toThrow(AuthorizationError);
     });
 
     test('restoreArticle should throw ValidationError if article is not deleted', async () => {
-      const article = Article.create(articleId, title, slug, excerpt, content, categoryId, authorId);
+      const article = Article.create(
+        articleId,
+        title,
+        slug,
+        excerpt,
+        content,
+        categoryId,
+        authorId
+      );
       findByIdMock.mockImplementation(() => Promise.resolve(article));
 
-      await expect(service.restoreArticle(articleId, { id: authorId, roles: [] })).rejects.toThrow(ValidationError);
+      await expect(service.restoreArticle(articleId, { id: authorId, roles: [] })).rejects.toThrow(
+        ValidationError
+      );
     });
   });
 });

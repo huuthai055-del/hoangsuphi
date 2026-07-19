@@ -1,7 +1,18 @@
-import { pgTable, uuid, varchar, integer, timestamp, text, pgEnum, uniqueIndex, index, check } from 'drizzle-orm/pg-core';
-import { sql } from 'drizzle-orm';
-import { users } from './users';
 import { generateUuidV7 } from '@/common/utils/uuid';
+import { sql } from 'drizzle-orm';
+import {
+  check,
+  index,
+  integer,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+  varchar,
+} from 'drizzle-orm/pg-core';
+import { users } from './users';
 
 // 1. Enums
 export const ownerTypeEnum = pgEnum('owner_type', ['PLACE', 'BUSINESS', 'ARTICLE', 'ATTRACTION']);
@@ -34,13 +45,13 @@ export const reviews = pgTable(
   (table) => ({
     // Rating check constraint: must be between 1 and 5
     ratingCheck: check('reviews_rating_check', sql`${table.rating} >= 1 AND ${table.rating} <= 5`),
-    
+
     // Partial unique index: A user can only review a specific active entity once.
     // If soft-deleted, they can write another review.
     userOwnerUniqueIdx: uniqueIndex('reviews_user_owner_uniq_idx')
       .on(table.userId, table.ownerType, table.ownerId)
       .where(sql`deleted_at IS NULL`),
-      
+
     // General lookup indexes
     userIdIdx: index('reviews_user_id_idx').on(table.userId),
     ownerIdx: index('reviews_owner_idx').on(table.ownerType, table.ownerId),
@@ -71,7 +82,7 @@ export const favorites = pgTable(
       table.ownerType,
       table.ownerId
     ),
-    
+
     // General lookup indexes
     userIdIdx: index('favorites_user_id_idx').on(table.userId),
     ownerIdx: index('favorites_owner_idx').on(table.ownerType, table.ownerId),

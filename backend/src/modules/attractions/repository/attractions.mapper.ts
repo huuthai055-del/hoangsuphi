@@ -1,5 +1,5 @@
-import { Attraction } from '../domain/attraction.entity';
 import { GPSLocation } from '@/modules/regions/domain/value-objects/gps-location.vo';
+import { Attraction } from '../domain/attraction.entity';
 
 export const AttractionMapper = {
   toDomain(raw: {

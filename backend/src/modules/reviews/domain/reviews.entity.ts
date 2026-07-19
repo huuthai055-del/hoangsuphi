@@ -1,8 +1,5 @@
-import {
-  ImmutableReviewError,
-  InvalidReviewStateTransitionError,
-} from './reviews.errors';
 import { ReviewRating } from './review-rating.value-object';
+import { ImmutableReviewError, InvalidReviewStateTransitionError } from './reviews.errors';
 
 export type OwnerType = 'PLACE' | 'BUSINESS' | 'ARTICLE' | 'ATTRACTION';
 export type ReviewStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
@@ -201,7 +198,7 @@ export class Review {
     }
 
     const newRating = ReviewRating.create(props.rating);
-    
+
     // Check if anything actually changed
     const hasChanged =
       this.props.title !== trimmedTitle ||

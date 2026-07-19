@@ -14,13 +14,13 @@
 -->
 
 # 📋 PROJECT CONTEXT — CỔNG THÔNG TIN DU LỊCH HOÀNG SU PHÌ
-
-> **Cập nhật lần cuối:** 2026-07-16 | **Phiên:** #032 | **Trạng thái:** 🔒 Phase 4.2 Nearby Search — LOCKED
-
+ 
+> **Cập nhật lần cuối:** 2026-07-19 | **Phiên:** #041 | **Trạng thái:** 🚧 Phase 4.5 Email — IN PROGRESS (Step 4.5.2 LOCKED)
+ 
 ---
-
+ 
 ## 1. PROJECT INFORMATION
-
+ 
 | Thuộc tính | Giá trị |
 | :--- | :--- |
 | **Tên dự án** | Cổng thông tin Du lịch Hoàng Su Phì |
@@ -30,7 +30,7 @@
 | **Ngôn ngữ chính** | Tiếng Việt (Ưu tiên) — Hỗ trợ: EN, ZH, KO, JA (Phase sau) |
 | **Thị trường mục tiêu** | Du khách nội địa Việt Nam + khách nước ngoài (backpacker) |
 | **Tạo dự án** | 2026-07-06 |
-| **Trạng thái hiện tại** | 🚧 Phase 4 — Phase 4.1 và Phase 4.2 đã LOCK; Phase 4.3 chưa bắt đầu |
+| **Trạng thái hiện tại** | 🚧 Phase 4.5 Email — IN PROGRESS (Step 4.5.2 LOCKED) |
 
 ### Mục tiêu chiến lược
 
@@ -85,7 +85,7 @@ Phase 3 (2028+):    Tây Bắc → Toàn quốc Việt Nam
 | PostGIS | Spatial — bản đồ, khoảng cách |
 | ltree Extension | Cây địa giới hành chính |
 | Redis 8 | Cache, Rate Limit, Session, Queue |
-| S3 / Cloudinary | Object Storage — media |
+| Cloudinary | Production Object Storage — media; LOCAL chỉ legacy/development/test |
 | ClickHouse | OLAP Analytics |
 | Typesense | Full-text + Vector Search |
 
@@ -121,7 +121,7 @@ Typesense  ClickHouse
 (Search)   (Analytics)
 
 Redis ←→ API Servers (Cache / Queue / Rate Limit)
-S3/Cloudinary ← API Servers (Media upload)
+Cloudinary ← API Servers (Media upload production)
 ```
 
 ### Phân tầng dữ liệu
@@ -132,7 +132,7 @@ S3/Cloudinary ← API Servers (Media upload)
 | Cache | Redis | Hot data, Session |
 | Search | Typesense | Full-text + Vector |
 | OLAP | ClickHouse | Analytics append-only |
-| Media | S3 + Cloudinary | Binary files |
+| Media | Cloudinary production; LOCAL legacy/development/test | Binary files |
 
 ---
 
@@ -204,10 +204,10 @@ scope: api | db | frontend | infra | auth | search | media
 | :--- | :--- |
 | `regions.path` dùng `ltree` | Nhanh hơn `WITH RECURSIVE` 10-100x |
 | `business_types` Reference Table | Thay `VARCHAR` hardcode — mở rộng tự do |
-| `media_links` Polymorphic | 1 bảng thay N join tables cũ |
+| Media ownership | `media.owner_type` + `media.owner_id`; `media_links` không được triển khai trong Phase 4.3 |
 | `reviews` + `favorites` Polymorphic | `entity_type` + `entity_id` — dễ mở rộng |
 | `amenities` chuẩn hóa | Thay JSONB — hỗ trợ filter/search |
-| `media.checksum` SHA256 UNIQUE | Chống upload file trùng |
+| Scoped Media SHA-256 dedup | `(uploaded_by, hash)` cho active unbound media; không dùng global hash-only dedup |
 
 **Migration Status:**
 
@@ -221,7 +221,7 @@ scope: api | db | frontend | infra | auth | search | media
 
 ## 6. API STATUS
 
-> **Trạng thái tổng thể:** Phase 3 core APIs 🔒 LOCKED; Phase 4.1 Search và Phase 4.2 Nearby Search 🔒 LOCKED
+> **Trạng thái tổng thể:** Phase 3 core APIs 🔒 LOCKED; Phase 4.1 Search, Phase 4.2 Nearby Search, Phase 4.3 Media Upload và Phase 4.4 SEO 🔒 LOCKED
 
 | Endpoint | Priority | Trạng thái |
 | :--- | :--- | :--- |
@@ -260,27 +260,20 @@ scope: api | db | frontend | infra | auth | search | media
 | 13 | Identity & Access Control Module — Domain, Repositories, Services, API Endpoints, Middleware, 100% Tests & Locked | #013 | ✅ |
 | 14 | Articles & Tags Module — Domain, Repositories, Services, DTOs, Controllers, Routes, Tests & Locked | #015 | ✅ |
 | 15 | Weather, Notifications, Itineraries, FAQs & Top Lists Modules — Domain, Repositories, Services, DTOs, Controllers, Routes, DI Container, Integration Tests & Locked | #017 | ✅ |
-| 16 | Search Specification & Vietnamese FTS Strategy (Steps 4.1.0–4.1.1) | #025 | ✅ Phê duyệt |
-| 17 | Search FTS migration/index orchestration và read-only Repository (Steps 4.1.2–4.1.3) | #025 | ✅ |
-| 18 | Search Service, signed cursor, DTO, Controller, Route và DI integration (Steps 4.1.4–4.1.5) | #025 | ✅ |
-| 19 | Search & Advanced Filter Phase 4.1 — Steps 4.1.0–4.1.6, API, Price, tests và benchmark record | #027 | 🔒 LOCKED — SLA exception recorded |
-| 20 | Nearby Search Phase 4.2 — PostGIS projection, signed cursor, API, integration tests và benchmark evidence | #032 | 🔒 LOCKED — 85/85 Nearby tests; 25 km DB p95 89,47 ms |
+| 16 | Phase 4.4 SEO — Backend Foundation, Sitemap, Robots, Next.js minimal shell & SSR metadata | #040 | 🔒 LOCKED |
+| 17 | Step 4.5.2 Verify Email — token security, Redis rate limits/idempotency, resend/confirm API và PostgreSQL/Redis integration verification | #041 | 🔒 LOCKED |
 
 ---
 
 ## 8. CURRENT TASK
 
-> **Phiên #032 — 2026-07-16 (PHASE 4.2 FINAL RE-AUDIT)**
+> **Phiên #041 — 2026-07-19 (PHASE 4.5 EMAIL — STEP 4.5.2 LOCKED)**
 
-- [x] Hoàn tất Steps 4.2.0–4.2.6 cho `GET /api/v1/nearby`.
-- [x] Giữ read-only projection: `ST_DWithin`, `ST_Distance`, `UNION ALL`, LATERAL review aggregate và stable keyset ordering.
-- [x] Sửa benchmark fail-open; chỉ cho phép database có hậu tố `_benchmark`, không fallback sang `DATABASE_URL`.
-- [x] Sửa public type `place`, empty scenario và page-two DB cursor dùng `rawDistanceMeters` chính xác.
-- [x] EXPLAIN được sinh trực tiếp từ SQL của repository hiện hành; xóa toàn bộ zero-row/obsolete CTE evidence.
-- [x] Chạy 27 scenarios × 30 mẫu, lưu raw DB/HTTP samples; 25 km DB p95 đạt 89,47 ms.
-- [x] Chạy đầy đủ Nearby suite với database PostGIS riêng: 85 pass, 0 fail, 0 skip; full regression 1052 pass, 0 fail.
-- [x] Xác minh GiST, `reviews_owner_idx`, concurrency 100%, security, visibility và API contract.
-- [x] Hoàn tất final audit và khóa Phase 4.2; Phase 4.3 chưa bắt đầu.
+- [x] Hoàn thành và khóa Contract v0.5 cùng Step 4.5.1 Email Foundation, One-Time Token Repository và Redis infrastructure.
+- [x] Hoàn thành và 🔒 LOCK Step 4.5.2 Verify Email: register integration, resend/confirm API, typed provider-failure policy, Redis rate limit/idempotency và FakeEmailSender.
+- [x] Loại bỏ dummy token persistence; generic resend không còn có thể lỗi foreign key hoặc lộ trạng thái qua timing bounded by provider timeout plus 500ms grace.
+- [x] Xác minh PostgreSQL token/re-send integration, Redis live `SET NX`, typecheck, lint, build và full backend regression: 1246 pass, 67 skip, 0 fail.
+- [x] Cập nhật closeout và nhận phê duyệt người dùng để khóa Step 4.5.2.
 
 ---
 
@@ -288,18 +281,17 @@ scope: api | db | frontend | infra | auth | search | media
 
 ### 🔴 Ưu tiên cao (làm ngay)
 
-| # | Nhiệm vụ |
-| :--- | :--- |
-| N1 | Chờ chỉ đạo của người dùng trước khi lập đặc tả Phase 4.3 Media Upload; không tự động bắt đầu |
+| # | Nhiệm vụ | Phụ thuộc |
+| :--- | :--- | :--- |
+| N1 | Step 4.5.3 Forgot Password & Reset | Step 4.5.2 LOCKED |
 
-### 🟡 Ưu tiên trung bình (sau N1-N5)
+### 🟡 Ưu tiên trung bình (sau N1)
 
 | # | Nhiệm vụ | Phụ thuộc |
 | :--- | :--- | :--- |
-| N6 | Phase 4.3 Cloudinary Media Upload | N5 |
-| N7 | Phase 4.4 SEO | N5 |
-| N8 | Phase 4.5 Email qua Resend | N5 |
-| N9 | Phase 4.6–4.8 Redirect, SQL Recommendation, Harvest Status | N5 |
+| N2 | Phase 4.6 Redirect Management (CRUD redirects, 301/302 support) | Phase 4.4 |
+| N3 | Phase 4.7 Recommendation (SQL-based recommendation queries) | Phase 4.4 |
+| N4 | Phase 4.8 Live Harvest Status (Harvest timeline & updates) | Phase 4.4 |
 
 ### 🟢 Ưu tiên thấp (Phase 2)
 
@@ -321,7 +313,7 @@ scope: api | db | frontend | infra | auth | search | media
 | :--- | :--- | :--- | :--- |
 | I1 | Hosting: Vercel + VPS riêng hay Full VPS? | 🔴 Cao | ⬜ Chờ quyết định |
 | I2 | Domain `hoangsuphi.vn` đã đăng ký chưa? | 🔴 Cao | ⬜ Chờ xác nhận |
-| I3 | Media Storage: Cloudinary (có phí) hay S3 self-managed? | 🟡 TB | ⬜ Chờ quyết định |
+| I3 | Media Storage: Cloudinary (có phí) hay S3 self-managed? | 🟢 | ✅ Chọn Cloudinary cho production Phase 4.3; LOCAL chỉ legacy/development/test |
 | I4 | Analytics: GA4 + ClickHouse hay chỉ GA4? | 🟡 TB | ⬜ Chờ quyết định |
 | I5 | Map: Mapbox (có phí) hay OpenStreetMap/Leaflet (miễn phí)? | 🟡 TB | ⬜ Chờ quyết định |
 | I6 | CMS: Tự xây Admin hay dùng Payload CMS / Directus? | 🟡 TB | ⬜ Chờ quyết định |
@@ -337,7 +329,7 @@ scope: api | db | frontend | infra | auth | search | media
 | D1 | 2026-07-06 | Không làm OTA đặt phòng | Content portal có lợi thế bản địa — không thể cạnh tranh Booking/Agoda |
 | D2 | 2026-07-06 | `ltree` cho `regions.path` | `WITH RECURSIVE` chậm; ltree + GIST index cực nhanh |
 | D3 | 2026-07-06 | UUIDv7 cho tất cả PK | UUIDv4 gây B-Tree fragmentation; UUIDv7 time-ordered |
-| D4 | 2026-07-06 | Polymorphic design cho `media_links`, `reviews`, `favorites` | 1 bảng thay N join tables — dễ mở rộng entity mới |
+| D4 | 2026-07-06 | Polymorphic design cho `media_links`, `reviews`, `favorites` | Quyết định Media đã bị D23 thay thế; reviews/favorites giữ thiết kế polymorphic. |
 | D5 | 2026-07-06 | Reference Tables cho `business_types`, `attraction_categories` | VARCHAR hardcode không mở rộng được |
 | D6 | 2026-07-06 | Bỏ B2B Portal ở Phase 1 | Chưa có traffic; focus content trước |
 | D7 | 2026-07-06 | ClickHouse cho Analytics | OLAP scan sẽ giết hiệu năng OLTP nếu chạy chung PostgreSQL |
@@ -356,6 +348,8 @@ scope: api | db | frontend | infra | auth | search | media
 | D20 | 2026-07-15 | LOCK Phase 4.1 với một SLA exception được ghi nhận | Mọi contract, Price, thumbnail, production decision, benchmark, integration và final audit gate đã đóng; `<100 ms` vẫn không đạt và không được đánh dấu pass. |
 | D21 | 2026-07-16 | Nearby là read-only PostGIS projection độc lập | Dùng `ST_DWithin`/`ST_Distance`, `UNION ALL`, LATERAL rating, HMAC keyset cursor; không hydrate Domain Entity hoặc sửa Domain Service Phase 3. |
 | D22 | 2026-07-16 | Nearby operational performance target | Warm DB p95 < 150 ms cho bán kính đến 25 km, limit 20, tối thiểu 30 mẫu trên dataset MVP đại diện; đây không phải public network-latency promise. Closeout đạt 89,47 ms. |
+| D23 | 2026-07-17 | Media dùng owner pair trên bảng `media`; không tạo `media_links` | Phase 4.3 giữ `media.owner_type` + `media.owner_id` là nguồn dữ liệu chính; upload mới bắt đầu unbound và dedup theo uploader/hash. |
+| D24 | 2026-07-17 | LOCK Phase 4.3 với Cloudinary production adapter | Expanded smoke bằng dedicated `CLOUDINARY_TEST_*` đạt upload/verify/download/decode/delete cho master + 3 variants, 25 assertions và 0 asset còn lại; mọi final gate đạt. |
 
 ---
 
@@ -425,7 +419,7 @@ scope: api | db | frontend | infra | auth | search | media
 **Việc đã làm:**
 - Tích hợp 19 cải tiến từ expert feedback vào DB Design V5:
   - Reference Tables: `business_types`, `attraction_categories`
-  - Polymorphic: `media_links`, `reviews`, `favorites`
+  - Polymorphic được đề xuất ban đầu: `media_links`, `reviews`, `favorites` (`media_links` sau đó không được triển khai; xem D23)
   - EXIF metadata đầy đủ cho `media`
   - `amenities` + `business_amenities` chuẩn hóa
   - `regions.path` → `ltree` extension
@@ -581,7 +575,7 @@ scope: api | db | frontend | infra | auth | search | media
 
 | ID | Vấn đề | Mức độ | Trạng thái | Ghi chú |
 | :--- | :--- | :--- | :--- | :--- |
-| P1 | `media_links` polymorphic không có DB-level FK | 🟡 | 🔓 Chấp nhận | Trade-off của Polymorphic; validation ở Application layer |
+| P1 | Tài liệu cũ mô tả `media_links` nhưng schema thực tế dùng owner pair trên `media` | 🟢 | ✅ Đã giải quyết | D23 xác nhận `media_links` không được triển khai trong Phase 4.3. |
 | P2 | UUIDv7 chưa có native support PostgreSQL 16 | 🟡 | ⬜ Cần giải pháp | Dùng extension `pg_uuidv7` hoặc generate ở App layer |
 | P3 | `ltree` label không chứa dấu gạch ngang `-` | 🟡 | ⬜ Cần xử lý | Slug có `-` cần convert sang `_` khi lưu vào ltree path |
 | P4 | Debezium CDC cần Kafka/Redpanda để buffer | 🟡 | ⬜ Cân nhắc | Phase 1 có thể sync thủ công; CDC khi traffic lớn hơn |
@@ -717,5 +711,67 @@ scope: api | db | frontend | infra | auth | search | media
 
 ---
 
+### 📅 Phiên #036 — 2026-07-17
+
+**Việc đã làm:**
+- Thiết lập và soạn thảo đặc tả Step 4.4.0 (DRAFT COMPLETE — AWAITING USER APPROVAL).
+- Xác lập bản đồ 10 route templates MVP (8 route dữ liệu động và 2 route shell/cấu hình), các Schema JSON-LD tương ứng, và cấu hình kiểm tra môi trường cho biến `PUBLIC_SITE_URL`.
+- Phân định rõ ràng trách nhiệm Backend (cấp sitemap, robots, data projection, cache) và Frontend (Next.js render metadata HTML & JSON-LD).
+- Lên kế hoạch đặt thư mục frontend minimal shell tại `/frontend` ở root workspace.
+
+**Kết luận:** `🚧 STEP 4.4.0 SEO CONTRACT — DRAFT COMPLETE — AWAITING USER APPROVAL`. Chưa bắt đầu Step 4.4.1.
+
+---
+
+### 📅 Phiên #037 — 2026-07-17
+
+**Việc đã làm:**
+- Sửa toàn bộ findings review lần 3 trong SEO specification v0.4 mà không chỉnh production code/schema/package.
+- Bổ sung public SEO projection endpoints và discriminated DTO làm ranh giới Backend/Frontend.
+- Chốt `/tien-ich/:slug`, Media resolver/interface, robots/noindex tương thích, Region render/index split, typed JSON-LD, lastmod đáng tin cậy và benchmark cold/warm.
+- Đồng bộ SEO readiness report thành historical snapshot superseded và sửa roadmap về lộ trình 4 step hiện hành.
+
+**Kết luận:** `🚧 STEP 4.4.0 SEO CONTRACT v0.4 — DRAFT COMPLETE — AWAITING USER APPROVAL`. Không bắt đầu Step 4.4.1.
+
+---
+
+### 📅 Phiên #038 — 2026-07-17
+
+**Việc đã làm:**
+- Người dùng phê duyệt toàn bộ SEO specification v0.4 và 20/20 architecture decisions.
+- Ghi Approval Record, khóa Step 4.4.0 làm implementation contract và cho phép bắt đầu Step 4.4.1.
+- Chuẩn bị prompt handoff Step 4.4.1; không triển khai backend/frontend trong phiên approval này.
+
+**Kết luận:** `✅ STEP 4.4.0 SEO CONTRACT v0.4 — APPROVED/LOCKED`. `⬜ STEP 4.4.1 — AUTHORIZED, NOT STARTED`.
+
+---
+
+### 📅 Phiên #039 — 2026-07-18
+
+**Việc đã làm:**
+- Hoàn tác toàn bộ các thay đổi Domain Phase 3 locked (đảm bảo cấm can thiệp khi chưa có controlled-unlock riêng).
+- Khắc phục triệt để lỗi typecheck `tsc --noEmit` và test timeout 5000ms trong `SharpImageProcessor`.
+- Chuyển toàn bộ logic truy cập database trực tiếp của SEO Service vào SEO Repository, đảm bảo projection/repository boundary.
+- Triển khai PostgreSQL integration tests thật chạy trên database PostgreSQL (khi có URL test) kết hợp mock query count.
+- Bổ sung evidence cho benchmark cold/warm p95, XML schema validation, cache-hit (không truy cập DB), và expired-cache fail-closed (HTTP 503).
+- Cập nhật tài liệu `walkthrough.md` và `task.md` với đầy đủ bằng chứng thực tế.
+
+**Kết luận:** `✅ STEP 4.4.1 BACKEND SEO FOUNDATION — COMPLETED`. `⬜ STEP 4.4.2 — NOT STARTED`.
+
+---
+
+### 📅 Phiên #040 — 2026-07-18
+ 
+**Việc đã làm:**
+- Triển khai thành công Backend SEO Foundation và minimal Next.js Frontend SEO rendering shell.
+- Khắc phục triệt để các lỗi typecheck và linting trên cả backend và frontend.
+- Tối ưu hóa mockContext và các kiểu dữ liệu test để loại bỏ hoàn toàn explicit `any` và non-null assertions.
+- Chạy thành công toàn bộ integration suite: 28 unit tests, 18 real SSR runtime integration tests, 1179 backend tests, sitemap XML validation và cache ETags.
+- Xuất bản Closeout Report chi tiết và chính thức khóa Phase 4.4 SEO.
+ 
+**Kết luận:** `🔒 PHASE 4.4 SEO — LOCKED`. Phase 4.5 chưa bắt đầu.
+ 
+---
+ 
 *Tài liệu được tạo và bảo trì bởi AI Agent Antigravity (Google DeepMind)*
-*Cập nhật lần cuối: 2026-07-16*
+*Cập nhật lần cuối: 2026-07-18*

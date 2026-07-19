@@ -1,12 +1,12 @@
-import { describe, test, expect, beforeEach, afterEach, spyOn } from 'bun:test';
-import {
-  SessionService,
-  type IUserSessionRepository,
-  type IRefreshTokenRepository,
-  type UserSessionModel,
-  type RefreshTokenModel,
-} from './session.service';
+import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
 import { AuthenticationError, NotFoundError } from '@/common/errors/http.errors';
+import {
+  type IRefreshTokenRepository,
+  type IUserSessionRepository,
+  type RefreshTokenModel,
+  SessionService,
+  type UserSessionModel,
+} from './session.service';
 
 describe('SessionService', () => {
   let service: SessionService;

@@ -1,4 +1,4 @@
-import { FaqDomainError, InvalidFaqStateError, ImmutableFaqError } from './faq.errors';
+import { FaqDomainError, ImmutableFaqError, InvalidFaqStateError } from './faq.errors';
 
 export type FaqStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
 
@@ -72,16 +72,36 @@ export class Faq {
 
   // ─── Getters ────────────────────────────────────────────────────────────────
 
-  public get id(): string { return this.props.id; }
-  public get question(): string { return this.props.question; }
-  public get answer(): string { return this.props.answer; }
-  public get category(): string | null { return this.props.category; }
-  public get displayOrder(): number { return this.props.displayOrder; }
-  public get status(): FaqStatus { return this.props.status; }
-  public get createdBy(): string { return this.props.createdBy; }
-  public get createdAt(): Date { return this.props.createdAt; }
-  public get updatedAt(): Date { return this.props.updatedAt; }
-  public get deletedAt(): Date | null { return this.props.deletedAt; }
+  public get id(): string {
+    return this.props.id;
+  }
+  public get question(): string {
+    return this.props.question;
+  }
+  public get answer(): string {
+    return this.props.answer;
+  }
+  public get category(): string | null {
+    return this.props.category;
+  }
+  public get displayOrder(): number {
+    return this.props.displayOrder;
+  }
+  public get status(): FaqStatus {
+    return this.props.status;
+  }
+  public get createdBy(): string {
+    return this.props.createdBy;
+  }
+  public get createdAt(): Date {
+    return this.props.createdAt;
+  }
+  public get updatedAt(): Date {
+    return this.props.updatedAt;
+  }
+  public get deletedAt(): Date | null {
+    return this.props.deletedAt;
+  }
 
   // ─── Guard ──────────────────────────────────────────────────────────────────
 

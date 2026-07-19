@@ -1,6 +1,6 @@
-import { expect, test, describe } from 'bun:test';
-import { TouristPlaceMapper } from './places.mapper';
+import { describe, expect, test } from 'bun:test';
 import { TouristPlace } from '../domain/place.entity';
+import { TouristPlaceMapper } from './places.mapper';
 
 describe('TouristPlaceMapper', () => {
   test('should map raw DB row to domain entity and back', () => {

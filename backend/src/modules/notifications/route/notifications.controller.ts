@@ -1,13 +1,13 @@
-import type { Context } from 'hono';
-import type { AppEnv } from '@/common/types/app-env';
-import type { NotificationService } from '../service/notification.service';
-import { mapNotificationToResponse } from './mappers/notifications.mapper';
 import { Roles } from '@/common/constants/roles';
+import type { AppEnv } from '@/common/types/app-env';
+import type { Context } from 'hono';
 import type {
   CreateNotificationRequestDto,
-  NotificationIdParamsDto,
   NotificationFilterQueryDto,
+  NotificationIdParamsDto,
 } from '../dto/notifications.dto';
+import type { NotificationService } from '../service/notification.service';
+import { mapNotificationToResponse } from './mappers/notifications.mapper';
 
 export class NotificationsController {
   constructor(private readonly service: NotificationService) {}

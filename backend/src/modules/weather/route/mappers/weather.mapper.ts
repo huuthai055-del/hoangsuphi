@@ -1,4 +1,9 @@
-import type { CurrentWeather, Forecast, CurrentWeatherResponseDto, ForecastResponseDto } from '../../dto/weather.dto';
+import type {
+  CurrentWeather,
+  CurrentWeatherResponseDto,
+  Forecast,
+  ForecastResponseDto,
+} from '../../dto/weather.dto';
 
 export function mapCurrentWeatherToResponse(weather: CurrentWeather): CurrentWeatherResponseDto {
   return {

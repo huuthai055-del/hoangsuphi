@@ -1,5 +1,5 @@
-import type { Notification, NotificationType } from '../domain/notification.entity';
 import type { PaginatedResult, PaginationOptions } from '@/common/types/pagination';
+import type { Notification, NotificationType } from '../domain/notification.entity';
 
 export type NotificationSortField = 'createdAt' | 'title' | 'type' | 'isRead';
 

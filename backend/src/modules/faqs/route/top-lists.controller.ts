@@ -1,17 +1,17 @@
-import type { Context } from 'hono';
-import type { TopListService } from '../service/top-list.service';
-import { mapTopListToResponse } from './mappers/top-lists.mapper';
 import { AuthenticationError } from '@/common/errors/http.errors';
 import type { AuthenticatedUser } from '@/modules/identity/middleware/identity.context';
+import type { Context } from 'hono';
 import type {
-  CreateTopListRequestDto,
-  UpdateTopListRequestDto,
-  TopListIdParamsDto,
   AddTopListItemRequestDto,
-  TopListItemIdParamsDto,
+  CreateTopListRequestDto,
   ReorderTopListItemsRequestDto,
   TopListFilterQueryDto,
+  TopListIdParamsDto,
+  TopListItemIdParamsDto,
+  UpdateTopListRequestDto,
 } from '../dto/top-lists.dto';
+import type { TopListService } from '../service/top-list.service';
+import { mapTopListToResponse } from './mappers/top-lists.mapper';
 
 function requireAuthenticatedUser(c: Context): AuthenticatedUser {
   const user = c.get('user');

@@ -1,8 +1,8 @@
 import {
-  InvalidNotificationStateError,
   ImmutableNotificationError,
-  InvalidNotificationTitleError,
   InvalidNotificationMessageError,
+  InvalidNotificationStateError,
+  InvalidNotificationTitleError,
   InvalidNotificationUserError,
 } from './notification.errors';
 
@@ -78,16 +78,36 @@ export class Notification {
 
   // ─── Getters ────────────────────────────────────────────────────────────────
 
-  public get id(): string { return this.props.id; }
-  public get userId(): string { return this.props.userId; }
-  public get title(): string { return this.props.title; }
-  public get message(): string { return this.props.message; }
-  public get type(): NotificationType { return this.props.type; }
-  public get isRead(): boolean { return this.props.isRead; }
-  public get dismissedAt(): Date | null { return this.props.dismissedAt; }
-  public get createdAt(): Date { return this.props.createdAt; }
-  public get updatedAt(): Date { return this.props.updatedAt; }
-  public get deletedAt(): Date | null { return this.props.deletedAt; }
+  public get id(): string {
+    return this.props.id;
+  }
+  public get userId(): string {
+    return this.props.userId;
+  }
+  public get title(): string {
+    return this.props.title;
+  }
+  public get message(): string {
+    return this.props.message;
+  }
+  public get type(): NotificationType {
+    return this.props.type;
+  }
+  public get isRead(): boolean {
+    return this.props.isRead;
+  }
+  public get dismissedAt(): Date | null {
+    return this.props.dismissedAt;
+  }
+  public get createdAt(): Date {
+    return this.props.createdAt;
+  }
+  public get updatedAt(): Date {
+    return this.props.updatedAt;
+  }
+  public get deletedAt(): Date | null {
+    return this.props.deletedAt;
+  }
 
   // ─── Guards ──────────────────────────────────────────────────────────────────
 
@@ -99,7 +119,9 @@ export class Notification {
 
   private ensureNotDismissed(): void {
     if (this.props.dismissedAt) {
-      throw new InvalidNotificationStateError('Cannot modify a dismissed notification (terminal state)');
+      throw new InvalidNotificationStateError(
+        'Cannot modify a dismissed notification (terminal state)'
+      );
     }
   }
 

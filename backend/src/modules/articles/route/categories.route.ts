@@ -1,24 +1,24 @@
+import { validateBody, validateParams } from '@/middleware/validator';
 import { Hono } from 'hono';
-import { CategoriesController } from './categories.controller';
-import { CategoriesService } from '../service/categories.service';
-import { DrizzleCategoriesRepository } from '../repository/categories.repository';
 import {
+  CategoryCodeParamsSchema,
+  CategoryIdParamsSchema,
   CreateCategorySchema,
   UpdateCategorySchema,
-  CategoryIdParamsSchema,
-  CategoryCodeParamsSchema,
 } from '../dto/categories.dto';
-import { validateBody, validateParams } from '@/middleware/validator';
+import { DrizzleCategoriesRepository } from '../repository/categories.repository';
+import { CategoriesService } from '../service/categories.service';
+import { CategoriesController } from './categories.controller';
 
-import { DrizzleUserRepository } from '@/modules/identity/repository/users.repository';
-import { DrizzleSessionRepository } from '@/modules/identity/repository/sessions.repository';
-import { DrizzleRefreshTokenRepository } from '@/modules/identity/repository/refresh-tokens.repository';
-import { DrizzlePermissionRepository } from '@/modules/identity/repository/permissions.repository';
-import { TokenService } from '@/modules/identity/service/token.service';
-import { SessionService } from '@/modules/identity/service/session.service';
+import { logger } from '@/lib/logger';
 import { authMiddleware } from '@/modules/identity/middleware/auth.middleware';
 import { requirePermission } from '@/modules/identity/middleware/permission.middleware';
-import { logger } from '@/lib/logger';
+import { DrizzlePermissionRepository } from '@/modules/identity/repository/permissions.repository';
+import { DrizzleRefreshTokenRepository } from '@/modules/identity/repository/refresh-tokens.repository';
+import { DrizzleSessionRepository } from '@/modules/identity/repository/sessions.repository';
+import { DrizzleUserRepository } from '@/modules/identity/repository/users.repository';
+import { SessionService } from '@/modules/identity/service/session.service';
+import { TokenService } from '@/modules/identity/service/token.service';
 
 const categoriesRouter = new Hono();
 

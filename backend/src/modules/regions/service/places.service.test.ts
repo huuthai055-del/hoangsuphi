@@ -13,14 +13,14 @@ mock.module('@/lib/database/client', () => {
   };
 });
 
-import { expect, test, describe, beforeEach } from 'bun:test';
-import { PlacesService, type CreatePlaceCommand, type UpdatePlaceCommand } from './places.service';
-import type { IRegionsRepository } from '../repository/regions-repository.interface';
-import type { ITouristPlacesRepository } from '../repository/places-repository.interface';
-import { Region } from '../domain/region.aggregate';
-import { LtreePath } from '../domain/value-objects/ltree-path.vo';
+import { beforeEach, describe, expect, test } from 'bun:test';
 import { TouristPlace } from '../domain/place.entity';
+import { Region } from '../domain/region.aggregate';
 import { GPSLocation } from '../domain/value-objects/gps-location.vo';
+import { LtreePath } from '../domain/value-objects/ltree-path.vo';
+import type { ITouristPlacesRepository } from '../repository/places-repository.interface';
+import type { IRegionsRepository } from '../repository/regions-repository.interface';
+import { type CreatePlaceCommand, PlacesService, type UpdatePlaceCommand } from './places.service';
 
 describe('PlacesService', () => {
   let findRegionByIdMock: ReturnType<typeof mock>;
@@ -313,7 +313,7 @@ describe('PlacesService', () => {
       new GPSLocation(104.5, 22.6),
       null,
       null,
-      'active',
+      'inactive',
       new Date(),
       new Date(),
       null

@@ -6,14 +6,14 @@ import {
   type SearchFtsIndexDefinition,
 } from './fts-index-manifest';
 import {
+  type SearchFtsEnvironmentAudit,
+  type SearchFtsIndexCatalogEntry,
+  type SearchFtsIndexStore,
   SearchFtsMigrationError,
   parseSearchFtsMigrationMode,
   runSearchFtsIndexMigration,
   validateEnvironment,
   validateIndexCatalogEntry,
-  type SearchFtsEnvironmentAudit,
-  type SearchFtsIndexCatalogEntry,
-  type SearchFtsIndexStore,
 } from './fts-index-migrator';
 
 function createEnvironment(

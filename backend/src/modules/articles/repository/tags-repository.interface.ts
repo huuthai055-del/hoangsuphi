@@ -1,5 +1,5 @@
-import type { Tag } from '../domain/tag.entity';
 import type { TransactionClient } from '@/lib/database/client';
+import type { Tag } from '../domain/tag.entity';
 
 export interface ListTagsOptions {
   page?: number;

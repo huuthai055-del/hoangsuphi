@@ -1,5 +1,5 @@
-import pino from 'pino';
 import { env, isDev } from '@/config/env';
+import pino from 'pino';
 import { requestStore } from './context';
 
 const redactPaths = [

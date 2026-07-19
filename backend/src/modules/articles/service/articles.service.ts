@@ -1,23 +1,28 @@
+import {
+  AuthorizationError,
+  ConflictError,
+  NotFoundError,
+  ValidationError,
+} from '@/common/errors/http.errors';
+import { slugify } from '@/common/utils/slug';
+import { generateUuidV7 } from '@/common/utils/uuid';
+import { runInTransaction } from '@/lib/database/client';
+import { ArticleDomainError } from '../domain/article-errors';
+import { Article } from '../domain/article.entity';
 import type {
   IArticlesRepository,
-  SearchArticlesFilter,
-  PaginationOptions,
-  SortOptions,
   PaginatedResult,
+  PaginationOptions,
+  SearchArticlesFilter,
+  SortOptions,
 } from '../repository/articles-repository.interface';
 import type { ICategoriesRepository } from '../repository/categories-repository.interface';
-import type { ITagsRepository } from '../repository/tags-repository.interface';
-import type { ILogger, IClock } from './interfaces';
-import { Article } from '../domain/article.entity';
-import { ArticleDomainError } from '../domain/article-errors';
-import { generateUuidV7 } from '@/common/utils/uuid';
-import { slugify } from '@/common/utils/slug';
-import { NotFoundError, ConflictError, ValidationError, AuthorizationError } from '@/common/errors/http.errors';
-import { runInTransaction } from '@/lib/database/client';
 import {
   DuplicateKeyRepositoryError,
   EntityNotFoundRepositoryError,
 } from '../repository/repository-errors';
+import type { ITagsRepository } from '../repository/tags-repository.interface';
+import type { IClock, ILogger } from './interfaces';
 
 export interface CreateArticleCommand {
   id?: string;
@@ -60,20 +65,26 @@ export class ArticlesService {
     try {
       const result = await fn();
       const executionTime = Math.round(performance.now() - startTime);
-      this.logger.info({
-        ...context,
-        executionTime,
-        action,
-      }, `Article action ${action} completed successfully`);
+      this.logger.info(
+        {
+          ...context,
+          executionTime,
+          action,
+        },
+        `Article action ${action} completed successfully`
+      );
       return result;
     } catch (error) {
       const executionTime = Math.round(performance.now() - startTime);
-      this.logger.error({
-        ...context,
-        executionTime,
-        action,
-        error: error instanceof Error ? error.message : String(error),
-      }, `Article action ${action} failed`);
+      this.logger.error(
+        {
+          ...context,
+          executionTime,
+          action,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        `Article action ${action} failed`
+      );
       throw error;
     }
   }
@@ -93,7 +104,10 @@ export class ArticlesService {
     }
   }
 
-  private ensureNotArchived(article: Article, message = 'Cannot perform operation on an archived article'): void {
+  private ensureNotArchived(
+    article: Article,
+    message = 'Cannot perform operation on an archived article'
+  ): void {
     if (article.status === 'archived') {
       throw new ValidationError(message);
     }
@@ -106,7 +120,10 @@ export class ArticlesService {
     }
   }
 
-  public async getArticleById(id: string, options?: { includeDeleted?: boolean }): Promise<Article> {
+  public async getArticleById(
+    id: string,
+    options?: { includeDeleted?: boolean }
+  ): Promise<Article> {
     const article = await this.articlesRepo.findById(id, options);
     if (!article) {
       throw new NotFoundError(`Article not found with ID: ${id}`);
@@ -114,7 +131,10 @@ export class ArticlesService {
     return article;
   }
 
-  public async getArticleBySlug(slug: string, options?: { includeDeleted?: boolean }): Promise<Article> {
+  public async getArticleBySlug(
+    slug: string,
+    options?: { includeDeleted?: boolean }
+  ): Promise<Article> {
     const cleanSlug = (slug || '').trim().toLowerCase();
     const article = await this.articlesRepo.findBySlug(cleanSlug, options);
     if (!article) {
@@ -132,69 +152,78 @@ export class ArticlesService {
   }
 
   public async createArticle(command: CreateArticleCommand): Promise<Article> {
-    return this.executeWithLogging('create_article', { title: command.title, slug: command.slug }, async () => {
-      // 1. Tạo thực thể Domain trước để tự bảo vệ invariants (không duplicate validation ở Service)
-      const id = command.id ?? generateUuidV7();
-      const slug = (command.slug !== undefined && command.slug !== null)
-        ? command.slug.trim()
-        : slugify(command.title || '');
+    return this.executeWithLogging(
+      'create_article',
+      { title: command.title, slug: command.slug },
+      async () => {
+        // 1. Tạo thực thể Domain trước để tự bảo vệ invariants (không duplicate validation ở Service)
+        const id = command.id ?? generateUuidV7();
+        const slug =
+          command.slug !== undefined && command.slug !== null
+            ? command.slug.trim()
+            : slugify(command.title || '');
 
-      const article = this.runDomain(() =>
-        Article.create(
-          id,
-          command.title,
-          slug,
-          command.excerpt,
-          command.content,
-          command.categoryId,
-          command.authorId,
-          command.thumbnailId ?? null,
-          this.clock.now()
-        )
-      );
+        const article = this.runDomain(() =>
+          Article.create(
+            id,
+            command.title,
+            slug,
+            command.excerpt,
+            command.content,
+            command.categoryId,
+            command.authorId,
+            command.thumbnailId ?? null,
+            this.clock.now()
+          )
+        );
 
-      // 2. Kiểm tra Business Constraints dựa trên thực thể hợp lệ đã khởi tạo
-      const categoryExists = await this.categoriesRepo.exists(article.categoryId);
-      if (!categoryExists) {
-        throw new NotFoundError(`Category not found with ID: ${article.categoryId}`);
-      }
-
-      if (article.slug) {
-        const slugExists = await this.articlesRepo.existsBySlug(article.slug);
-        if (slugExists) {
-          throw new ConflictError(`Article slug already exists: ${article.slug}`);
+        // 2. Kiểm tra Business Constraints dựa trên thực thể hợp lệ đã khởi tạo
+        const categoryExists = await this.categoriesRepo.exists(article.categoryId);
+        if (!categoryExists) {
+          throw new NotFoundError(`Category not found with ID: ${article.categoryId}`);
         }
-      }
 
-      if (command.tagIds && command.tagIds.length > 0) {
-        const uniqueTagIds = [...new Set(command.tagIds)];
-        const foundTags = await this.tagsRepo.findByIds(uniqueTagIds);
-        if (foundTags.length !== uniqueTagIds.length) {
-          throw new ValidationError('One or more associated tags do not exist');
-        }
-      }
-
-      return runInTransaction(async (tx) => {
-        try {
-          await this.articlesRepo.save(article, tx);
-        } catch (err) {
-          if (err instanceof DuplicateKeyRepositoryError) {
-            throw new ConflictError(`Article slug already exists: ${slug}`);
+        if (article.slug) {
+          const slugExists = await this.articlesRepo.existsBySlug(article.slug);
+          if (slugExists) {
+            throw new ConflictError(`Article slug already exists: ${article.slug}`);
           }
-          throw err;
         }
 
         if (command.tagIds && command.tagIds.length > 0) {
           const uniqueTagIds = [...new Set(command.tagIds)];
-          await this.articlesRepo.addTagsToArticle(id, uniqueTagIds, tx);
+          const foundTags = await this.tagsRepo.findByIds(uniqueTagIds);
+          if (foundTags.length !== uniqueTagIds.length) {
+            throw new ValidationError('One or more associated tags do not exist');
+          }
         }
 
-        return article;
-      });
-    });
+        return runInTransaction(async (tx) => {
+          try {
+            await this.articlesRepo.save(article, tx);
+          } catch (err) {
+            if (err instanceof DuplicateKeyRepositoryError) {
+              throw new ConflictError(`Article slug already exists: ${slug}`);
+            }
+            throw err;
+          }
+
+          if (command.tagIds && command.tagIds.length > 0) {
+            const uniqueTagIds = [...new Set(command.tagIds)];
+            await this.articlesRepo.addTagsToArticle(id, uniqueTagIds, tx);
+          }
+
+          return article;
+        });
+      }
+    );
   }
 
-  public async updateArticle(id: string, command: UpdateArticleCommand, caller: { id: string; roles: string[] }): Promise<Article> {
+  public async updateArticle(
+    id: string,
+    command: UpdateArticleCommand,
+    caller: { id: string; roles: string[] }
+  ): Promise<Article> {
     return this.executeWithLogging('update_article', { articleId: id }, async () => {
       const article = await this.articlesRepo.findById(id, { includeDeleted: true });
       if (!article) {
@@ -345,31 +374,38 @@ export class ArticlesService {
   }
 
   public async rejectArticle(id: string, reason?: string): Promise<Article> {
-    return this.executeWithLogging('reject_review', { articleId: id, reason: reason ?? '' }, async () => {
-      const article = await this.articlesRepo.findById(id, { includeDeleted: false });
-      if (!article) {
-        throw new NotFoundError(`Article not found with ID: ${id}`);
-      }
-
-      this.ensureNotArchived(article);
-
-      this.runDomain(() => article.rejectReview(this.clock.now()));
-
-      return runInTransaction(async (tx) => {
-        try {
-          await this.articlesRepo.update(article, tx);
-        } catch (err) {
-          if (err instanceof EntityNotFoundRepositoryError) {
-            throw new NotFoundError(`Article not found with ID: ${id}`);
-          }
-          throw err;
+    return this.executeWithLogging(
+      'reject_review',
+      { articleId: id, reason: reason ?? '' },
+      async () => {
+        const article = await this.articlesRepo.findById(id, { includeDeleted: false });
+        if (!article) {
+          throw new NotFoundError(`Article not found with ID: ${id}`);
         }
-        return article;
-      });
-    });
+
+        this.ensureNotArchived(article);
+
+        this.runDomain(() => article.rejectReview(this.clock.now()));
+
+        return runInTransaction(async (tx) => {
+          try {
+            await this.articlesRepo.update(article, tx);
+          } catch (err) {
+            if (err instanceof EntityNotFoundRepositoryError) {
+              throw new NotFoundError(`Article not found with ID: ${id}`);
+            }
+            throw err;
+          }
+          return article;
+        });
+      }
+    );
   }
 
-  public async archiveArticle(id: string, caller: { id: string; roles: string[] }): Promise<Article> {
+  public async archiveArticle(
+    id: string,
+    caller: { id: string; roles: string[] }
+  ): Promise<Article> {
     return this.executeWithLogging('archive_article', { articleId: id }, async () => {
       const article = await this.articlesRepo.findById(id, { includeDeleted: false });
       if (!article) {
@@ -437,7 +473,10 @@ export class ArticlesService {
     });
   }
 
-  public async restoreArticle(id: string, caller: { id: string; roles: string[] }): Promise<Article> {
+  public async restoreArticle(
+    id: string,
+    caller: { id: string; roles: string[] }
+  ): Promise<Article> {
     return this.executeWithLogging('restore_article', { articleId: id }, async () => {
       const article = await this.articlesRepo.findById(id, { includeDeleted: true });
       if (!article) {
@@ -466,7 +505,11 @@ export class ArticlesService {
     });
   }
 
-  public async bindTags(articleId: string, tagIds: string[], caller: { id: string; roles: string[] }): Promise<void> {
+  public async bindTags(
+    articleId: string,
+    tagIds: string[],
+    caller: { id: string; roles: string[] }
+  ): Promise<void> {
     if (!tagIds || tagIds.length === 0) {
       return;
     }
@@ -494,7 +537,11 @@ export class ArticlesService {
     });
   }
 
-  public async removeTags(articleId: string, tagIds: string[], caller: { id: string; roles: string[] }): Promise<void> {
+  public async removeTags(
+    articleId: string,
+    tagIds: string[],
+    caller: { id: string; roles: string[] }
+  ): Promise<void> {
     if (!tagIds || tagIds.length === 0) {
       return;
     }

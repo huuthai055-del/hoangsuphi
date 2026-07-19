@@ -1,7 +1,7 @@
-import { db, type TransactionClient } from '@/lib/database/client';
+import { type TransactionClient, db } from '@/lib/database/client';
+import { roles, userRoles } from '@/lib/database/schema/references';
 import { users } from '@/lib/database/schema/users';
-import { userRoles, roles } from '@/lib/database/schema/references';
-import { eq, and, isNull } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import type { User } from '../domain/user.entity';
 import type { IUserRepository } from './users-repository.interface';
 import { UserMapper } from './users.mapper';

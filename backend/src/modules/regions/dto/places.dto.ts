@@ -1,5 +1,5 @@
-import { z } from 'zod';
 import { slugify } from '@/common/utils/slug';
+import { z } from 'zod';
 
 // ==========================================
 // REQUEST SCHEMAS & DTOs

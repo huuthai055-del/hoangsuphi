@@ -1,23 +1,25 @@
-import { Hono } from 'hono';
-import { z } from 'zod';
 import { container } from '@/common/di/container';
-import {
-  CreateBusinessSchema,
-  UpdateBusinessSchema,
-  ListBusinessesQuerySchema,
-  BusinessNearbyQuerySchema,
-  BusinessIdParamsSchema,
-  BusinessSlugParamsSchema,
-} from '../dto/businesses.dto';
-import { validateBody, validateQuery, validateParams } from '@/middleware/validator';
+import { validateBody, validateParams, validateQuery } from '@/middleware/validator';
 import { requirePermission } from '@/modules/identity/middleware/permission.middleware';
+import { Hono } from 'hono';
 import type { MiddlewareHandler } from 'hono';
+import { z } from 'zod';
+import {
+  BusinessIdParamsSchema,
+  BusinessNearbyQuerySchema,
+  BusinessSlugParamsSchema,
+  CreateBusinessSchema,
+  ListBusinessesQuerySchema,
+  UpdateBusinessSchema,
+} from '../dto/businesses.dto';
 import type { BusinessesController } from './businesses.controller';
 
 const businessesRouter = new Hono();
 
-const authGuard: MiddlewareHandler = (c, next) => container.resolve<MiddlewareHandler>('AuthGuard')(c, next);
-const getController = (): BusinessesController => container.resolve<BusinessesController>('BusinessesController');
+const authGuard: MiddlewareHandler = (c, next) =>
+  container.resolve<MiddlewareHandler>('AuthGuard')(c, next);
+const getController = (): BusinessesController =>
+  container.resolve<BusinessesController>('BusinessesController');
 
 // ==========================================
 // PUBLIC ROUTES
@@ -27,10 +29,14 @@ const getController = (): BusinessesController => container.resolve<BusinessesCo
 businessesRouter.get('/', validateQuery(ListBusinessesQuerySchema), (c) => getController().list(c));
 
 // GET /api/v1/businesses/nearby
-businessesRouter.get('/nearby', validateQuery(BusinessNearbyQuerySchema), (c) => getController().searchNearby(c));
+businessesRouter.get('/nearby', validateQuery(BusinessNearbyQuerySchema), (c) =>
+  getController().searchNearby(c)
+);
 
 // GET /api/v1/businesses/slug/:slug
-businessesRouter.get('/slug/:slug', validateParams(BusinessSlugParamsSchema), (c) => getController().getBySlug(c));
+businessesRouter.get('/slug/:slug', validateParams(BusinessSlugParamsSchema), (c) =>
+  getController().getBySlug(c)
+);
 
 // GET /api/v1/businesses/region/:regionId
 businessesRouter.get(
@@ -41,7 +47,9 @@ businessesRouter.get(
 );
 
 // GET /api/v1/businesses/:id
-businessesRouter.get('/:id', validateParams(BusinessIdParamsSchema), (c) => getController().getById(c));
+businessesRouter.get('/:id', validateParams(BusinessIdParamsSchema), (c) =>
+  getController().getById(c)
+);
 
 // ==========================================
 // ADMIN ROUTES

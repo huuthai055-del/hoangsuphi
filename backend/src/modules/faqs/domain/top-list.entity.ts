@@ -1,11 +1,15 @@
-import { TopListItem, type TopListItemOwnerType, type TopListItemProps } from './top-list-item.entity';
 import {
-  TopListDomainError,
   DuplicateTopListItemError,
-  InvalidTopListStateError,
   EmptyTopListError,
   ImmutableTopListError,
+  InvalidTopListStateError,
+  TopListDomainError,
 } from './faq.errors';
+import {
+  TopListItem,
+  type TopListItemOwnerType,
+  type TopListItemProps,
+} from './top-list-item.entity';
 
 export type TopListStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
 
@@ -100,19 +104,43 @@ export class TopList {
 
   // ─── Getters ────────────────────────────────────────────────────────────────
 
-  public get id(): string { return this.props.id; }
-  public get title(): string { return this.props.title; }
-  public get description(): string | null { return this.props.description; }
+  public get id(): string {
+    return this.props.id;
+  }
+  public get title(): string {
+    return this.props.title;
+  }
+  public get description(): string | null {
+    return this.props.description;
+  }
   /** Slug is immutable — set once at creation and never changed. */
-  public get slug(): string { return this.props.slug; }
-  public get category(): string | null { return this.props.category; }
-  public get featured(): boolean { return this.props.featured; }
-  public get status(): TopListStatus { return this.props.status; }
-  public get createdBy(): string { return this.props.createdBy; }
-  public get createdAt(): Date { return this.props.createdAt; }
-  public get updatedAt(): Date { return this.props.updatedAt; }
-  public get deletedAt(): Date | null { return this.props.deletedAt; }
-  public get items(): TopListItem[] { return [...this.props.items]; }
+  public get slug(): string {
+    return this.props.slug;
+  }
+  public get category(): string | null {
+    return this.props.category;
+  }
+  public get featured(): boolean {
+    return this.props.featured;
+  }
+  public get status(): TopListStatus {
+    return this.props.status;
+  }
+  public get createdBy(): string {
+    return this.props.createdBy;
+  }
+  public get createdAt(): Date {
+    return this.props.createdAt;
+  }
+  public get updatedAt(): Date {
+    return this.props.updatedAt;
+  }
+  public get deletedAt(): Date | null {
+    return this.props.deletedAt;
+  }
+  public get items(): TopListItem[] {
+    return [...this.props.items];
+  }
 
   // ─── Guard ──────────────────────────────────────────────────────────────────
 
@@ -233,10 +261,7 @@ export class TopList {
     this.props.updatedAt = updateTime;
   }
 
-  public reorderItems(
-    itemIdOrders: Array<{ id: string; displayOrder: number }>,
-    now?: Date
-  ): void {
+  public reorderItems(itemIdOrders: Array<{ id: string; displayOrder: number }>, now?: Date): void {
     this.ensureMutable();
 
     // Must cover exactly all existing items
@@ -279,7 +304,9 @@ export class TopList {
     this.ensureMutable();
 
     if (this.props.status !== 'DRAFT') {
-      throw new InvalidTopListStateError(`Cannot publish top list from status: ${this.props.status}`);
+      throw new InvalidTopListStateError(
+        `Cannot publish top list from status: ${this.props.status}`
+      );
     }
 
     if (this.props.items.length === 0) {

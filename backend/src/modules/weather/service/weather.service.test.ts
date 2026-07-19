@@ -1,7 +1,7 @@
-import { describe, test, expect, mock } from 'bun:test';
-import { WeatherService } from './weather.service';
+import { describe, expect, mock, test } from 'bun:test';
+import { ExternalServiceError, ValidationError } from '@/common/errors/http.errors';
 import type { IWeatherProvider } from '../interfaces/weather-provider.interface';
-import { ValidationError, ExternalServiceError } from '@/common/errors/http.errors';
+import { WeatherService } from './weather.service';
 
 describe('WeatherService', () => {
   const mockGetCurrentWeather = mock(() => Promise.resolve(null as any));

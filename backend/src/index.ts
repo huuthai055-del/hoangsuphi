@@ -1,7 +1,7 @@
-import { createApp } from './app';
 import { env } from '@/config/env';
-import { logger } from '@/lib/logger';
 import { dbHealthCheck } from '@/lib/database/client';
+import { logger } from '@/lib/logger';
+import { createApp } from './app';
 
 async function validateBootstrap() {
   logger.info('🔍 Starting Startup Validation Pipeline...');

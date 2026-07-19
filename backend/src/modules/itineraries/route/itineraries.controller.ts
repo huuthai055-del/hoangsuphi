@@ -1,18 +1,18 @@
-import type { Context } from 'hono';
-import type { ItineraryService } from '../service/itinerary.service';
-import { mapItineraryToResponse } from './mappers/itineraries.mapper';
-import type { ItineraryFilters } from '../repository/itinerary-repository.interface';
 import { AuthenticationError, AuthorizationError } from '@/common/errors/http.errors';
 import type { AuthenticatedUser } from '@/modules/identity/middleware/identity.context';
+import type { Context } from 'hono';
 import type {
-  CreateItineraryRequestDto,
-  UpdateItineraryRequestDto,
-  ItineraryIdParamsDto,
   AddItineraryItemRequestDto,
+  CreateItineraryRequestDto,
+  ItineraryFilterQueryDto,
+  ItineraryIdParamsDto,
   ItineraryItemIdParamsDto,
   ReorderItineraryItemsRequestDto,
-  ItineraryFilterQueryDto,
+  UpdateItineraryRequestDto,
 } from '../dto/itineraries.dto';
+import type { ItineraryFilters } from '../repository/itinerary-repository.interface';
+import type { ItineraryService } from '../service/itinerary.service';
+import { mapItineraryToResponse } from './mappers/itineraries.mapper';
 
 function requireAuthenticatedUser(c: Context): AuthenticatedUser {
   const user = c.get('user');
@@ -64,7 +64,11 @@ export class ItinerariesController {
 
     const itinerary = await this.service.getItinerary(params.id);
     // Visibility/ownership rules: Private itineraries can only be read by their owner or an admin
-    if (itinerary.visibility === 'PRIVATE' && itinerary.createdBy !== user.id && !user.roles.includes('admin')) {
+    if (
+      itinerary.visibility === 'PRIVATE' &&
+      itinerary.createdBy !== user.id &&
+      !user.roles.includes('admin')
+    ) {
       throw new AuthorizationError('You do not have permission to view this itinerary');
     }
 

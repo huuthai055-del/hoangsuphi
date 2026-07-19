@@ -1,20 +1,25 @@
-import type { TopList } from '../domain/top-list.entity';
-import type { TopListItemOwnerType } from '../domain/top-list-item.entity';
-import type { TopListItem } from '../domain/top-list-item.entity';
-import type { ITopListRepository, TopListFilters } from '../repository/top-list-repository.interface';
-import { generateUuidV7 } from '@/common/utils/uuid';
-import { NotFoundError, ConflictError, ValidationError } from '@/common/errors/http.errors';
+import { ConflictError, NotFoundError, ValidationError } from '@/common/errors/http.errors';
 import {
   DuplicateKeyRepositoryError,
   EntityNotFoundRepositoryError,
 } from '@/common/errors/repository.errors';
-import { TopListDomainError } from '../domain/faq.errors';
-import { runInTransaction } from '@/lib/database/client';
 import type { PaginatedResult, PaginationOptions } from '@/common/types/pagination';
+import { generateUuidV7 } from '@/common/utils/uuid';
+import { runInTransaction } from '@/lib/database/client';
+import { TopListDomainError } from '../domain/faq.errors';
+import type { TopListItemOwnerType } from '../domain/top-list-item.entity';
+import type { TopListItem } from '../domain/top-list-item.entity';
+import type { TopList } from '../domain/top-list.entity';
+import type {
+  ITopListRepository,
+  TopListFilters,
+} from '../repository/top-list-repository.interface';
 
 function mapDomainError(err: Error): Error {
   if (err instanceof DuplicateKeyRepositoryError) {
-    return new ConflictError('Unique constraint violated: TopList or slug already exists', { cause: err });
+    return new ConflictError('Unique constraint violated: TopList or slug already exists', {
+      cause: err,
+    });
   }
   if (err instanceof EntityNotFoundRepositoryError) {
     return new NotFoundError(err.message, { cause: err });
@@ -155,11 +160,14 @@ export class TopListService {
     try {
       return await runInTransaction(async (tx) => {
         const topList = await this.loadTopListOrThrow(id, tx);
-        const item = topList.addItem({
-          id: generateUuidV7(),
-          ownerType: input.ownerType,
-          ownerId: input.ownerId,
-        }, now);
+        const item = topList.addItem(
+          {
+            id: generateUuidV7(),
+            ownerType: input.ownerType,
+            ownerId: input.ownerId,
+          },
+          now
+        );
         await this.topListRepo.update(topList, tx);
         return item;
       });

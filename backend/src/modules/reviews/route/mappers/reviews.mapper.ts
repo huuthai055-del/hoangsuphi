@@ -1,6 +1,6 @@
-import type { Review } from '../../domain/reviews.entity';
 import type { Favorite } from '../../domain/favorites.entity';
-import type { ReviewResponseDto, FavoriteResponseDto } from '../../dto/reviews.dto';
+import type { Review } from '../../domain/reviews.entity';
+import type { FavoriteResponseDto, ReviewResponseDto } from '../../dto/reviews.dto';
 
 export function mapReviewToResponse(review: Review): ReviewResponseDto {
   const p = review.toPersistence();

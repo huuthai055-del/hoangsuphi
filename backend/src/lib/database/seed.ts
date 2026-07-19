@@ -1,12 +1,12 @@
-import { db } from './client';
 import { sql } from 'drizzle-orm';
+import { db } from './client';
 import {
-  businessTypes,
-  attractionCategories,
   amenities,
+  attractionCategories,
+  businessTypes,
   regions,
-  users,
   userProfiles,
+  users,
 } from './schema';
 
 // Helper to generate UUIDv7 in application layer
@@ -317,19 +317,35 @@ async function main() {
 
     // ─── 6. SEED ROLES & PERMISSIONS & USER ROLES ─────────────────────────────────
     console.info('Seeding roles, permissions, and assigning role to admin user...');
-    
+
     const { roles, permissions, rolePermissions, userRoles } = require('./schema');
 
     const allPermissionsList = [
       // Regions & Places
-      { code: 'system:write', name: 'System Write', description: 'Modify system regions and configurations' },
+      {
+        code: 'system:write',
+        name: 'System Write',
+        description: 'Modify system regions and configurations',
+      },
       { code: 'place:write', name: 'Place Write', description: 'Create and modify tourist places' },
       // Attractions & Businesses
-      { code: 'attraction:write', name: 'Attraction Write', description: 'Create and modify attractions' },
-      { code: 'business:write', name: 'Business Write', description: 'Create and modify businesses' },
+      {
+        code: 'attraction:write',
+        name: 'Attraction Write',
+        description: 'Create and modify attractions',
+      },
+      {
+        code: 'business:write',
+        name: 'Business Write',
+        description: 'Create and modify businesses',
+      },
       // Articles
       { code: 'article:write', name: 'Article Write', description: 'Create and modify articles' },
-      { code: 'article:publish', name: 'Article Publish', description: 'Publish or reject articles' },
+      {
+        code: 'article:publish',
+        name: 'Article Publish',
+        description: 'Publish or reject articles',
+      },
       // Reviews & Favorites
       { code: 'review:create', name: 'Review Create', description: 'Write reviews' },
       { code: 'review:read', name: 'Review Read', description: 'View reviews list' },
@@ -358,24 +374,46 @@ async function main() {
       { code: 'toplist:update', name: 'TopList Update', description: 'Modify TopLists' },
       { code: 'toplist:delete', name: 'TopList Delete', description: 'Delete TopLists' },
       // Notifications
-      { code: 'notification:create', name: 'Notification Create', description: 'Create notifications' },
+      {
+        code: 'notification:create',
+        name: 'Notification Create',
+        description: 'Create notifications',
+      },
       { code: 'notification:read', name: 'Notification Read', description: 'Read notifications' },
-      { code: 'notification:update', name: 'Notification Update', description: 'Modify notifications' },
-      { code: 'notification:dismiss', name: 'Notification Dismiss', description: 'Dismiss notifications' },
-      { code: 'notification:delete', name: 'Notification Delete', description: 'Delete notifications' },
+      {
+        code: 'notification:update',
+        name: 'Notification Update',
+        description: 'Modify notifications',
+      },
+      {
+        code: 'notification:dismiss',
+        name: 'Notification Dismiss',
+        description: 'Dismiss notifications',
+      },
+      {
+        code: 'notification:delete',
+        name: 'Notification Delete',
+        description: 'Delete notifications',
+      },
     ];
 
     const permissionMap = new Map<string, string>();
     for (const p of allPermissionsList) {
       const pId = generateUuidV7();
-      await db.insert(permissions).values({
-        id: pId,
-        code: p.code,
-        name: p.name,
-        description: p.description,
-      }).onConflictDoNothing();
+      await db
+        .insert(permissions)
+        .values({
+          id: pId,
+          code: p.code,
+          name: p.name,
+          description: p.description,
+        })
+        .onConflictDoNothing();
 
-      const existing = await db.select({ id: permissions.id }).from(permissions).where(sql`${permissions.code} = ${p.code}`);
+      const existing = await db
+        .select({ id: permissions.id })
+        .from(permissions)
+        .where(sql`${permissions.code} = ${p.code}`);
       permissionMap.set(p.code, existing[0]?.id || pId);
     }
 
@@ -383,20 +421,30 @@ async function main() {
     const rolesList = [
       { code: 'admin', name: 'Admin', description: 'Super Administrator with all permissions' },
       { code: 'editor', name: 'Editor', description: 'Content Editor with write permissions' },
-      { code: 'viewer', name: 'Viewer', description: 'Registered User with basic write/read permissions' },
+      {
+        code: 'viewer',
+        name: 'Viewer',
+        description: 'Registered User with basic write/read permissions',
+      },
     ];
 
     const roleMap = new Map<string, string>();
     for (const r of rolesList) {
       const rId = generateUuidV7();
-      await db.insert(roles).values({
-        id: rId,
-        code: r.code,
-        name: r.name,
-        description: r.description,
-      }).onConflictDoNothing();
+      await db
+        .insert(roles)
+        .values({
+          id: rId,
+          code: r.code,
+          name: r.name,
+          description: r.description,
+        })
+        .onConflictDoNothing();
 
-      const existing = await db.select({ id: roles.id }).from(roles).where(sql`${roles.code} = ${r.code}`);
+      const existing = await db
+        .select({ id: roles.id })
+        .from(roles)
+        .where(sql`${roles.code} = ${r.code}`);
       roleMap.set(r.code, existing[0]?.id || rId);
     }
 
@@ -404,55 +452,104 @@ async function main() {
     // Admin gets all
     const adminRoleId = getRequiredMapValue(roleMap, 'admin');
     for (const pId of permissionMap.values()) {
-      await db.insert(rolePermissions).values({
-        roleId: adminRoleId,
-        permissionId: pId,
-      }).onConflictDoNothing();
+      await db
+        .insert(rolePermissions)
+        .values({
+          roleId: adminRoleId,
+          permissionId: pId,
+        })
+        .onConflictDoNothing();
     }
 
     // Editor permissions
     const editorRoleId = getRequiredMapValue(roleMap, 'editor');
     const editorPermissionCodes = [
-      'place:write', 'attraction:write', 'business:write', 'article:write', 'article:publish',
-      'review:create', 'review:read', 'review:update', 'review:delete', 'review:approve', 'review:reject',
-      'favorite:create', 'favorite:delete', 'favorite:read', 'media:upload', 'media:read', 'media:delete',
-      'itinerary:create', 'itinerary:read', 'itinerary:update', 'itinerary:delete',
-      'faq:create', 'faq:update', 'faq:delete', 'toplist:create', 'toplist:update', 'toplist:delete',
-      'notification:create', 'notification:read', 'notification:update', 'notification:dismiss', 'notification:delete'
+      'place:write',
+      'attraction:write',
+      'business:write',
+      'article:write',
+      'article:publish',
+      'review:create',
+      'review:read',
+      'review:update',
+      'review:delete',
+      'review:approve',
+      'review:reject',
+      'favorite:create',
+      'favorite:delete',
+      'favorite:read',
+      'media:upload',
+      'media:read',
+      'media:delete',
+      'itinerary:create',
+      'itinerary:read',
+      'itinerary:update',
+      'itinerary:delete',
+      'faq:create',
+      'faq:update',
+      'faq:delete',
+      'toplist:create',
+      'toplist:update',
+      'toplist:delete',
+      'notification:create',
+      'notification:read',
+      'notification:update',
+      'notification:dismiss',
+      'notification:delete',
     ];
     for (const code of editorPermissionCodes) {
       const pId = permissionMap.get(code);
       if (pId) {
-        await db.insert(rolePermissions).values({
-          roleId: editorRoleId,
-          permissionId: pId,
-        }).onConflictDoNothing();
+        await db
+          .insert(rolePermissions)
+          .values({
+            roleId: editorRoleId,
+            permissionId: pId,
+          })
+          .onConflictDoNothing();
       }
     }
 
     // Viewer permissions
     const viewerRoleId = getRequiredMapValue(roleMap, 'viewer');
     const viewerPermissionCodes = [
-      'review:create', 'review:read', 'review:update', 'review:delete',
-      'favorite:create', 'favorite:delete', 'favorite:read', 'media:upload', 'media:read',
-      'itinerary:create', 'itinerary:read', 'itinerary:update', 'itinerary:delete',
-      'notification:read', 'notification:dismiss'
+      'review:create',
+      'review:read',
+      'review:update',
+      'review:delete',
+      'favorite:create',
+      'favorite:delete',
+      'favorite:read',
+      'media:upload',
+      'media:read',
+      'itinerary:create',
+      'itinerary:read',
+      'itinerary:update',
+      'itinerary:delete',
+      'notification:read',
+      'notification:dismiss',
     ];
     for (const code of viewerPermissionCodes) {
       const pId = permissionMap.get(code);
       if (pId) {
-        await db.insert(rolePermissions).values({
-          roleId: viewerRoleId,
-          permissionId: pId,
-        }).onConflictDoNothing();
+        await db
+          .insert(rolePermissions)
+          .values({
+            roleId: viewerRoleId,
+            permissionId: pId,
+          })
+          .onConflictDoNothing();
       }
     }
 
     // Link Admin User to Admin Role
-    await db.insert(userRoles).values({
-      userId: adminId,
-      roleId: adminRoleId,
-    }).onConflictDoNothing();
+    await db
+      .insert(userRoles)
+      .values({
+        userId: adminId,
+        roleId: adminRoleId,
+      })
+      .onConflictDoNothing();
 
     console.info('✅ Database seeding completed successfully.');
   } catch (error) {

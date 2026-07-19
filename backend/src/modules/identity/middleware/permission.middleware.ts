@@ -1,5 +1,5 @@
-import { createMiddleware } from 'hono/factory';
 import { AuthenticationError, AuthorizationError } from '@/common/errors/http.errors';
+import { createMiddleware } from 'hono/factory';
 import { AUTH_MESSAGES } from './auth.middleware';
 
 export const PERMISSION_MESSAGES = {

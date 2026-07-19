@@ -202,7 +202,11 @@ export class Business {
     if (props.slug !== undefined) {
       if (!props.slug || props.slug.trim() === '')
         throw new BusinessDomainError('Business slug is required');
-      this._slug = props.slug.trim();
+      const cleanSlug = props.slug.trim();
+      if (this._status === 'active' && this._slug !== cleanSlug) {
+        throw new BusinessDomainError('Slug is immutable once business is active');
+      }
+      this._slug = cleanSlug;
     }
     if (props.location !== undefined) this._location = props.location;
     if (props.description !== undefined) this._description = props.description;

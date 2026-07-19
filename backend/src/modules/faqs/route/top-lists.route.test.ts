@@ -1,9 +1,9 @@
-import { expect, test, describe, beforeEach, mock } from 'bun:test';
-import type { Hono } from 'hono';
-import { TopList } from '../domain/top-list.entity';
-import { TopListItem } from '../domain/top-list-item.entity';
-import { TopListsController } from './top-lists.controller';
+import { beforeEach, describe, expect, mock, test } from 'bun:test';
 import { container } from '@/common/di/container';
+import type { Hono } from 'hono';
+import { TopListItem } from '../domain/top-list-item.entity';
+import { TopList } from '../domain/top-list.entity';
+import { TopListsController } from './top-lists.controller';
 
 describe('Top Lists API Routing & Controller', () => {
   let app: Hono;
@@ -194,10 +194,13 @@ describe('Top Lists API Routing & Controller', () => {
       mockGetTopList.mockImplementation(() => Promise.resolve(topList));
       mockRemoveItemFromTopList.mockImplementation(() => Promise.resolve());
 
-      const res = await app.request(`/api/v1/top-lists/${topList.id}/items/${sampleTopListItemProps.id}`, {
-        method: 'DELETE',
-        headers: { Authorization: 'Bearer valid-token' },
-      });
+      const res = await app.request(
+        `/api/v1/top-lists/${topList.id}/items/${sampleTopListItemProps.id}`,
+        {
+          method: 'DELETE',
+          headers: { Authorization: 'Bearer valid-token' },
+        }
+      );
 
       expect(res.status).toBe(200);
     });
@@ -214,9 +217,7 @@ describe('Top Lists API Routing & Controller', () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          items: [
-            { id: sampleTopListItemProps.id, displayOrder: 2 },
-          ],
+          items: [{ id: sampleTopListItemProps.id, displayOrder: 2 }],
         }),
       });
 

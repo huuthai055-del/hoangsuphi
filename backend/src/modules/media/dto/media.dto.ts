@@ -2,14 +2,18 @@ import { z } from 'zod';
 
 export const UploadMediaSchema = z
   .object({
-    ownerType: z
+    altText: z
       .string()
       .trim()
-      .toUpperCase()
-      .pipe(z.enum(['ARTICLE', 'PLACE', 'BUSINESS', 'ATTRACTION', 'USER']))
+      .max(255, 'altText must be at most 255 characters')
       .optional()
       .nullable(),
-    ownerId: z.string().trim().uuid('Owner ID must be a valid UUID').optional().nullable(),
+    caption: z
+      .string()
+      .trim()
+      .max(500, 'caption must be at most 500 characters')
+      .optional()
+      .nullable(),
   })
   .strict();
 
@@ -25,7 +29,6 @@ export type MediaIdParamsDto = z.infer<typeof MediaIdParamsSchema>;
 
 export interface MediaVariantResponseDto {
   variantType: string;
-  storageKey: string;
   url: string;
   width: number | null;
   height: number | null;
@@ -34,16 +37,15 @@ export interface MediaVariantResponseDto {
 
 export interface MediaResponseDto {
   id: string;
-  fileName: string;
-  storageKey: string;
   url: string;
   mimeType: string;
   mediaType: string;
+  fileName: string;
   fileSize: number;
-  hash: string;
-  status: string;
-  ownerType: string | null;
-  ownerId: string | null;
+  width: number | null;
+  height: number | null;
+  altText: string | null;
+  caption: string | null;
+  variants: MediaVariantResponseDto[];
   createdAt: string;
-  updatedAt: string;
 }

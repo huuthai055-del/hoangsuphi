@@ -26,13 +26,21 @@ export const CreateTopListRequestSchema = z
       .trim()
       .min(1, 'Title must not be empty')
       .max(255, 'Title must not exceed 255 characters'),
-    description: z.string().trim().max(1000, 'Description must not exceed 1000 characters').optional().nullable(),
+    description: z
+      .string()
+      .trim()
+      .max(1000, 'Description must not exceed 1000 characters')
+      .optional()
+      .nullable(),
     slug: z
       .string({ required_error: 'Slug is required' })
       .trim()
       .min(1, 'Slug must not be empty')
       .max(100, 'Slug must not exceed 100 characters')
-      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must consist of lowercase letters, numbers, and single hyphens (no consecutive or leading/trailing hyphens)'),
+      .regex(
+        /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+        'Slug must consist of lowercase letters, numbers, and single hyphens (no consecutive or leading/trailing hyphens)'
+      ),
     category: z.string().trim().max(100).optional().nullable(),
     featured: z.boolean().optional(),
   })
@@ -48,7 +56,12 @@ export const UpdateTopListRequestSchema = z
       .min(1, 'Title must not be empty')
       .max(255, 'Title must not exceed 255 characters')
       .optional(),
-    description: z.string().trim().max(1000, 'Description must not exceed 1000 characters').optional().nullable(),
+    description: z
+      .string()
+      .trim()
+      .max(1000, 'Description must not exceed 1000 characters')
+      .optional()
+      .nullable(),
     featured: z.boolean().optional(),
   })
   .strict();

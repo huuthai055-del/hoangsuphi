@@ -46,7 +46,9 @@ export class Category {
     }
     const cleanCode = code.trim();
     if (!SEO_SLUG_REGEX.test(cleanCode)) {
-      throw new CategoryDomainError('Category code must be a valid SEO slug format (lowercase alphanumeric and single dashes, no leading/trailing dashes)');
+      throw new CategoryDomainError(
+        'Category code must be a valid SEO slug format (lowercase alphanumeric and single dashes, no leading/trailing dashes)'
+      );
     }
   }
 
@@ -110,12 +112,24 @@ export class Category {
   }
 
   // Getters
-  public get id(): string { return this._id; }
-  public get code(): string { return this._code; }
-  public get name(): string { return this._name; }
-  public get description(): string | null { return this._description; }
-  public get createdAt(): Date { return this._createdAt; }
-  public get updatedAt(): Date { return this._updatedAt; }
+  public get id(): string {
+    return this._id;
+  }
+  public get code(): string {
+    return this._code;
+  }
+  public get name(): string {
+    return this._name;
+  }
+  public get description(): string | null {
+    return this._description;
+  }
+  public get createdAt(): Date {
+    return this._createdAt;
+  }
+  public get updatedAt(): Date {
+    return this._updatedAt;
+  }
 
   // Business Methods
   public rename(newName: string, now?: Date): void {

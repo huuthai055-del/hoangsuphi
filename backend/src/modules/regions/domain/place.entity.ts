@@ -1,12 +1,12 @@
-import type { GPSLocation } from './value-objects/gps-location.vo';
 import {
-  InvalidPlaceNameError,
-  InvalidPlaceSlugError,
-  InvalidPlaceRegionError,
   InvalidPlaceCoverUrlError,
-  PlaceDeletedError,
+  InvalidPlaceNameError,
+  InvalidPlaceRegionError,
+  InvalidPlaceSlugError,
   InvalidPlaceStatusTransitionError,
+  PlaceDeletedError,
 } from './place.errors';
+import type { GPSLocation } from './value-objects/gps-location.vo';
 
 export interface TouristPlaceProps {
   id: string;
@@ -22,7 +22,10 @@ export interface TouristPlaceProps {
   deletedAt: Date | null;
 }
 
-export type CreateTouristPlaceProps = Omit<TouristPlaceProps, 'createdAt' | 'updatedAt' | 'deletedAt'>;
+export type CreateTouristPlaceProps = Omit<
+  TouristPlaceProps,
+  'createdAt' | 'updatedAt' | 'deletedAt'
+>;
 
 export class TouristPlace {
   private _regionId: string;
@@ -153,6 +156,9 @@ export class TouristPlace {
     }
     if (!newSlug || !/^[a-z0-9_-]+$/.test(newSlug)) {
       throw new InvalidPlaceSlugError('Place slug must be in valid format (^[a-z0-9_-]+$)');
+    }
+    if (this._status === 'active' && this._slug !== newSlug) {
+      throw new InvalidPlaceSlugError('Slug is immutable once place is active');
     }
     this._name = newName;
     this._slug = newSlug;

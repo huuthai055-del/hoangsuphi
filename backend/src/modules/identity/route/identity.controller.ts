@@ -1,13 +1,14 @@
-import type { Context } from 'hono';
-import type { IAuthService } from '../service/auth.service';
-import type {
-  RegisterRequestDto,
-  LoginRequestDto,
-  RefreshRequestDto,
-  ChangePasswordRequestDto,
-  LoginResponseDto,
-} from '../dto/identity.dto';
 import { AuthenticationError } from '@/common/errors/http.errors';
+import { extractClientIp } from '@/common/utils/ip';
+import type { Context } from 'hono';
+import type {
+  ChangePasswordRequestDto,
+  LoginRequestDto,
+  LoginResponseDto,
+  RefreshRequestDto,
+  RegisterRequestDto,
+} from '../dto/identity.dto';
+import type { IAuthService } from '../service/auth.service';
 
 export class IdentityController {
   constructor(private readonly authService: IAuthService) {}
@@ -29,7 +30,7 @@ export class IdentityController {
   public login = async (c: Context) => {
     const body = c.get('validBody') as LoginRequestDto;
 
-    const ipAddress = c.req.header('x-forwarded-for') || c.req.header('x-real-ip') || '127.0.0.1';
+    const ipAddress = extractClientIp(c);
     const userAgent = c.req.header('user-agent') || null;
     const deviceName = c.req.header('x-device-name') || null;
 

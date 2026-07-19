@@ -1,4 +1,4 @@
-import { describe, test, expect, mock, beforeEach } from 'bun:test';
+import { beforeEach, describe, expect, mock, test } from 'bun:test';
 
 let mockResolveValue: any = undefined;
 let mockResolveQueue: any[] = [];
@@ -50,16 +50,16 @@ mock.module('@/lib/database/client', () => ({
   runInTransaction: async (cb: (tx: unknown) => Promise<unknown>) => cb(mockDbChain),
 }));
 
-import { DrizzleNotificationRepository } from './notification.repository';
-import { Notification } from '../domain/notification.entity';
 import {
+  CheckConstraintViolationRepositoryError,
+  ConstraintViolationRepositoryError,
+  DatabaseOperationRepositoryError,
   DuplicateKeyRepositoryError,
   EntityNotFoundRepositoryError,
-  ConstraintViolationRepositoryError,
-  CheckConstraintViolationRepositoryError,
   TransactionConflictRepositoryError,
-  DatabaseOperationRepositoryError,
 } from '@/common/errors/repository.errors';
+import { Notification } from '../domain/notification.entity';
+import { DrizzleNotificationRepository } from './notification.repository';
 
 describe('Notification Repository Layer', () => {
   let repo: DrizzleNotificationRepository;
@@ -113,7 +113,8 @@ describe('Notification Repository Layer', () => {
 
     test('should throw DuplicateKeyRepositoryError on PG 23505', async () => {
       const notif = Notification.rehydrate(sampleRawNotification);
-      const pgErr = new Error('Unique'); (pgErr as any).code = '23505';
+      const pgErr = new Error('Unique');
+      (pgErr as any).code = '23505';
       mockResolveValue = pgErr;
       await expect(repo.create(notif)).rejects.toThrow(DuplicateKeyRepositoryError);
     });
@@ -157,20 +158,17 @@ describe('Notification Repository Layer', () => {
 
   describe('findMany() & findByUser()', () => {
     test('should return paginated notification list', async () => {
-      mockResolveQueue = [
-        [{ count: '1' }],
-        [sampleRawNotification],
-      ];
-      const res = await repo.findMany({ filters: { isRead: false }, pagination: { limit: 5, offset: 0 } });
+      mockResolveQueue = [[{ count: '1' }], [sampleRawNotification]];
+      const res = await repo.findMany({
+        filters: { isRead: false },
+        pagination: { limit: 5, offset: 0 },
+      });
       expect(res.total).toBe(1);
       expect(res.items.length).toBe(1);
     });
 
     test('should return notifications by user', async () => {
-      mockResolveQueue = [
-        [{ count: '1' }],
-        [sampleRawNotification],
-      ];
+      mockResolveQueue = [[{ count: '1' }], [sampleRawNotification]];
       const res = await repo.findByUser('user-01');
       expect(res.total).toBe(1);
       expect(res.items.length).toBe(1);
@@ -179,19 +177,22 @@ describe('Notification Repository Layer', () => {
 
   describe('Constraint Mapping tests', () => {
     test('PG 23503 → ConstraintViolationRepositoryError', async () => {
-      const pgErr = new Error('FK'); (pgErr as any).code = '23503';
+      const pgErr = new Error('FK');
+      (pgErr as any).code = '23503';
       mockResolveValue = pgErr;
       await expect(repo.exists('id')).rejects.toThrow(ConstraintViolationRepositoryError);
     });
 
     test('PG 23514 → CheckConstraintViolationRepositoryError', async () => {
-      const pgErr = new Error('Check'); (pgErr as any).code = '23514';
+      const pgErr = new Error('Check');
+      (pgErr as any).code = '23514';
       mockResolveValue = pgErr;
       await expect(repo.exists('id')).rejects.toThrow(CheckConstraintViolationRepositoryError);
     });
 
     test('PG 40001 → TransactionConflictRepositoryError', async () => {
-      const pgErr = new Error('Deadlock'); (pgErr as any).code = '40001';
+      const pgErr = new Error('Deadlock');
+      (pgErr as any).code = '40001';
       mockResolveValue = pgErr;
       await expect(repo.exists('id')).rejects.toThrow(TransactionConflictRepositoryError);
     });

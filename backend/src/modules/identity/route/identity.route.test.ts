@@ -1,17 +1,17 @@
-import { expect, test, describe, beforeEach, spyOn, afterEach, mock } from 'bun:test';
-import type { Hono } from 'hono';
-import { User } from '../domain/user.entity';
-import { TokenService } from '../service/token.service';
+import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from 'bun:test';
 import {
-  ValidationError,
+  AuthorizationError,
   ConflictError,
   NotFoundError,
-  AuthorizationError,
+  ValidationError,
 } from '@/common/errors/http.errors';
-import { DrizzleUserRepository } from '../repository/users.repository';
-import { DrizzleSessionRepository } from '../repository/sessions.repository';
-import { DrizzleRefreshTokenRepository } from '../repository/refresh-tokens.repository';
+import type { Hono } from 'hono';
+import { User } from '../domain/user.entity';
 import { DrizzlePermissionRepository } from '../repository/permissions.repository';
+import { DrizzleRefreshTokenRepository } from '../repository/refresh-tokens.repository';
+import { DrizzleSessionRepository } from '../repository/sessions.repository';
+import { DrizzleUserRepository } from '../repository/users.repository';
+import { TokenService } from '../service/token.service';
 
 describe('Identity API Routing & Controller', () => {
   let app: Hono;
@@ -31,7 +31,9 @@ describe('Identity API Routing & Controller', () => {
   const mockUserExistsByEmail = mock((_email: string) => Promise.resolve<boolean>(false));
   const mockUserCreate = mock((_user: any) => Promise.resolve());
   const mockUserUpdate = mock((_user: any) => Promise.resolve());
-  const mockUserFindRoleByCode = mock((_code: string) => Promise.resolve<any>({ id: 'viewer-role-id' }));
+  const mockUserFindRoleByCode = mock((_code: string) =>
+    Promise.resolve<any>({ id: 'viewer-role-id' })
+  );
   const mockUserAssignRole = mock((_userId: string, _roleId: string) => Promise.resolve());
 
   const mockSessionCreate = mock((_session: any) => Promise.resolve());
@@ -80,7 +82,9 @@ describe('Identity API Routing & Controller', () => {
     );
     spyOn(DrizzleUserRepository.prototype, 'create').mockImplementation(mockUserCreate);
     spyOn(DrizzleUserRepository.prototype, 'update').mockImplementation(mockUserUpdate);
-    spyOn(DrizzleUserRepository.prototype, 'findRoleByCode').mockImplementation(mockUserFindRoleByCode);
+    spyOn(DrizzleUserRepository.prototype, 'findRoleByCode').mockImplementation(
+      mockUserFindRoleByCode
+    );
     spyOn(DrizzleUserRepository.prototype, 'assignRole').mockImplementation(mockUserAssignRole);
 
     spyOn(DrizzleSessionRepository.prototype, 'create').mockImplementation(mockSessionCreate);
@@ -666,7 +670,9 @@ describe('Identity API Routing & Controller', () => {
         updatedAt: new Date(),
       });
 
-      spyOn(DrizzleSessionRepository.prototype, 'update').mockRejectedValueOnce(new Error('Database is down'));
+      spyOn(DrizzleSessionRepository.prototype, 'update').mockRejectedValueOnce(
+        new Error('Database is down')
+      );
 
       const res = await app.request('/api/v1/auth/logout', {
         method: 'POST',

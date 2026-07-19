@@ -1,19 +1,19 @@
+import { generateUuidV7 } from '@/common/utils/uuid';
+import { sql } from 'drizzle-orm';
 import {
+  boolean,
+  check,
+  index,
+  integer,
+  pgEnum,
   pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
   uuid,
   varchar,
-  integer,
-  timestamp,
-  text,
-  boolean,
-  pgEnum,
-  uniqueIndex,
-  index,
-  check,
 } from 'drizzle-orm/pg-core';
-import { sql } from 'drizzle-orm';
 import { users } from './users';
-import { generateUuidV7 } from '@/common/utils/uuid';
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
@@ -114,10 +114,7 @@ export const topListItems = pgTable(
       .$onUpdate(() => new Date()),
   },
   (table) => ({
-    displayOrderCheck: check(
-      'top_list_items_display_order_check',
-      sql`${table.displayOrder} >= 1`
-    ),
+    displayOrderCheck: check('top_list_items_display_order_check', sql`${table.displayOrder} >= 1`),
 
     // Prevent duplicate owner in the same top list
     topListItemUniqIdx: uniqueIndex('top_list_items_uniq_idx').on(

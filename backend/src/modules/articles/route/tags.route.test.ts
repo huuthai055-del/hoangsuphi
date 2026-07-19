@@ -177,7 +177,7 @@ mock.module('@/modules/articles/repository/articles.repository', () => {
   };
 });
 
-import { expect, test, describe, beforeEach } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'bun:test';
 import type { Hono } from 'hono';
 import { Tag } from '../domain/tag.entity';
 
@@ -222,14 +222,7 @@ describe('Tags API Routing & Controller', () => {
   const tagName = 'Ruộng bậc thang';
   const tagDesc = 'Thẻ dành cho các bài viết về ruộng bậc thang Hoang Su Phi.';
 
-  const sampleTag = Tag.create(
-    tagId,
-    tagName,
-    tagSlug,
-    tagDesc,
-    true,
-    new Date()
-  );
+  const sampleTag = Tag.create(tagId, tagName, tagSlug, tagDesc, true, new Date());
 
   describe('GET /api/v1/tags', () => {
     test('should return list of tags', async () => {
@@ -315,7 +308,7 @@ describe('Tags API Routing & Controller', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer valid-token',
+          Authorization: 'Bearer valid-token',
         },
         body: JSON.stringify({
           name: 'New Tag',
@@ -342,7 +335,7 @@ describe('Tags API Routing & Controller', () => {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer valid-token',
+          Authorization: 'Bearer valid-token',
         },
         body: JSON.stringify({
           name: 'Updated Tag Name',
@@ -366,7 +359,7 @@ describe('Tags API Routing & Controller', () => {
       const res = await app.request(`/api/v1/tags/${tagId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': 'Bearer valid-token',
+          Authorization: 'Bearer valid-token',
         },
       });
 

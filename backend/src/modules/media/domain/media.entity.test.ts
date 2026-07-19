@@ -1,8 +1,8 @@
-import { expect, test, describe, mock } from 'bun:test';
-import { Media } from './media.entity';
-import { MediaDomainError } from './media-errors';
-import type { IMediaStorage } from './storage.interface';
+import { describe, expect, mock, test } from 'bun:test';
 import { MediaMapper } from '../repository/media.mapper';
+import { MediaDomainError } from './media-errors';
+import { Media } from './media.entity';
+import type { IMediaStorage } from './storage.interface';
 
 describe('Media Domain Entity & Storage Mock', () => {
   const mediaId = '019f4bc4-f550-7d52-bba4-3b6258b55705';
@@ -139,7 +139,7 @@ describe('Media Domain Entity & Storage Mock', () => {
   });
 
   describe('Lifecycle State Transitions', () => {
-    test('should successfully transition from UPLOADING to READY', () => {
+    test('should reject direct transition from UPLOADING to READY', () => {
       const media = Media.create({
         id: mediaId,
         fileName,
@@ -150,8 +150,8 @@ describe('Media Domain Entity & Storage Mock', () => {
         hash,
       });
 
-      media.markReady();
-      expect(media.status).toBe('READY');
+      expect(() => media.markReady()).toThrow(MediaDomainError);
+      expect(media.status).toBe('UPLOADING');
     });
 
     test('should successfully transition from UPLOADING to PROCESSING', () => {
@@ -227,6 +227,7 @@ describe('Media Domain Entity & Storage Mock', () => {
         hash,
       });
 
+      media.markProcessing();
       media.markReady();
       expect(() => {
         media.markProcessing();
@@ -310,6 +311,9 @@ describe('Media Domain Entity & Storage Mock', () => {
         fileSize,
         hash,
         status: 'READY',
+        storageProvider: 'LOCAL',
+        altText: null,
+        caption: null,
         ownerType: 'ARTICLE',
         ownerId: '019f4bc4-f550-7d52-bba4-3b6258b55701',
         uploadedBy: null,

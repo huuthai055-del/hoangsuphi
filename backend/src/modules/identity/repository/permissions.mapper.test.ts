@@ -1,4 +1,4 @@
-import { describe, test, expect } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import { PermissionMapper } from './permissions.mapper';
 
 describe('PermissionMapper', () => {

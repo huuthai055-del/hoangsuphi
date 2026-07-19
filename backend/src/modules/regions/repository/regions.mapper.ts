@@ -1,6 +1,6 @@
 import { Region, type RegionLevel } from '../domain/region.aggregate';
-import { LtreePath } from '../domain/value-objects/ltree-path.vo';
 import { GPSLocation } from '../domain/value-objects/gps-location.vo';
+import { LtreePath } from '../domain/value-objects/ltree-path.vo';
 
 export const RegionMapper = {
   toDomain(raw: {

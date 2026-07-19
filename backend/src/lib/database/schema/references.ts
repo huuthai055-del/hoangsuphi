@@ -1,12 +1,12 @@
 import {
+  boolean,
+  index,
   pgTable,
+  primaryKey,
+  smallint,
+  timestamp,
   uuid,
   varchar,
-  smallint,
-  boolean,
-  timestamp,
-  primaryKey,
-  index,
 } from 'drizzle-orm/pg-core';
 import { users } from './users';
 

@@ -1,11 +1,14 @@
-import { expect, test, describe, mock, beforeEach } from 'bun:test';
-import { NotificationService } from './notification.service';
-import type { INotificationRepository } from '../repository/notification-repository.interface';
-import { Notification } from '../domain/notification.entity';
-import { NotFoundError, ConflictError, ValidationError, AuthorizationError } from '@/common/errors/http.errors';
+import { beforeEach, describe, expect, mock, test } from 'bun:test';
 import {
-  DuplicateKeyRepositoryError,
-} from '@/common/errors/repository.errors';
+  AuthorizationError,
+  ConflictError,
+  NotFoundError,
+  ValidationError,
+} from '@/common/errors/http.errors';
+import { DuplicateKeyRepositoryError } from '@/common/errors/repository.errors';
+import { Notification } from '../domain/notification.entity';
+import type { INotificationRepository } from '../repository/notification-repository.interface';
+import { NotificationService } from './notification.service';
 
 describe('NotificationService', () => {
   let service: NotificationService;

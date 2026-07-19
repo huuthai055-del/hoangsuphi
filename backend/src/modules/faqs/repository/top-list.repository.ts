@@ -1,39 +1,66 @@
-import { db, type TransactionClient } from '@/lib/database/client';
-import { eq, and, isNull, sql, desc, asc, inArray } from 'drizzle-orm';
-import type { SQL } from 'drizzle-orm';
-import type { ITopListRepository, TopListFilters } from './top-list-repository.interface';
-import type { TopList } from '../domain/top-list.entity';
-import { topLists as topListsSchema, topListItems as topListItemsSchema } from '@/lib/database/schema/faqs';
-import { TopListMapper, type RawTopList, type RawTopListItem } from './faq.mapper';
 import {
-  RepositoryError,
+  CheckConstraintViolationRepositoryError,
+  ConstraintViolationRepositoryError,
+  DatabaseOperationRepositoryError,
   DuplicateKeyRepositoryError,
   EntityNotFoundRepositoryError,
-  DatabaseOperationRepositoryError,
-  ConstraintViolationRepositoryError,
   NotNullViolationRepositoryError,
-  CheckConstraintViolationRepositoryError,
+  RepositoryError,
   TransactionConflictRepositoryError,
 } from '@/common/errors/repository.errors';
 import type { PaginatedResult, PaginationOptions } from '@/common/types/pagination';
+import { type TransactionClient, db } from '@/lib/database/client';
+import {
+  topListItems as topListItemsSchema,
+  topLists as topListsSchema,
+} from '@/lib/database/schema/faqs';
+import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
+import type { SQL } from 'drizzle-orm';
+import type { TopList } from '../domain/top-list.entity';
+import { type RawTopList, type RawTopListItem, TopListMapper } from './faq.mapper';
+import type { ITopListRepository, TopListFilters } from './top-list-repository.interface';
 
 function mapDbError(err: unknown, operation: string, details?: Record<string, unknown>): never {
   if (err instanceof RepositoryError) throw err;
   const pgErr = err as { code?: string; constraint?: string; column?: string };
   switch (pgErr.code) {
     case '23505':
-      throw new DuplicateKeyRepositoryError(`${operation} failed: unique constraint violated`, { constraint: pgErr.constraint, ...details }, err as Error);
+      throw new DuplicateKeyRepositoryError(
+        `${operation} failed: unique constraint violated`,
+        { constraint: pgErr.constraint, ...details },
+        err as Error
+      );
     case '23503':
-      throw new ConstraintViolationRepositoryError(`${operation} failed: foreign key constraint violated`, { constraint: pgErr.constraint, ...details }, err as Error);
+      throw new ConstraintViolationRepositoryError(
+        `${operation} failed: foreign key constraint violated`,
+        { constraint: pgErr.constraint, ...details },
+        err as Error
+      );
     case '23502':
-      throw new NotNullViolationRepositoryError(`${operation} failed: not-null constraint violated`, { column: pgErr.column, ...details }, err as Error);
+      throw new NotNullViolationRepositoryError(
+        `${operation} failed: not-null constraint violated`,
+        { column: pgErr.column, ...details },
+        err as Error
+      );
     case '23514':
-      throw new CheckConstraintViolationRepositoryError(`${operation} failed: check constraint violated`, { constraint: pgErr.constraint, ...details }, err as Error);
+      throw new CheckConstraintViolationRepositoryError(
+        `${operation} failed: check constraint violated`,
+        { constraint: pgErr.constraint, ...details },
+        err as Error
+      );
     case '40001':
     case '40P01':
-      throw new TransactionConflictRepositoryError(`${operation} failed: transaction conflict`, details, err as Error);
+      throw new TransactionConflictRepositoryError(
+        `${operation} failed: transaction conflict`,
+        details,
+        err as Error
+      );
     default:
-      throw new DatabaseOperationRepositoryError(`${operation} failed: raw database error`, details, err as Error);
+      throw new DatabaseOperationRepositoryError(
+        `${operation} failed: raw database error`,
+        details,
+        err as Error
+      );
   }
 }
 
@@ -47,7 +74,8 @@ export class DrizzleTopListRepository implements ITopListRepository {
 
     if (filters) {
       const { status, category, featured, search } = filters;
-      if (status) conditions.push(eq(topListsSchema.status, status as 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'));
+      if (status)
+        conditions.push(eq(topListsSchema.status, status as 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'));
       if (category) conditions.push(eq(topListsSchema.category, category));
       if (featured !== undefined) conditions.push(eq(topListsSchema.featured, featured));
       if (search) {
@@ -155,13 +183,13 @@ export class DrizzleTopListRepository implements ITopListRepository {
         .returning();
 
       if (!updated) {
-        throw new EntityNotFoundRepositoryError(`TopList not found for update with ID: ${topList.id}`);
+        throw new EntityNotFoundRepositoryError(
+          `TopList not found for update with ID: ${topList.id}`
+        );
       }
 
       // Sync items: delete old items, insert fresh list (avoids unique index conflicts)
-      await client
-        .delete(topListItemsSchema)
-        .where(eq(topListItemsSchema.topListId, topList.id));
+      await client.delete(topListItemsSchema).where(eq(topListItemsSchema.topListId, topList.id));
 
       if (rawItems.length > 0) {
         await client.insert(topListItemsSchema).values(rawItems);

@@ -4,4 +4,4 @@ export const Roles = {
   VIEWER: 'viewer',
 } as const;
 
-export type UserRole = typeof Roles[keyof typeof Roles];
+export type UserRole = (typeof Roles)[keyof typeof Roles];

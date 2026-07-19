@@ -1,5 +1,5 @@
-import type { Faq } from '../domain/faq.entity';
 import type { PaginatedResult, PaginationOptions } from '@/common/types/pagination';
+import type { Faq } from '../domain/faq.entity';
 
 export interface FaqFilters {
   status?: string;

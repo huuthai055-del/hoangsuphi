@@ -1,15 +1,15 @@
-import { Hono } from 'hono';
-import { container } from '@/common/di/container';
 import { Permissions } from '@/common/constants/permissions';
+import { container } from '@/common/di/container';
+import type { AppEnv } from '@/common/types/app-env';
+import { validateBody, validateParams, validateQuery } from '@/middleware/validator';
 import { requirePermission } from '@/modules/identity/middleware/permission.middleware';
+import { Hono } from 'hono';
 import {
-  NotificationIdParamsSchema,
   CreateNotificationRequestSchema,
   NotificationFilterQuerySchema,
+  NotificationIdParamsSchema,
 } from '../dto/notifications.dto';
-import { validateBody, validateParams, validateQuery } from '@/middleware/validator';
 import type { NotificationsController } from './notifications.controller';
-import type { AppEnv } from '@/common/types/app-env';
 
 import type { MiddlewareHandler } from 'hono';
 
@@ -18,7 +18,8 @@ const notificationsRouter = new Hono<AppEnv>();
 // Dynamically resolve authGuard and controller from Container
 const authGuard: MiddlewareHandler<AppEnv> = (c, next) =>
   container.resolve<MiddlewareHandler<AppEnv>>('AuthGuard')(c, next);
-const getController = (): NotificationsController => container.resolve<NotificationsController>('NotificationsController');
+const getController = (): NotificationsController =>
+  container.resolve<NotificationsController>('NotificationsController');
 
 // Routes
 notificationsRouter.post(

@@ -1,6 +1,6 @@
+import { ValidationError } from '@/common/errors/http.errors';
 import type { MiddlewareHandler } from 'hono';
 import type { ZodTypeAny } from 'zod';
-import { ValidationError } from '@/common/errors/http.errors';
 
 export function validateBody(schema: ZodTypeAny): MiddlewareHandler {
   return async (c, next) => {

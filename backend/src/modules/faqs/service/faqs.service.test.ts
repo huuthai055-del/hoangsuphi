@@ -1,15 +1,15 @@
-import { expect, test, describe, mock, beforeEach } from 'bun:test';
-import { FaqService } from './faq.service';
-import { TopListService } from './top-list.service';
-import type { IFaqRepository } from '../repository/faq-repository.interface';
-import type { ITopListRepository } from '../repository/top-list-repository.interface';
-import { Faq } from '../domain/faq.entity';
-import { TopList } from '../domain/top-list.entity';
-import { NotFoundError, ConflictError, ValidationError } from '@/common/errors/http.errors';
+import { beforeEach, describe, expect, mock, test } from 'bun:test';
+import { ConflictError, NotFoundError, ValidationError } from '@/common/errors/http.errors';
 import {
   DuplicateKeyRepositoryError,
   EntityNotFoundRepositoryError,
 } from '@/common/errors/repository.errors';
+import { Faq } from '../domain/faq.entity';
+import { TopList } from '../domain/top-list.entity';
+import type { IFaqRepository } from '../repository/faq-repository.interface';
+import type { ITopListRepository } from '../repository/top-list-repository.interface';
+import { FaqService } from './faq.service';
+import { TopListService } from './top-list.service';
 
 // ─── FAQ Service Tests ────────────────────────────────────────────────────────
 
@@ -97,7 +97,9 @@ describe('FaqService', () => {
     });
 
     test('should throw NotFoundError if FAQ not found', async () => {
-      await expect(faqService.updateFaq('missing', { question: 'Q?' })).rejects.toThrow(NotFoundError);
+      await expect(faqService.updateFaq('missing', { question: 'Q?' })).rejects.toThrow(
+        NotFoundError
+      );
     });
 
     test('should throw EntityNotFoundRepositoryError mapped to NotFoundError on update failure', async () => {
@@ -222,7 +224,9 @@ describe('TopListService', () => {
     });
 
     test('should map DuplicateKeyRepositoryError to ConflictError', async () => {
-      mockCreate.mockImplementation(() => Promise.reject(new DuplicateKeyRepositoryError('slug conflict')));
+      mockCreate.mockImplementation(() =>
+        Promise.reject(new DuplicateKeyRepositoryError('slug conflict'))
+      );
       await expect(
         topListService.createTopList({ title: 'T', slug: 'dup-slug', createdBy: 'user-01' })
       ).rejects.toThrow(ConflictError);
@@ -234,7 +238,10 @@ describe('TopListService', () => {
       const topList = TopList.rehydrate({ ...sampleRawTopList, items: [] });
       mockFindById.mockImplementation(() => Promise.resolve(topList));
 
-      const updated = await topListService.updateTopList('list-01', { title: 'New Title', featured: true });
+      const updated = await topListService.updateTopList('list-01', {
+        title: 'New Title',
+        featured: true,
+      });
       expect(updated.title).toBe('New Title');
       expect(updated.featured).toBe(true);
     });

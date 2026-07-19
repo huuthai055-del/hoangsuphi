@@ -1,10 +1,13 @@
-import type { ICategoriesRepository } from '../repository/categories-repository.interface';
-import type { ILogger, IClock } from './interfaces';
-import { Category } from '../domain/category.entity';
+import { ConflictError, NotFoundError, ValidationError } from '@/common/errors/http.errors';
 import { generateUuidV7 } from '@/common/utils/uuid';
-import { NotFoundError, ConflictError, ValidationError } from '@/common/errors/http.errors';
-import { DuplicateKeyRepositoryError, EntityNotFoundRepositoryError } from '../repository/repository-errors';
 import { CategoryDomainError } from '../domain/article-errors';
+import { Category } from '../domain/category.entity';
+import type { ICategoriesRepository } from '../repository/categories-repository.interface';
+import {
+  DuplicateKeyRepositoryError,
+  EntityNotFoundRepositoryError,
+} from '../repository/repository-errors';
+import type { IClock, ILogger } from './interfaces';
 
 export interface CreateCategoryCommand {
   id?: string;
@@ -34,20 +37,26 @@ export class CategoriesService {
     try {
       const result = await fn();
       const executionTime = Math.round(performance.now() - startTime);
-      this.logger.info({
-        ...context,
-        executionTime,
-        action,
-      }, `Category action ${action} completed successfully`);
+      this.logger.info(
+        {
+          ...context,
+          executionTime,
+          action,
+        },
+        `Category action ${action} completed successfully`
+      );
       return result;
     } catch (error) {
       const executionTime = Math.round(performance.now() - startTime);
-      this.logger.error({
-        ...context,
-        executionTime,
-        action,
-        error: error instanceof Error ? error.message : String(error),
-      }, `Category action ${action} failed`);
+      this.logger.error(
+        {
+          ...context,
+          executionTime,
+          action,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        `Category action ${action} failed`
+      );
       throw error;
     }
   }
@@ -102,13 +111,7 @@ export class CategoriesService {
 
       const id = command.id ?? generateUuidV7();
       const category = this.runDomain(() =>
-        Category.create(
-          id,
-          code,
-          command.name,
-          command.description ?? null,
-          this.clock.now()
-        )
+        Category.create(id, code, command.name, command.description ?? null, this.clock.now())
       );
 
       try {

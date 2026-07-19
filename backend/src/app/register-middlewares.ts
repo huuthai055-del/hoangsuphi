@@ -1,8 +1,8 @@
-import type { Hono } from 'hono';
-import { cors } from 'hono/cors';
 import { env } from '@/config/env';
 import { loggerMiddleware } from '@/middleware/logging';
 import { rateLimit } from '@/middleware/rate-limit';
+import type { Hono } from 'hono';
+import { cors } from 'hono/cors';
 
 export function registerMiddlewares(app: Hono) {
   // 1. Logger & Request ID Tracing
@@ -14,8 +14,19 @@ export function registerMiddlewares(app: Hono) {
     cors({
       origin: env.CORS_ORIGINS,
       allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      allowHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'X-Correlation-ID'],
-      exposeHeaders: ['Content-Length', 'X-Request-ID', 'X-Correlation-ID'],
+      allowHeaders: [
+        'Content-Type',
+        'Authorization',
+        'X-Request-ID',
+        'X-Correlation-ID',
+        'Idempotency-Key',
+      ],
+      exposeHeaders: [
+        'Content-Length',
+        'X-Request-ID',
+        'X-Correlation-ID',
+        'Idempotency-Key',
+      ],
       maxAge: 600,
       credentials: true,
     })

@@ -1,6 +1,34 @@
 import { logger, requestStore } from '@/lib/logger';
 import type { MiddlewareHandler } from 'hono';
 
+const SENSITIVE_REQUEST_HEADERS = new Set([
+  'authorization',
+  'cookie',
+  'idempotency-key',
+  'x-api-key',
+]);
+
+const SENSITIVE_QUERY_PARAMETERS = new Set([
+  'access_token',
+  'accesstoken',
+  'authorization',
+  'idempotency_key',
+  'idempotencykey',
+  'password',
+  'refresh_token',
+  'refreshtoken',
+  'token',
+]);
+
+export function redactRequestHeaders(headers: Record<string, string>): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(headers).map(([name, value]) => [
+      name,
+      SENSITIVE_REQUEST_HEADERS.has(name.toLowerCase()) ? '[REDACTED]' : value,
+    ])
+  );
+}
+
 export const loggerMiddleware = (): MiddlewareHandler => {
   return async (c, next) => {
     const correlationId =
@@ -20,7 +48,7 @@ export const loggerMiddleware = (): MiddlewareHandler => {
           req: {
             method,
             url: redactedUrl,
-            headers: c.req.header(),
+            headers: redactRequestHeaders(c.req.header()),
             correlationId,
           },
         },
@@ -65,27 +93,30 @@ export const loggerMiddleware = (): MiddlewareHandler => {
   };
 };
 
-function redactSensitiveUrl(urlString: string): string {
+export function redactSensitiveUrl(urlString: string): string {
   try {
     const url = new URL(urlString);
     let changed = false;
-    if (url.searchParams.has('lat')) {
-      url.searchParams.set('lat', '[REDACTED]');
-      changed = true;
+
+    for (const [name] of url.searchParams) {
+      const normalizedName = name.toLowerCase().replace(/-/gu, '_');
+      if (
+        normalizedName === 'lat' ||
+        normalizedName === 'lng' ||
+        normalizedName === 'cursor' ||
+        SENSITIVE_QUERY_PARAMETERS.has(normalizedName)
+      ) {
+        url.searchParams.set(name, '[REDACTED]');
+        changed = true;
+      }
     }
-    if (url.searchParams.has('lng')) {
-      url.searchParams.set('lng', '[REDACTED]');
-      changed = true;
-    }
-    if (url.searchParams.has('cursor')) {
-      url.searchParams.set('cursor', '[REDACTED]');
-      changed = true;
-    }
+
     return changed ? url.toString() : urlString;
   } catch {
     return urlString
       .replace(/([?&])lat=[^&]*/gi, '$1lat=[REDACTED]')
       .replace(/([?&])lng=[^&]*/gi, '$1lng=[REDACTED]')
-      .replace(/([?&])cursor=[^&]*/gi, '$1cursor=[REDACTED]');
+      .replace(/([?&])cursor=[^&]*/gi, '$1cursor=[REDACTED]')
+      .replace(/([?&])(?:access[_-]?token|authorization|idempotency[_-]?key|password|refresh[_-]?token|token)=[^&]*/gi, '$1[REDACTED]');
   }
 }

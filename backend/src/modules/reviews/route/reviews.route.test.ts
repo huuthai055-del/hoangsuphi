@@ -1,10 +1,10 @@
-import { expect, test, describe, beforeEach, mock } from 'bun:test';
-import type { Hono } from 'hono';
-import { Review } from '../domain/reviews.entity';
-import { Favorite } from '../domain/favorites.entity';
-import { ReviewsController } from './reviews.controller';
-import { FavoritesController } from './favorites.controller';
+import { beforeEach, describe, expect, mock, test } from 'bun:test';
 import { AuthorizationError } from '@/common/errors/http.errors';
+import type { Hono } from 'hono';
+import { Favorite } from '../domain/favorites.entity';
+import { Review } from '../domain/reviews.entity';
+import { FavoritesController } from './favorites.controller';
+import { ReviewsController } from './reviews.controller';
 
 describe('Reviews & Favorites API Routing & Controller', () => {
   let app: Hono;
@@ -36,7 +36,9 @@ describe('Reviews & Favorites API Routing & Controller', () => {
   const mockUpdateReview = mock(async (_id: string, caller: any, props: any) => {
     const review = await mockGetReview();
     if (review && review.userId !== caller.id && !caller.roles?.includes('admin')) {
-      return Promise.reject(new AuthorizationError('You do not have permission to access this review'));
+      return Promise.reject(
+        new AuthorizationError('You do not have permission to access this review')
+      );
     }
     return Promise.resolve({
       ...sampleReviewData,
@@ -47,7 +49,9 @@ describe('Reviews & Favorites API Routing & Controller', () => {
   const mockDeleteReview = mock(async (_id: string, caller: any) => {
     const review = await mockGetReview();
     if (review && review.userId !== caller.id && !caller.roles?.includes('admin')) {
-      return Promise.reject(new AuthorizationError('You do not have permission to access this review'));
+      return Promise.reject(
+        new AuthorizationError('You do not have permission to access this review')
+      );
     }
     return Promise.resolve();
   });
@@ -60,7 +64,9 @@ describe('Reviews & Favorites API Routing & Controller', () => {
   const mockListReviewsByOwner = mock(() => Promise.resolve<Review[]>([]));
   const mockListReviewsByUser = mock(async (userId: string, caller: any, _pagination?: any) => {
     if (userId !== caller?.id && !caller?.roles?.includes('admin')) {
-      return Promise.reject(new AuthorizationError('You do not have permission to access these reviews'));
+      return Promise.reject(
+        new AuthorizationError('You do not have permission to access these reviews')
+      );
     }
     return Promise.resolve([Review.rehydrate(sampleReviewData)]);
   });
@@ -111,7 +117,9 @@ describe('Reviews & Favorites API Routing & Controller', () => {
     mockUpdateReview.mockImplementation(async (_id: string, caller: any, props: any) => {
       const review = await mockGetReview();
       if (review && review.userId !== caller.id && !caller.roles?.includes('admin')) {
-        return Promise.reject(new AuthorizationError('You do not have permission to access this review'));
+        return Promise.reject(
+          new AuthorizationError('You do not have permission to access this review')
+        );
       }
       return Promise.resolve({
         ...sampleReviewData,
@@ -124,7 +132,9 @@ describe('Reviews & Favorites API Routing & Controller', () => {
     mockDeleteReview.mockImplementation(async (_id: string, caller: any) => {
       const review = await mockGetReview();
       if (review && review.userId !== caller.id && !caller.roles?.includes('admin')) {
-        return Promise.reject(new AuthorizationError('You do not have permission to access this review'));
+        return Promise.reject(
+          new AuthorizationError('You do not have permission to access this review')
+        );
       }
       return Promise.resolve();
     });
@@ -145,12 +155,16 @@ describe('Reviews & Favorites API Routing & Controller', () => {
     mockListReviewsByOwner.mockImplementation(() => Promise.resolve([]));
 
     mockListReviewsByUser.mockClear();
-    mockListReviewsByUser.mockImplementation(async (userId: string, caller: any, _pagination?: any) => {
-      if (userId !== caller?.id && !caller?.roles?.includes('admin')) {
-        return Promise.reject(new AuthorizationError('You do not have permission to access these reviews'));
+    mockListReviewsByUser.mockImplementation(
+      async (userId: string, caller: any, _pagination?: any) => {
+        if (userId !== caller?.id && !caller?.roles?.includes('admin')) {
+          return Promise.reject(
+            new AuthorizationError('You do not have permission to access these reviews')
+          );
+        }
+        return Promise.resolve([Review.rehydrate(sampleReviewData)]);
       }
-      return Promise.resolve([Review.rehydrate(sampleReviewData)]);
-    });
+    );
 
     // Reset Favorites service spies
     mockAddFavorite.mockClear();
@@ -237,7 +251,10 @@ describe('Reviews & Favorites API Routing & Controller', () => {
 
     test('PATCH /api/v1/reviews/:id - Reject update if not owner', async () => {
       // Rehydrate a review owned by a different user
-      const review = Review.rehydrate({ ...sampleReviewData, userId: '00000000-0000-0000-0000-999999999999' });
+      const review = Review.rehydrate({
+        ...sampleReviewData,
+        userId: '00000000-0000-0000-0000-999999999999',
+      });
       mockGetReview.mockImplementation(() => Promise.resolve(review));
 
       const res = await app.request(`/api/v1/reviews/${review.id}`, {
@@ -286,7 +303,10 @@ describe('Reviews & Favorites API Routing & Controller', () => {
 
     test('DELETE /api/v1/reviews/:id - Reject delete if not owner', async () => {
       // Rehydrate a review owned by a different user
-      const review = Review.rehydrate({ ...sampleReviewData, userId: '00000000-0000-0000-0000-999999999999' });
+      const review = Review.rehydrate({
+        ...sampleReviewData,
+        userId: '00000000-0000-0000-0000-999999999999',
+      });
       mockGetReview.mockImplementation(() => Promise.resolve(review));
 
       const res = await app.request(`/api/v1/reviews/${review.id}`, {
@@ -298,9 +318,13 @@ describe('Reviews & Favorites API Routing & Controller', () => {
     });
 
     test('GET /api/v1/owners/:ownerType/:ownerId/reviews - Public fetch success', async () => {
-      mockListReviewsByOwner.mockImplementation(() => Promise.resolve([Review.rehydrate(sampleReviewData)]));
+      mockListReviewsByOwner.mockImplementation(() =>
+        Promise.resolve([Review.rehydrate(sampleReviewData)])
+      );
 
-      const res = await app.request(`/api/v1/owners/PLACE/${sampleReviewData.ownerId}/reviews?limit=5&offset=0`);
+      const res = await app.request(
+        `/api/v1/owners/PLACE/${sampleReviewData.ownerId}/reviews?limit=5&offset=0`
+      );
       expect(res.status).toBe(200);
       const json = await res.json();
       expect(json.data.length).toBe(1);
@@ -360,14 +384,18 @@ describe('Reviews & Favorites API Routing & Controller', () => {
     test('GET /api/v1/owners/:ownerType/:ownerId/favorites/count - Public fetch count', async () => {
       mockCountFavorites.mockImplementation(() => Promise.resolve(25));
 
-      const res = await app.request(`/api/v1/owners/PLACE/${sampleFavoriteData.ownerId}/favorites/count`);
+      const res = await app.request(
+        `/api/v1/owners/PLACE/${sampleFavoriteData.ownerId}/favorites/count`
+      );
       expect(res.status).toBe(200);
       const json = await res.json();
       expect(json.count).toBe(25);
     });
 
     test('GET /api/v1/users/:userId/favorites - List user favorites success', async () => {
-      mockListFavorites.mockImplementation(() => Promise.resolve([Favorite.rehydrate(sampleFavoriteData)]));
+      mockListFavorites.mockImplementation(() =>
+        Promise.resolve([Favorite.rehydrate(sampleFavoriteData)])
+      );
 
       const res = await app.request(`/api/v1/users/${sampleFavoriteData.userId}/favorites`, {
         headers: { Authorization: 'Bearer valid-token' },

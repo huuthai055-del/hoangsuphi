@@ -1,5 +1,5 @@
-import type { Attraction } from '../domain/attraction.entity';
 import type { TransactionClient } from '@/lib/database/client';
+import type { Attraction } from '../domain/attraction.entity';
 
 export interface ListAttractionsOptions {
   page?: number;

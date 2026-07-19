@@ -1,14 +1,14 @@
-import { Hono } from 'hono';
-import { container } from '@/common/di/container';
 import { Permissions } from '@/common/constants/permissions';
-import { requirePermission } from '@/modules/identity/middleware/permission.middleware';
-import {
-  FaqIdParamsSchema,
-  CreateFaqRequestSchema,
-  UpdateFaqRequestSchema,
-  FaqFilterQuerySchema,
-} from '../dto/faqs.dto';
+import { container } from '@/common/di/container';
 import { validateBody, validateParams, validateQuery } from '@/middleware/validator';
+import { requirePermission } from '@/modules/identity/middleware/permission.middleware';
+import { Hono } from 'hono';
+import {
+  CreateFaqRequestSchema,
+  FaqFilterQuerySchema,
+  FaqIdParamsSchema,
+  UpdateFaqRequestSchema,
+} from '../dto/faqs.dto';
 import type { FaqsController } from './faqs.controller';
 
 import type { MiddlewareHandler } from 'hono';
@@ -16,21 +16,14 @@ import type { MiddlewareHandler } from 'hono';
 const faqsRouter = new Hono();
 
 // Dynamically resolve authGuard and controller from Container
-const authGuard: MiddlewareHandler = (c, next) => container.resolve<MiddlewareHandler>('AuthGuard')(c, next);
+const authGuard: MiddlewareHandler = (c, next) =>
+  container.resolve<MiddlewareHandler>('AuthGuard')(c, next);
 const getController = (): FaqsController => container.resolve<FaqsController>('FaqsController');
 
 // Public Routes
-faqsRouter.get(
-  '/',
-  validateQuery(FaqFilterQuerySchema),
-  (c) => getController().list(c)
-);
+faqsRouter.get('/', validateQuery(FaqFilterQuerySchema), (c) => getController().list(c));
 
-faqsRouter.get(
-  '/:id',
-  validateParams(FaqIdParamsSchema),
-  (c) => getController().getById(c)
-);
+faqsRouter.get('/:id', validateParams(FaqIdParamsSchema), (c) => getController().getById(c));
 
 // Admin Routes
 faqsRouter.post(

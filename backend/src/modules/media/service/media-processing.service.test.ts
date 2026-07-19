@@ -1,14 +1,14 @@
-import { expect, test, describe, beforeEach, mock } from 'bun:test';
-import { MediaProcessingService } from './media-processing.service';
-import type { IMediaRepository } from '../repository/media-repository.interface';
-import type { IMediaStorage } from '../domain/storage.interface';
+import { beforeEach, describe, expect, mock, test } from 'bun:test';
 import type { IImageProcessor } from '../domain/image-processor.interface';
-import { Media } from '../domain/media.entity';
 import {
   MediaDomainError,
   StorageProcessingError,
   VariantGenerationError,
 } from '../domain/media-errors';
+import { Media } from '../domain/media.entity';
+import type { IMediaStorage } from '../domain/storage.interface';
+import type { IMediaRepository } from '../repository/media-repository.interface';
+import { MediaProcessingService } from './media-processing.service';
 
 describe('MediaProcessingService', () => {
   let findByIdMock: ReturnType<typeof mock>;
@@ -42,13 +42,19 @@ describe('MediaProcessingService', () => {
     mediaRepo = {
       findById: findByIdMock,
       findByHash: mock(() => Promise.resolve(null)),
+      findScopedDuplicate: mock(() => Promise.resolve(null)),
       save: mock(() => Promise.resolve()),
       update: updateMock,
       delete: mock(() => Promise.resolve()),
+      transitionToProcessing: mock(() => Promise.resolve()),
+      transitionToFailed: mock(() => Promise.resolve()),
+      finalizeProcessedMedia: mock(() => Promise.resolve()),
       saveMetadata: saveMetadataMock,
       saveVariant: saveVariantMock,
       getMetadata: mock(() => Promise.resolve(null)),
       getVariants: mock(() => Promise.resolve([])),
+      listPurgeCandidates: mock(() => Promise.resolve([])),
+      hardDeletePurged: mock(() => Promise.resolve()),
     };
 
     // Storage Mock bindings
@@ -75,7 +81,9 @@ describe('MediaProcessingService', () => {
         gps: { latitude: 22.75, longitude: 104.75 },
       })
     );
-    resizeMock = mock(() => Promise.resolve({ buffer: Buffer.from('optimized variant'), fileSize: 50000 }));
+    resizeMock = mock(() =>
+      Promise.resolve({ buffer: Buffer.from('optimized variant'), fileSize: 50000 })
+    );
 
     imageProcessor = {
       extractMetadata: extractMetadataMock,
@@ -96,6 +104,7 @@ describe('MediaProcessingService', () => {
         fileSize: 10000,
         hash: 'hash123',
       });
+      readyMedia.markProcessing();
       readyMedia.markReady();
       findByIdMock.mockImplementation(() => Promise.resolve(readyMedia));
 
@@ -121,7 +130,7 @@ describe('MediaProcessingService', () => {
   });
 
   describe('Full Processing Pipeline Workflows', () => {
-    test('should successfully extract camera, GPS metadata, write variations, and mark READY', async () => {
+    test('should persist only allowlisted technical metadata, write variants, and mark READY', async () => {
       const media = Media.create({
         id: mediaId,
         fileName: 'image.jpg',
@@ -139,6 +148,13 @@ describe('MediaProcessingService', () => {
       expect(downloadStorageMock).toHaveBeenCalledWith(originalKey);
       expect(extractMetadataMock).toHaveBeenCalled();
       expect(saveMetadataMock).toHaveBeenCalled();
+      const savedMetadata = saveMetadataMock.mock.calls[0]?.[1] as Record<string, unknown>;
+      expect(savedMetadata).toEqual(
+        expect.objectContaining({ width: 1920, height: 1080, processedAt: expect.any(String) })
+      );
+      expect(savedMetadata).not.toHaveProperty('gps');
+      expect(savedMetadata).not.toHaveProperty('cameraMake');
+      expect(savedMetadata).not.toHaveProperty('cameraModel');
       expect(resizeMock).toHaveBeenCalledTimes(3); // thumbnail, medium, large
       expect(uploadStorageMock).toHaveBeenCalledTimes(3);
       expect(saveVariantMock).toHaveBeenCalledTimes(3);
@@ -176,7 +192,7 @@ describe('MediaProcessingService', () => {
         hash: 'hash123',
       });
       findByIdMock.mockImplementation(() => Promise.resolve(media));
-      
+
       // First variant succeeds, second crashes
       let callCount = 0;
       resizeMock.mockImplementation(() => {

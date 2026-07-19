@@ -1,22 +1,19 @@
-import type { Context } from 'hono';
-import type { ArticlesService } from '../service/articles.service';
-import {
-  mapArticleToResponse,
-  mapArticleListToResponse,
-} from './mappers/articles.mapper';
 import { AuthenticationError } from '@/common/errors/http.errors';
 import type { AuthenticatedUser } from '@/modules/identity/middleware/identity.context';
+import type { Context } from 'hono';
 import type {
-  CreateArticleRequestDto,
-  UpdateArticleRequestDto,
-  SearchArticlesQueryDto,
   ArticleIdParamsDto,
+  ArticleListResponseDto,
   ArticleSlugParamsDto,
   BindTagsDto,
-  RemoveTagsDto,
+  CreateArticleRequestDto,
   RejectArticleDto,
-  ArticleListResponseDto,
+  RemoveTagsDto,
+  SearchArticlesQueryDto,
+  UpdateArticleRequestDto,
 } from '../dto/articles.dto';
+import type { ArticlesService } from '../service/articles.service';
+import { mapArticleListToResponse, mapArticleToResponse } from './mappers/articles.mapper';
 
 export function requireAuthenticatedUser(c: Context): AuthenticatedUser {
   const user = c.get('user');
@@ -96,16 +93,20 @@ export class ArticlesController {
     const body = c.get('validBody') as UpdateArticleRequestDto;
     const user = requireAuthenticatedUser(c);
 
-    const article = await this.service.updateArticle(params.id, {
-      title: body.title,
-      slug: body.slug,
-      excerpt: body.excerpt,
-      content: body.content,
-      thumbnailId: body.thumbnailId,
-      categoryId: body.categoryId,
-      tagIds: body.tagIds,
-      isFeatured: body.isFeatured,
-    }, user);
+    const article = await this.service.updateArticle(
+      params.id,
+      {
+        title: body.title,
+        slug: body.slug,
+        excerpt: body.excerpt,
+        content: body.content,
+        thumbnailId: body.thumbnailId,
+        categoryId: body.categoryId,
+        tagIds: body.tagIds,
+        isFeatured: body.isFeatured,
+      },
+      user
+    );
 
     return c.json(mapArticleToResponse(article), 200);
   };

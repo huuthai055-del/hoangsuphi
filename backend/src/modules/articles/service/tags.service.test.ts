@@ -13,12 +13,15 @@ mock.module('@/lib/database/client', () => {
   };
 });
 
-import { expect, test, describe, beforeEach } from 'bun:test';
-import { TagsService, type CreateTagCommand, type UpdateTagCommand } from './tags.service';
-import type { ITagsRepository } from '../repository/tags-repository.interface';
+import { beforeEach, describe, expect, test } from 'bun:test';
+import { ConflictError, NotFoundError, ValidationError } from '@/common/errors/http.errors';
 import { Tag } from '../domain/tag.entity';
-import { NotFoundError, ConflictError, ValidationError } from '@/common/errors/http.errors';
-import { DuplicateKeyRepositoryError, EntityNotFoundRepositoryError } from '../repository/repository-errors';
+import {
+  DuplicateKeyRepositoryError,
+  EntityNotFoundRepositoryError,
+} from '../repository/repository-errors';
+import type { ITagsRepository } from '../repository/tags-repository.interface';
+import { type CreateTagCommand, TagsService, type UpdateTagCommand } from './tags.service';
 
 describe('TagsService', () => {
   let findByIdMock: ReturnType<typeof mock>;
@@ -202,7 +205,9 @@ describe('TagsService', () => {
       };
 
       existsBySlugMock.mockImplementation(() => Promise.resolve(false));
-      saveMock.mockImplementation(() => Promise.reject(new DuplicateKeyRepositoryError('Duplicate key')));
+      saveMock.mockImplementation(() =>
+        Promise.reject(new DuplicateKeyRepositoryError('Duplicate key'))
+      );
 
       await expect(service.createTag(cmd)).rejects.toThrow(ConflictError);
     });
@@ -248,7 +253,9 @@ describe('TagsService', () => {
     test('should map EntityNotFoundRepositoryError to NotFoundError', async () => {
       const mockTag = Tag.create(tagId, tagName, tagSlug, tagDesc, true);
       findByIdMock.mockImplementation(() => Promise.resolve(mockTag));
-      updateMock.mockImplementation(() => Promise.reject(new EntityNotFoundRepositoryError('Not found')));
+      updateMock.mockImplementation(() =>
+        Promise.reject(new EntityNotFoundRepositoryError('Not found'))
+      );
 
       const cmd: UpdateTagCommand = { name: 'New Name' };
       await expect(service.updateTag(tagId, cmd)).rejects.toThrow(NotFoundError);
@@ -271,7 +278,9 @@ describe('TagsService', () => {
 
     test('should map EntityNotFoundRepositoryError to NotFoundError', async () => {
       existsMock.mockImplementation(() => Promise.resolve(true));
-      deleteMock.mockImplementation(() => Promise.reject(new EntityNotFoundRepositoryError('Not found')));
+      deleteMock.mockImplementation(() =>
+        Promise.reject(new EntityNotFoundRepositoryError('Not found'))
+      );
 
       await expect(service.deleteTag(tagId)).rejects.toThrow(NotFoundError);
     });

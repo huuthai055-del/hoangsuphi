@@ -1,6 +1,6 @@
-import { pgTable, uuid, varchar, text, timestamp, index } from 'drizzle-orm/pg-core';
-import { regions } from './regions';
+import { index, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 import { attractionCategories } from './references';
+import { regions } from './regions';
 import { point } from './shared/custom-types';
 
 export const attractions = pgTable(

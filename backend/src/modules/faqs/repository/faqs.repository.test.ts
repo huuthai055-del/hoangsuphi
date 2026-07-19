@@ -1,4 +1,4 @@
-import { describe, test, expect, mock, beforeEach } from 'bun:test';
+import { beforeEach, describe, expect, mock, test } from 'bun:test';
 
 let mockResolveValue: any = undefined;
 
@@ -45,18 +45,18 @@ mock.module('@/lib/database/client', () => ({
   runInTransaction: async (cb: (tx: unknown) => Promise<unknown>) => cb(mockDbChain),
 }));
 
-import { DrizzleFaqRepository } from './faq.repository';
-import { DrizzleTopListRepository } from './top-list.repository';
-import { Faq } from '../domain/faq.entity';
-import { TopList } from '../domain/top-list.entity';
 import {
+  CheckConstraintViolationRepositoryError,
+  ConstraintViolationRepositoryError,
+  DatabaseOperationRepositoryError,
   DuplicateKeyRepositoryError,
   EntityNotFoundRepositoryError,
-  ConstraintViolationRepositoryError,
-  CheckConstraintViolationRepositoryError,
   TransactionConflictRepositoryError,
-  DatabaseOperationRepositoryError,
 } from '@/common/errors/repository.errors';
+import { Faq } from '../domain/faq.entity';
+import { TopList } from '../domain/top-list.entity';
+import { DrizzleFaqRepository } from './faq.repository';
+import { DrizzleTopListRepository } from './top-list.repository';
 
 describe('FAQ Repository Layer', () => {
   let faqRepo: DrizzleFaqRepository;
@@ -109,7 +109,8 @@ describe('FAQ Repository Layer', () => {
 
     test('should throw DuplicateKeyRepositoryError on PG 23505', async () => {
       const faq = Faq.rehydrate(sampleRawFaq);
-      const pgErr = new Error('Unique'); (pgErr as any).code = '23505';
+      const pgErr = new Error('Unique');
+      (pgErr as any).code = '23505';
       mockResolveValue = pgErr;
       await expect(faqRepo.create(faq)).rejects.toThrow(DuplicateKeyRepositoryError);
     });
@@ -153,26 +154,32 @@ describe('FAQ Repository Layer', () => {
   describe('findMany()', () => {
     test('should return paginated FAQ list', async () => {
       mockResolveValue = [{ count: '1' }];
-      const res = await faqRepo.findMany({ filters: { status: 'DRAFT' }, pagination: { limit: 5, offset: 0 } });
+      const res = await faqRepo.findMany({
+        filters: { status: 'DRAFT' },
+        pagination: { limit: 5, offset: 0 },
+      });
       expect(res.total).toBe(1);
     });
   });
 
   describe('Constraint Mapping', () => {
     test('PG 23503 → ConstraintViolationRepositoryError', async () => {
-      const pgErr = new Error('FK'); (pgErr as any).code = '23503';
+      const pgErr = new Error('FK');
+      (pgErr as any).code = '23503';
       mockResolveValue = pgErr;
       await expect(faqRepo.exists('id')).rejects.toThrow(ConstraintViolationRepositoryError);
     });
 
     test('PG 23514 → CheckConstraintViolationRepositoryError', async () => {
-      const pgErr = new Error('Check'); (pgErr as any).code = '23514';
+      const pgErr = new Error('Check');
+      (pgErr as any).code = '23514';
       mockResolveValue = pgErr;
       await expect(faqRepo.exists('id')).rejects.toThrow(CheckConstraintViolationRepositoryError);
     });
 
     test('PG 40001 → TransactionConflictRepositoryError', async () => {
-      const pgErr = new Error('Deadlock'); (pgErr as any).code = '40001';
+      const pgErr = new Error('Deadlock');
+      (pgErr as any).code = '40001';
       mockResolveValue = pgErr;
       await expect(faqRepo.exists('id')).rejects.toThrow(TransactionConflictRepositoryError);
     });
@@ -277,7 +284,10 @@ describe('TopList Repository Layer', () => {
   describe('findMany()', () => {
     test('should return paginated top lists with batch-loaded items', async () => {
       mockResolveValue = [{ count: '1' }];
-      const res = await topListRepo.findMany({ filters: { featured: true }, pagination: { limit: 5, offset: 0 } });
+      const res = await topListRepo.findMany({
+        filters: { featured: true },
+        pagination: { limit: 5, offset: 0 },
+      });
       expect(res.total).toBe(1);
     });
   });

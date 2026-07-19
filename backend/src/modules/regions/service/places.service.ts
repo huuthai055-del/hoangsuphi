@@ -1,15 +1,15 @@
-import type { IRegionsRepository } from '../repository/regions-repository.interface';
+import { ConflictError, NotFoundError, ValidationError } from '@/common/errors/http.errors';
+import { slugify } from '@/common/utils/slug';
+import { generateUuidV7 } from '@/common/utils/uuid';
+import { logger } from '@/lib/logger';
+import { requestStore } from '@/lib/logger/context';
+import { TouristPlace } from '../domain/place.entity';
+import { GPSLocation } from '../domain/value-objects/gps-location.vo';
 import type {
   ITouristPlacesRepository,
   ListPlacesOptions,
 } from '../repository/places-repository.interface';
-import { TouristPlace } from '../domain/place.entity';
-import { GPSLocation } from '../domain/value-objects/gps-location.vo';
-import { generateUuidV7 } from '@/common/utils/uuid';
-import { slugify } from '@/common/utils/slug';
-import { logger } from '@/lib/logger';
-import { requestStore } from '@/lib/logger/context';
-import { NotFoundError, ConflictError, ValidationError } from '@/common/errors/http.errors';
+import type { IRegionsRepository } from '../repository/regions-repository.interface';
 
 export interface CreatePlaceCommand {
   id?: string;
@@ -53,7 +53,9 @@ export class PlacesService {
     return place;
   }
 
-  public async listPlaces(options: ListPlacesOptions): Promise<{ items: TouristPlace[]; total: number }> {
+  public async listPlaces(
+    options: ListPlacesOptions
+  ): Promise<{ items: TouristPlace[]; total: number }> {
     const [items, total] = await Promise.all([
       this.placesRepo.list(options),
       this.placesRepo.count(options),

@@ -1,14 +1,14 @@
-import type { Context } from 'hono';
-import type { FaqService } from '../service/faq.service';
-import { mapFaqToResponse } from './mappers/faqs.mapper';
 import { AuthenticationError } from '@/common/errors/http.errors';
 import type { AuthenticatedUser } from '@/modules/identity/middleware/identity.context';
+import type { Context } from 'hono';
 import type {
   CreateFaqRequestDto,
-  UpdateFaqRequestDto,
-  FaqIdParamsDto,
   FaqFilterQueryDto,
+  FaqIdParamsDto,
+  UpdateFaqRequestDto,
 } from '../dto/faqs.dto';
+import type { FaqService } from '../service/faq.service';
+import { mapFaqToResponse } from './mappers/faqs.mapper';
 
 function requireAuthenticatedUser(c: Context): AuthenticatedUser {
   const user = c.get('user');

@@ -1,14 +1,14 @@
 import type { Context } from 'hono';
-import type { RegionsService } from '../service/regions.service';
 import type { Region } from '../domain/region.aggregate';
 import type {
   CreateRegionRequestDto,
-  UpdateRegionRequestDto,
   ListRegionsQueryDto,
   RegionIdParamsDto,
-  RegionSlugParamsDto,
   RegionResponseDto,
+  RegionSlugParamsDto,
+  UpdateRegionRequestDto,
 } from '../dto/regions.dto';
+import type { RegionsService } from '../service/regions.service';
 
 export class RegionsController {
   constructor(private readonly regionsService: RegionsService) {}

@@ -1,6 +1,6 @@
-import { eq, and } from 'drizzle-orm';
-import { db, type TransactionClient } from '@/lib/database/client';
+import { type TransactionClient, db } from '@/lib/database/client';
 import { userSessions } from '@/lib/database/schema/users';
+import { and, eq } from 'drizzle-orm';
 import type { IUserSessionRepository, UserSessionModel } from '../service/session.service';
 
 export class DrizzleSessionRepository implements IUserSessionRepository {

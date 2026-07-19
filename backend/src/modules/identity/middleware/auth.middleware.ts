@@ -1,11 +1,11 @@
-import { createMiddleware } from 'hono/factory';
 import { AuthenticationError } from '@/common/errors/http.errors';
-import { logger } from '@/lib/logger';
 import { isValidUuid } from '@/common/utils/uuid';
-import type { ITokenService } from '../service/token.service';
-import type { ISessionService } from '../service/session.service';
-import type { IUserRepository } from '../repository/users-repository.interface';
+import { logger } from '@/lib/logger';
+import { createMiddleware } from 'hono/factory';
 import type { IPermissionRepository } from '../repository/permissions-repository.interface';
+import type { IUserRepository } from '../repository/users-repository.interface';
+import type { ISessionService } from '../service/session.service';
+import type { ITokenService } from '../service/token.service';
 import type { AuthenticatedUser } from './identity.context';
 
 export const USER_STATUS = {
@@ -64,7 +64,10 @@ export function authMiddleware(
     // Step 2: Session active verification (performed first to bypass User query on revoked sessions)
     const isSessionActive = await sessionService.isSessionActive(sessionId);
     if (!isSessionActive) {
-      logger.warn({ userId: payload.sub, sessionId }, 'Auth failed: Session is inactive or expired');
+      logger.warn(
+        { userId: payload.sub, sessionId },
+        'Auth failed: Session is inactive or expired'
+      );
       throw new AuthenticationError(AUTH_MESSAGES.UNAUTHORIZED);
     }
 
@@ -89,14 +92,22 @@ export function authMiddleware(
         logger.warn({ userId: user.id, sessionId }, 'Auth failed: User account is locked');
         throw new AuthenticationError(AUTH_MESSAGES.UNAUTHORIZED);
       default:
-        logger.warn({ userId: user.id, sessionId, status: user.status }, 'Auth failed: User account status is inactive');
+        logger.warn(
+          { userId: user.id, sessionId, status: user.status },
+          'Auth failed: User account status is inactive'
+        );
         throw new AuthenticationError(AUTH_MESSAGES.UNAUTHORIZED);
     }
 
     // Step 5: Permissions version check
     if (user.permissionsVersion !== payload.permissionsVersion) {
       logger.warn(
-        { userId: user.id, sessionId, userVersion: user.permissionsVersion, tokenVersion: payload.permissionsVersion },
+        {
+          userId: user.id,
+          sessionId,
+          userVersion: user.permissionsVersion,
+          tokenVersion: payload.permissionsVersion,
+        },
         'Auth failed: permissionsVersion mismatch'
       );
       throw new AuthenticationError(AUTH_MESSAGES.UNAUTHORIZED);

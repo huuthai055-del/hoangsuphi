@@ -1,15 +1,15 @@
+import { AuthenticationError } from '@/common/errors/http.errors';
+import type { AuthenticatedUser } from '@/modules/identity/middleware/identity.context';
 import type { Context } from 'hono';
-import type { FavoritesService } from '../service/favorites.service';
-import { mapFavoriteToResponse } from './mappers/reviews.mapper';
 import type {
   CreateFavoriteRequestDto,
+  FavoriteFilterQueryDto,
   FavoriteIdParamsDto,
   OwnerParamsDto,
-  FavoriteFilterQueryDto,
   PaginationQueryDto,
 } from '../dto/reviews.dto';
-import type { AuthenticatedUser } from '@/modules/identity/middleware/identity.context';
-import { AuthenticationError } from '@/common/errors/http.errors';
+import type { FavoritesService } from '../service/favorites.service';
+import { mapFavoriteToResponse } from './mappers/reviews.mapper';
 
 function requireAuthenticatedUser(c: Context): AuthenticatedUser {
   const user = c.get('user');

@@ -1,17 +1,19 @@
-import { runInTransaction } from '@/lib/database/client';
-import { generateUuidV7 } from '@/common/utils/uuid';
-import { hashToken } from '@/common/utils/token-hash';
 import {
-  ValidationError,
   AuthenticationError,
   ConflictError,
   NotFoundError,
+  ValidationError,
 } from '@/common/errors/http.errors';
+import { hashToken } from '@/common/utils/token-hash';
+import { generateUuidV7 } from '@/common/utils/uuid';
+import { runInTransaction } from '@/lib/database/client';
+import { logger } from '@/lib/logger';
 import { User } from '../domain/user.entity';
-import type { IPasswordService } from './password.service';
-import type { ITokenService } from './token.service';
-import type { ISessionService, UserSessionModel } from './session.service';
 import type { IUserRepository } from '../repository/users-repository.interface';
+import type { IEmailVerificationService } from './email-verification.service';
+import type { IPasswordService } from './password.service';
+import type { ISessionService, UserSessionModel } from './session.service';
+import type { ITokenService } from './token.service';
 
 export interface UserResponseDto {
   id: string;
@@ -51,7 +53,8 @@ export class AuthService implements IAuthService {
     private readonly passwordService: IPasswordService,
     private readonly tokenService: ITokenService,
     private readonly sessionService: ISessionService,
-    private readonly userRepo: IUserRepository
+    private readonly userRepo: IUserRepository,
+    private readonly emailVerificationService: IEmailVerificationService
   ) {}
 
   private validateEmail(email: string): void {
@@ -71,7 +74,7 @@ export class AuthService implements IAuthService {
 
     this.validateEmail(trimmedEmail);
 
-    return runInTransaction(async (tx) => {
+    const user = await runInTransaction(async (tx) => {
       const exists = await this.userRepo.existsByEmail(trimmedEmail, tx);
       if (exists) {
         throw new ConflictError('Email already exists');
@@ -81,13 +84,13 @@ export class AuthService implements IAuthService {
       const passwordHash = await this.passwordService.hash(trimmedPassword);
       const userId = generateUuidV7();
 
-      const user = User.create({
+      const newUser = User.create({
         id: userId,
         email: trimmedEmail,
         passwordHash,
       });
 
-      await this.userRepo.create(user, tx);
+      await this.userRepo.create(newUser, tx);
 
       // Assign default 'viewer' role via user repository
       const role = await this.userRepo.findRoleByCode('viewer', tx);
@@ -97,8 +100,26 @@ export class AuthService implements IAuthService {
 
       await this.userRepo.assignRole(userId, role.id, tx);
 
-      return user;
+      return newUser;
     });
+
+    try {
+      await this.emailVerificationService.issueAndSendVerificationEmail(user.id, user.email);
+    } catch (error) {
+      // As per Contract v0.5 Section 3.4:
+      // Register (Đăng ký): Nếu gửi email bị lỗi, User vẫn được tạo thành công với trạng thái pending_verification.
+      const redactedEmail = user.email.replace(/(?<=^.{1})[^@\n]+(?=@)/, '***');
+      logger.error(
+        {
+          errorCode: error instanceof Error ? error.name : 'UnknownError',
+          userId: user.id,
+          email: redactedEmail,
+        },
+        '[AuthService] Error sending verification email during register'
+      );
+    }
+
+    return user;
   }
 
   public async login(
@@ -154,12 +175,15 @@ export class AuthService implements IAuthService {
       user.recordLogin();
       await this.userRepo.update(user, tx);
 
-      const session = await this.sessionService.createSession({
-        userId: user.id,
-        ipAddress: trimmedIp,
-        userAgent,
-        deviceName,
-      }, tx);
+      const session = await this.sessionService.createSession(
+        {
+          userId: user.id,
+          ipAddress: trimmedIp,
+          userAgent,
+          deviceName,
+        },
+        tx
+      );
 
       const jwtId = generateUuidV7();
       const familyId = generateUuidV7();
@@ -179,13 +203,16 @@ export class AuthService implements IAuthService {
 
       const tokenHash = hashToken(refreshToken);
 
-      await this.sessionService.createRefreshToken({
-        userId: user.id,
-        sessionId: session.id,
-        tokenHash,
-        jwtId,
-        familyId,
-      }, tx);
+      await this.sessionService.createRefreshToken(
+        {
+          userId: user.id,
+          sessionId: session.id,
+          tokenHash,
+          jwtId,
+          familyId,
+        },
+        tx
+      );
 
       return {
         accessToken,
@@ -223,11 +250,14 @@ export class AuthService implements IAuthService {
 
       const newTokenHash = hashToken(newRefreshToken);
 
-      await this.sessionService.rotateRefreshToken({
-        oldTokenHash,
-        newTokenHash,
-        newJwtId,
-      }, tx);
+      await this.sessionService.rotateRefreshToken(
+        {
+          oldTokenHash,
+          newTokenHash,
+          newJwtId,
+        },
+        tx
+      );
 
       // Update session activity on token rotation
       await this.sessionService.touchSession(payload.sid, tx);

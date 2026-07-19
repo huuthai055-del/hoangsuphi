@@ -1,11 +1,11 @@
 import { createHash } from 'node:crypto';
-import type { IMediaRepository } from '../repository/media-repository.interface';
-import type { IMediaStorage } from '../domain/storage.interface';
-import { Media } from '../domain/media.entity';
+import { logger } from '@/lib/logger';
 import { StorageUploadError } from '../domain/media-errors';
+import { Media } from '../domain/media.entity';
+import type { IMediaStorage } from '../domain/storage.interface';
+import type { IMediaRepository } from '../repository/media-repository.interface';
 import { MediaValidationPolicy } from './media-validation.policy';
 import { StorageKeyGenerator } from './storage-key.generator';
-import { logger } from '@/lib/logger';
 
 export class MediaUploadService {
   constructor(
@@ -24,7 +24,10 @@ export class MediaUploadService {
     // 1. Delegate validation policies
     const sanitizedName = MediaValidationPolicy.validateFileName(props.fileName);
     const fileSize = props.fileBuffer.length;
-    const { mediaType } = MediaValidationPolicy.determineMediaTypeAndLimit(props.mimeType, fileSize);
+    const { mediaType } = MediaValidationPolicy.determineMediaTypeAndLimit(
+      props.mimeType,
+      fileSize
+    );
 
     // Calculate SHA-256 hash for deduplication
     const hash = createHash('sha256').update(props.fileBuffer).digest('hex');
@@ -42,8 +45,8 @@ export class MediaUploadService {
     // 3. Storage Upload
     try {
       await this.storage.upload(storageKey, props.fileBuffer, props.mimeType);
-    } catch (err) {
-      throw new StorageUploadError(`Failed to store uploaded file: ${err instanceof Error ? err.message : String(err)}`);
+    } catch {
+      throw new StorageUploadError('Failed to store uploaded file');
     }
 
     // 4. Database Save
@@ -72,7 +75,10 @@ export class MediaUploadService {
         // Log storage cleanup failure: the DB error will still be rethrown, but now
         // we have visibility that the orphaned storage file may need manual cleanup.
         logger.error(
-          { err: cleanupErr, mediaId: id, storageKey },
+          {
+            errorClass: cleanupErr instanceof Error ? cleanupErr.name : 'UnknownError',
+            mediaId: id,
+          },
           'Failed to delete orphaned storage file after DB save failure'
         );
       }
@@ -81,6 +87,9 @@ export class MediaUploadService {
 
     // 5. Mark Ready
     try {
+      // Legacy service compatibility: preserve the mandatory lifecycle even
+      // though the production upload route uses MediaIngestionService.
+      media.markProcessing();
       media.markReady();
       await this.mediaRepo.update(media);
     } catch (updateErr) {
@@ -89,7 +98,10 @@ export class MediaUploadService {
         await this.storage.delete(storageKey);
       } catch (cleanupErr) {
         logger.error(
-          { err: cleanupErr, mediaId: media.id, storageKey },
+          {
+            errorClass: cleanupErr instanceof Error ? cleanupErr.name : 'UnknownError',
+            mediaId: media.id,
+          },
           'Failed to delete orphaned storage file after markReady failure'
         );
       }
@@ -97,7 +109,10 @@ export class MediaUploadService {
         await this.mediaRepo.delete(media.id);
       } catch (cleanupErr) {
         logger.error(
-          { err: cleanupErr, mediaId: media.id },
+          {
+            errorClass: cleanupErr instanceof Error ? cleanupErr.name : 'UnknownError',
+            mediaId: media.id,
+          },
           'Failed to delete orphaned DB record after markReady failure'
         );
       }

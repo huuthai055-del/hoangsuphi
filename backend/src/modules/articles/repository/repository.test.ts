@@ -1,4 +1,4 @@
-import { describe, test, expect, mock, beforeEach } from 'bun:test';
+import { beforeEach, describe, expect, mock, test } from 'bun:test';
 
 // 1. Setup global resolve value for the thenable DB chain
 let mockResolveValue: any = undefined;
@@ -59,25 +59,25 @@ mock.module('@/lib/database/client', () => {
   };
 });
 
-// Import production repositories under test
-import { DrizzleCategoriesRepository } from './categories.repository';
-import { DrizzleTagsRepository } from './tags.repository';
-import { DrizzleArticlesRepository } from './articles.repository';
+import { Article } from '../domain/article.entity';
 import { Category } from '../domain/category.entity';
 import { Tag } from '../domain/tag.entity';
-import { Article } from '../domain/article.entity';
-import { CategoryMapper } from './categories.mapper';
-import { TagMapper } from './tags.mapper';
 import { ArticleMapper } from './articles.mapper';
+import { DrizzleArticlesRepository } from './articles.repository';
+import { CategoryMapper } from './categories.mapper';
+// Import production repositories under test
+import { DrizzleCategoriesRepository } from './categories.repository';
 import {
+  CheckConstraintViolationRepositoryError,
+  ConstraintViolationRepositoryError,
+  DatabaseOperationRepositoryError,
   DuplicateKeyRepositoryError,
   EntityNotFoundRepositoryError,
-  DatabaseOperationRepositoryError,
-  ConstraintViolationRepositoryError,
   NotNullViolationRepositoryError,
-  CheckConstraintViolationRepositoryError,
   TransactionConflictRepositoryError,
 } from './repository-errors';
+import { TagMapper } from './tags.mapper';
+import { DrizzleTagsRepository } from './tags.repository';
 
 describe('Repositories Layer', () => {
   const categoryId = '019f4bc4-f550-7d52-bba4-3b6258b55701';
@@ -157,7 +157,9 @@ describe('Repositories Layer', () => {
   // -------------------------------------------------------------------------
   describe('DrizzleCategoriesRepository', () => {
     let repo: DrizzleCategoriesRepository;
-    beforeEach(() => { repo = new DrizzleCategoriesRepository(); });
+    beforeEach(() => {
+      repo = new DrizzleCategoriesRepository();
+    });
 
     test('findById() should return Category domain entity when found', async () => {
       mockResolveValue = [rawCategory];
@@ -198,7 +200,10 @@ describe('Repositories Layer', () => {
       await repo.save(cat);
       expect(insertSpy).toHaveBeenCalled();
 
-      mockResolveValue = Object.assign(new Error('dup'), { code: '23505', constraint: 'category_code_key' });
+      mockResolveValue = Object.assign(new Error('dup'), {
+        code: '23505',
+        constraint: 'category_code_key',
+      });
       await expect(repo.save(cat)).rejects.toThrow(DuplicateKeyRepositoryError);
 
       mockResolveValue = Object.assign(new Error('fk'), { code: '23503', constraint: 'some_fk' });
@@ -207,7 +212,10 @@ describe('Repositories Layer', () => {
       mockResolveValue = Object.assign(new Error('not-null'), { code: '23502', column: 'name' });
       await expect(repo.save(cat)).rejects.toThrow(NotNullViolationRepositoryError);
 
-      mockResolveValue = Object.assign(new Error('check'), { code: '23514', constraint: 'articles_status_check' });
+      mockResolveValue = Object.assign(new Error('check'), {
+        code: '23514',
+        constraint: 'articles_status_check',
+      });
       await expect(repo.save(cat)).rejects.toThrow(CheckConstraintViolationRepositoryError);
 
       mockResolveValue = Object.assign(new Error('serial'), { code: '40001' });
@@ -229,7 +237,10 @@ describe('Repositories Layer', () => {
       mockResolveValue = [];
       await expect(repo.update(cat)).rejects.toThrow(EntityNotFoundRepositoryError);
 
-      const dup = Object.assign(new Error('dup'), { code: '23505', constraint: 'category_code_key' });
+      const dup = Object.assign(new Error('dup'), {
+        code: '23505',
+        constraint: 'category_code_key',
+      });
       mockResolveValue = dup;
       await expect(repo.update(cat)).rejects.toThrow(DuplicateKeyRepositoryError);
 
@@ -253,7 +264,9 @@ describe('Repositories Layer', () => {
   // -------------------------------------------------------------------------
   describe('DrizzleTagsRepository', () => {
     let repo: DrizzleTagsRepository;
-    beforeEach(() => { repo = new DrizzleTagsRepository(); });
+    beforeEach(() => {
+      repo = new DrizzleTagsRepository();
+    });
 
     test('findById() should return Tag domain entity when found', async () => {
       mockResolveValue = [rawTag];
@@ -326,11 +339,13 @@ describe('Repositories Layer', () => {
   // -------------------------------------------------------------------------
   describe('DrizzleArticlesRepository', () => {
     let repo: DrizzleArticlesRepository;
-    beforeEach(() => { repo = new DrizzleArticlesRepository(); });
+    beforeEach(() => {
+      repo = new DrizzleArticlesRepository();
+    });
 
     test('findById() & findBySlug() should return Article domain entity or null', async () => {
       mockResolveValue = [rawArticle];
-      expect((await repo.findById(articleId))).toBeInstanceOf(Article);
+      expect(await repo.findById(articleId)).toBeInstanceOf(Article);
 
       mockResolveValue = [];
       expect(await repo.findById(articleId, { includeDeleted: true })).toBeNull();
@@ -339,7 +354,9 @@ describe('Repositories Layer', () => {
       expect((await repo.findBySlug('kinh-nghiem-du-lich-hoang-su-phi'))?.id).toBe(articleId);
 
       mockResolveValue = [];
-      expect(await repo.findBySlug('kinh-nghiem-du-lich-hoang-su-phi', { includeDeleted: true })).toBeNull();
+      expect(
+        await repo.findBySlug('kinh-nghiem-du-lich-hoang-su-phi', { includeDeleted: true })
+      ).toBeNull();
     });
 
     test('exists() & existsBySlug() should return boolean', async () => {
@@ -518,7 +535,7 @@ describe('Repositories Layer', () => {
       const res = await repo.search(
         {
           keyword: 'trekking 100% _abc_',
-    status: 'draft' as const,
+          status: 'draft' as const,
           categoryId,
           isFeatured: true,
           tagId,
@@ -532,7 +549,7 @@ describe('Repositories Layer', () => {
         { field: 'publishedAt', order: 'DESC' }
       );
 
-      expect(res.page).toBe(1);       // clamped
+      expect(res.page).toBe(1); // clamped
       expect(res.pageSize).toBe(100); // clamped to MAX
       expect(res.total).toBe(2);
       expect(res.items.length).toBe(1);
@@ -597,7 +614,9 @@ describe('Repositories Layer', () => {
       expect(updateSpy).toHaveBeenCalled();
 
       mockResolveValue = [];
-      await expect(repo.incrementViewCount(articleId)).rejects.toThrow(EntityNotFoundRepositoryError);
+      await expect(repo.incrementViewCount(articleId)).rejects.toThrow(
+        EntityNotFoundRepositoryError
+      );
     });
   });
 });
