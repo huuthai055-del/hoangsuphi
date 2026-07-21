@@ -13,3 +13,4 @@ export * from './faqs';
 export * from './notifications';
 export * from './redirects';
 export * from './harvest-updates';
+export * from './public-catalog';

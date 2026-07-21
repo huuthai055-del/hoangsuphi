@@ -24,9 +24,13 @@ import type { SeoController } from '@/modules/seo/route/seo.controller';
 import { seoRouter } from '@/modules/seo/route/seo.route';
 import { weatherRouter } from '@/modules/weather/route/weather.route';
 import { contactRouter } from '@/modules/contact/route/contact.route';
-import { redirectsAdminRouter, redirectsPublicRouter } from '@/modules/redirects/route/redirects.route';
+import {
+  redirectsAdminRouter,
+  redirectsPublicRouter,
+} from '@/modules/redirects/route/redirects.route';
 import { harvestStatusRoute } from '@/modules/harvest-status/route/harvest-status.route';
 import { harvestStatusPublicRouter } from '@/modules/harvest-status/public/harvest-status.public.route';
+import { publicCatalogRouter } from '@/modules/public-catalog/public-catalog.route';
 
 export function registerRoutes(app: Hono) {
   // Liveness Check
@@ -79,6 +83,7 @@ export function registerRoutes(app: Hono) {
   v1Router.route('/admin/redirects', redirectsAdminRouter);
   v1Router.route('/', harvestStatusRoute);
   v1Router.route('/harvest-status', harvestStatusPublicRouter);
+  v1Router.route('/public', publicCatalogRouter);
 
   app.route(AppConfig.server.apiPrefix, v1Router);
 }

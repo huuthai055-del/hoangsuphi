@@ -106,6 +106,10 @@ import { RedirectsController } from '@/modules/redirects/route/redirects.control
 import { DrizzleRecommendationsRepository } from '@/modules/recommendations/repository/recommendations.repository';
 import { RecommendationsService } from '@/modules/recommendations/application/recommendations.service';
 import { RecommendationsController } from '@/modules/recommendations/http/recommendations.controller';
+import { PublicCatalogController } from '@/modules/public-catalog/public-catalog.controller';
+import { PublicCatalogCursorCodec } from '@/modules/public-catalog/public-catalog.cursor';
+import { DrizzlePublicCatalogRepository } from '@/modules/public-catalog/public-catalog.repository';
+import { PublicCatalogService } from '@/modules/public-catalog/public-catalog.service';
 import { HarvestMediaOwnershipAdapter } from '@/modules/harvest-status/ports/media-ownership.adapter';
 import { HarvestStatusRepository } from '@/modules/harvest-status/repository/harvest-status.repository';
 import { HarvestStatusController } from '@/modules/harvest-status/route/harvest-status.controller';
@@ -168,8 +172,9 @@ class Container {
     });
 
     this.factories.set('EmailVerificationController', () => {
-      const emailVerificationService =
-        this.resolve<EmailVerificationService>('EmailVerificationService');
+      const emailVerificationService = this.resolve<EmailVerificationService>(
+        'EmailVerificationService'
+      );
       return new EmailVerificationController(emailVerificationService);
     });
 
@@ -201,8 +206,9 @@ class Container {
       const tokenService = this.resolve<TokenService>('TokenService');
       const sessionService = this.resolve<SessionService>('SessionService');
       const userRepo = this.resolve<DrizzleUserRepository>('UserRepository');
-      const emailVerificationService =
-        this.resolve<EmailVerificationService>('EmailVerificationService');
+      const emailVerificationService = this.resolve<EmailVerificationService>(
+        'EmailVerificationService'
+      );
       return new AuthService(
         passwordService,
         tokenService,
@@ -539,12 +545,36 @@ class Container {
     // Recommendations module
     this.factories.set('RecommendationsRepository', () => new DrizzleRecommendationsRepository(db));
     this.factories.set('RecommendationsService', () => {
-      const repository = this.resolve<DrizzleRecommendationsRepository>('RecommendationsRepository');
+      const repository = this.resolve<DrizzleRecommendationsRepository>(
+        'RecommendationsRepository'
+      );
       return new RecommendationsService(repository);
     });
     this.factories.set('RecommendationsController', () => {
       const service = this.resolve<RecommendationsService>('RecommendationsService');
       return new RecommendationsController(service);
+    });
+
+    // Public catalog additive read projection
+    this.factories.set('PublicCatalogRepository', () => new DrizzlePublicCatalogRepository(db));
+    this.factories.set(
+      'PublicCatalogCursorCodec',
+      () => new PublicCatalogCursorCodec(SearchConfig.cursorKeyring)
+    );
+    this.factories.set('PublicCatalogService', () => {
+      const repository = this.resolve<DrizzlePublicCatalogRepository>('PublicCatalogRepository');
+      const cursorCodec = this.resolve<PublicCatalogCursorCodec>('PublicCatalogCursorCodec');
+      const storageResolver = this.resolve<MediaStorageResolver>('MediaStorageResolver');
+      return new PublicCatalogService(
+        repository,
+        cursorCodec,
+        storageResolver,
+        env.PUBLIC_SITE_URL ?? ''
+      );
+    });
+    this.factories.set('PublicCatalogController', () => {
+      const service = this.resolve<PublicCatalogService>('PublicCatalogService');
+      return new PublicCatalogController(service);
     });
   }
 }
