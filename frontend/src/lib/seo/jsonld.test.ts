@@ -8,7 +8,7 @@ describe('JSON-LD Builder & Serializer', () => {
     const payload = {
       malicious: '<script>alert(1)</script>',
     };
-    
+
     const result = serializeJsonLd(payload);
     expect(result).not.toContain('<script>');
     expect(result).toContain('\\u003cscript\\u003ealert(1)\\u003c/script\\u003e');

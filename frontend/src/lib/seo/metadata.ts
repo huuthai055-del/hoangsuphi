@@ -4,7 +4,7 @@ import { env } from '@/config/env';
 
 export function generateSeoMetadata(projection: SeoPageProjection): Metadata {
   const absoluteUrl = `${env.PUBLIC_SITE_URL}${projection.canonicalPath === '/' ? '' : projection.canonicalPath}`;
-  
+
   return {
     title: projection.title,
     description: projection.description,

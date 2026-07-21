@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Hoàng Su Phì Frontend — Phase 5.1
 
-## Getting Started
+Nền tảng Design System và Frontend Foundation cho Cổng thông tin Du lịch Hoàng Su Phì.
 
-First, run the development server:
+## Yêu cầu
+
+- Node.js 22+
+- npm 10+
+- Bun 1.3+ để chạy bộ test trực tiếp; script npm cũng có thể tải runner Bun 1.3.14 đã pin qua `npx`
+
+## Khởi động
 
 ```bash
+npm install
+cp .env.example .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Trên Windows PowerShell:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```powershell
+Copy-Item .env.example .env.local
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Cập nhật `PUBLIC_SITE_URL` và `INTERNAL_BACKEND_URL` trong `.env.local` trước khi kết nối backend Phase 3–4.
 
-## Learn More
+## Quality gates
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run typecheck
+npm run lint
+npm run build
+npm run test
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Hoặc chạy toàn bộ theo đúng thứ tự:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run verify
+```
 
-## Deploy on Vercel
+`npm run test` yêu cầu production build đã tồn tại vì bộ runtime test khởi động `next start`. Runner `scripts/test-all.ts` chạy unit/contract trước, sau đó chạy tuần tự cross-crawl, redirect và SSR để không tranh chấp tiến trình.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Phase 5.1 đã bao phủ
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Brand/design tokens, typography tiếng Việt không phụ thuộc tải font ngoài.
+- Responsive shell, header, footer, desktop/mobile navigation và skip link.
+- Component primitives cùng loading/error/empty/skeleton states.
+- Typed API foundation, runtime schema boundary và RFC 7807 mapping.
+- BFF auth với HttpOnly cookies, session provider và refresh không replay mutation.
+- Phone/Zalo/Google Maps deep-link utilities an toàn.
+- Route shells cho các entry point công khai của Phase 5.0.
+- SEO/SSR/redirect regression tests được giữ nguyên và tích hợp vào gate.
+
+Tài liệu kiến trúc và bằng chứng xác minh nằm trong `docs/phase-5/`.

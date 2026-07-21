@@ -40,7 +40,7 @@ export default function ArticleList() {
           }),
         }}
       />
-      
+
       <h1 className="text-3xl font-bold mb-4">Cẩm nang du lịch Hoàng Su Phì</h1>
       <p className="text-gray-700">Tổng hợp các bài viết, cẩm nang và kinh nghiệm du lịch Hoàng Su Phì chi tiết nhất.</p>
     </main>

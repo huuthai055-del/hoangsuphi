@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   const backendUrl = process.env.INTERNAL_BACKEND_URL || 'http://localhost:3000';
-  
+
   try {
     const headers: Record<string, string> = {};
     const ifNoneMatch = request.headers.get('If-None-Match');
@@ -19,10 +19,10 @@ export async function GET(request: NextRequest) {
 
     const responseHeaders = new Headers();
     responseHeaders.set('Content-Type', res.headers.get('Content-Type') || 'text/plain');
-    
+
     const etag = res.headers.get('ETag');
     if (etag) responseHeaders.set('ETag', etag);
-    
+
     const cacheControl = res.headers.get('Cache-Control');
     if (cacheControl) responseHeaders.set('Cache-Control', cacheControl);
 

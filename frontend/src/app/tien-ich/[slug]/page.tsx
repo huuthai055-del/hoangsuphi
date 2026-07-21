@@ -22,9 +22,9 @@ export default async function AttractionDetail({ params }: Props) {
     <main className="container mx-auto px-4 py-8">
       <JsonLd projection={projection} />
       <BreadcrumbJsonLd breadcrumbs={projection.breadcrumbs} />
-      
+
       <Breadcrumbs items={projection.breadcrumbs} />
-      
+
       <article className="mt-8">
         <h1 className="text-4xl font-bold mb-4">{projection.title}</h1>
         {projection.image && (

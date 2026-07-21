@@ -1,4 +1,5 @@
 import { describe, expect, test, spyOn } from 'bun:test';
+import { env } from '@/config/env';
 import { RedirectResolverClient } from './redirect-resolver.client';
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -16,7 +17,7 @@ describe('RedirectResolverClient', () => {
 
       expect(fetchSpy).toHaveBeenCalledTimes(1);
       const [url, options] = fetchSpy.mock.calls[0] ?? [];
-      expect(String(url)).toBe('http://localhost:3000/api/v1/redirects/resolve?path=%2Fold-page');
+      expect(String(url)).toBe(`${env.INTERNAL_BACKEND_URL}/api/v1/redirects/resolve?path=%2Fold-page`);
       expect(options).toMatchObject({ method: 'GET', cache: 'no-store' });
     } finally {
       fetchSpy.mockRestore();

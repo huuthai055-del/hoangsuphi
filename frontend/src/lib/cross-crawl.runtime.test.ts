@@ -15,7 +15,7 @@ const MOCK_BACKEND_PORT = 3006;
 const NEXT_PORT = 4106;
 const NEXT_BASE = `http://localhost:${NEXT_PORT}`;
 const MOCK_BASE = `http://localhost:${MOCK_BACKEND_PORT}`;
-const CANONICAL_BASE = 'http://localhost:3001';
+const CANONICAL_BASE = process.env.PUBLIC_SITE_URL ?? 'http://127.0.0.1:3001';
 
 // The URLs our mock sitemap will contain, along with expected kind
 const mockData = [
@@ -55,7 +55,7 @@ beforeAll(async () => {
       if (url.pathname.startsWith('/api/v1/seo/pages/')) {
         let kind = 'administrative-area';
         let canonicalPath = '/';
-        
+
         if (url.pathname.includes('/article/')) { kind = 'blog-posting'; canonicalPath = url.pathname.replace('/api/v1/seo/pages/article', '/cam-nang'); }
         else if (url.pathname.includes('/article')) { kind = 'collection-page'; canonicalPath = '/cam-nang'; }
         else if (url.pathname.includes('/business/')) { kind = 'local-business'; canonicalPath = url.pathname.replace('/api/v1/seo/pages/business', '/co-so'); }
@@ -65,8 +65,8 @@ beforeAll(async () => {
         else if (url.pathname.includes('/tag/')) { kind = 'collection-page'; canonicalPath = url.pathname.replace('/api/v1/seo/pages/tag', '/tag'); }
         else if (url.pathname.includes('/top-list/')) { kind = 'item-list'; canonicalPath = url.pathname.replace('/api/v1/seo/pages/top-list', '/top'); }
         else if (url.pathname.includes('/faq-hub')) { kind = 'faq-page'; canonicalPath = '/hoi-dap'; }
-        
-        return new Response(JSON.stringify({ 
+
+        return new Response(JSON.stringify({
           data: {
             canonicalPath: canonicalPath,
             robots: 'index,follow',
@@ -117,7 +117,7 @@ beforeAll(async () => {
     try {
       const ping = await fetch(NEXT_BASE);
       if (ping.ok || ping.status === 404) ready = true;
-    } catch (e) {
+    } catch {
       // ignore
     }
     await Bun.sleep(500);
@@ -143,7 +143,7 @@ describe('Sitemap Cross-Crawl Audit', () => {
     const sitemapRes = await fetch(`${NEXT_BASE}/sitemap.xml`);
     expect(sitemapRes.status).toBe(200);
     const sitemapText = await sitemapRes.text();
-    
+
     // 2. Parse URLs from sitemap
     const urlsToCrawl: { original: string; fetchUrl: string; expectedPath: string }[] = [];
     const regex = /<loc>(.*?)<\/loc>/g;
@@ -154,30 +154,30 @@ describe('Sitemap Cross-Crawl Audit', () => {
       const expectedPath = original.replace(CANONICAL_BASE, '');
       urlsToCrawl.push({ original, fetchUrl, expectedPath });
     }
-    
+
     expect(urlsToCrawl.length).toBe(mockData.length);
 
     // 3. Crawl each URL
     for (const u of urlsToCrawl) {
       const pageRes = await fetch(u.fetchUrl);
       expect(pageRes.status).toBe(200);
-      
+
       const html = await pageRes.text();
-      
+
       // Basic checks for all pages
       expect(html).toContain('<html');
-      
+
       // Check canonical exact-match with sitemap <loc>
       expect(html).toContain(`<link rel="canonical" href="${u.original}"/>`);
-      
+
       // Check og:url exact-match with sitemap <loc>
       expect(html).toContain(`<meta property="og:url" content="${u.original}"/>`);
-      
+
       // Find the expected kind for this path
       const expectedKindItem = mockData.find(m => m.path === (u.expectedPath || '/'));
       expect(expectedKindItem).toBeDefined();
       const kind = expectedKindItem!.expectedKind;
-      
+
       // Map 'kind' to schema.org type to check JSON-LD
       let expectedSchemaType = '';
       if (kind === 'website') expectedSchemaType = '"@type":"WebSite"';
@@ -191,12 +191,12 @@ describe('Sitemap Cross-Crawl Audit', () => {
       if (kind === 'local-business') expectedSchemaType = '"@type":"LocalBusiness"';
       if (kind === 'item-list') expectedSchemaType = '"@type":"ItemList"';
       if (kind === 'faq-page') expectedSchemaType = '"@type":"FAQPage"';
-      
+
       if (expectedSchemaType) {
         // Assert JSON-LD schema type is rendered
         expect(html).toContain(expectedSchemaType);
       }
-      
+
       // Verify no leaked errors
       expect(html).not.toContain('Error:');
     }

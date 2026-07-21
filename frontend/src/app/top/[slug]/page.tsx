@@ -22,9 +22,9 @@ export default async function TopListDetail({ params }: Props) {
     <main className="container mx-auto px-4 py-8">
       <JsonLd projection={projection} />
       <BreadcrumbJsonLd breadcrumbs={projection.breadcrumbs} />
-      
+
       <Breadcrumbs items={projection.breadcrumbs} />
-      
+
       <article className="mt-8">
         <h1 className="text-4xl font-bold mb-4">{projection.title}</h1>
         {projection.image && (
@@ -40,7 +40,7 @@ export default async function TopListDetail({ params }: Props) {
         <div className="prose max-w-none mb-8">
           <p>{projection.description}</p>
         </div>
-        
+
         {projection.schema.kind === 'item-list' && projection.schema.items.length > 0 && (
           <div className="mt-8">
             <h2 className="text-2xl font-semibold mb-4">Danh sách top</h2>

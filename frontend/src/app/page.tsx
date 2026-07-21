@@ -48,7 +48,7 @@ export default function Homepage() {
           ]),
         }}
       />
-      
+
       <h1 className="text-3xl font-bold mb-4">Cổng thông tin du lịch Hoàng Su Phì</h1>
       <p className="text-gray-700">Khám phá vẻ đẹp Hoàng Su Phì với ruộng bậc thang kỳ vĩ, văn hóa bản địa độc đáo và các dịch vụ du lịch chất lượng.</p>
     </main>

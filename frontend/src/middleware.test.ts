@@ -21,7 +21,7 @@ describe('Middleware Redirect Registry', () => {
   test('canonicalizes lowercase and trailing slash in one 308 hop without calling the resolver', async () => {
     const req = createRequest('https://hoangsuphi.vn/UPPER-CASE/');
     const res = await middleware(req);
-    
+
     expect(res.status).toBe(308);
     expect(res.headers.get('Location')).toBe('https://hoangsuphi.vn/upper-case');
     expect(resolveSpy).not.toHaveBeenCalled();

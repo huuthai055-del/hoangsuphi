@@ -1,28 +1,16 @@
-'use client'; // Error components must be Client Components
+"use client";
 
-import { useEffect } from 'react';
+import { Button } from "@/components/ui/button";
+import { ErrorState } from "@/components/ui/error-state";
 
-export default function Error({
-  error,
-  reset,
-}: {
-  error: Error & { digest?: string };
-  reset: () => void;
-}) {
-  useEffect(() => {
-    console.error('Page Error:', error);
-  }, [error]);
-
+export default function Error({ reset }: Readonly<{ reset: () => void }>) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-4">
-      <h1 className="text-4xl font-bold mb-4">500</h1>
-      <p className="text-lg text-gray-600 mb-8">Đã xảy ra lỗi từ phía hệ thống.</p>
-      <button
-        onClick={() => reset()}
-        className="text-blue-600 hover:underline"
-      >
-        Thử lại
-      </button>
+    <div className="layout-container py-12 md:py-20">
+      <ErrorState
+        title="Không thể tải trang"
+        description="Hệ thống đang gặp sự cố tạm thời. Bạn có thể thử tải lại nội dung."
+        action={<Button onClick={reset}>Thử lại</Button>}
+      />
     </div>
   );
 }

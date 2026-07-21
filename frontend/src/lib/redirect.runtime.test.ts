@@ -10,7 +10,7 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import type { Server } from 'bun';
 
 const NEXT_PORT = 4107;
-const RESOLVER_PORT = 3007;
+const RESOLVER_PORT = 3000;
 const NEXT_BASE = `http://127.0.0.1:${NEXT_PORT}`;
 const RESOLVER_BASE = `http://127.0.0.1:${RESOLVER_PORT}`;
 const resolverRequests: string[] = [];
@@ -102,16 +102,6 @@ beforeAll(async () => {
   });
 
   try {
-    const buildProcess = Bun.spawn(nextCommand('build'), {
-      cwd: process.cwd(),
-      env: nextEnvironment(),
-      stdio: ['ignore', 'ignore', 'ignore'],
-    });
-    const buildExitCode = await buildProcess.exited;
-    if (buildExitCode !== 0) {
-      throw new Error(`Next.js redirect runtime fixture build failed with exit code ${buildExitCode}`);
-    }
-
     nextProcess = Bun.spawn(nextCommand('start', '--port', String(NEXT_PORT)), {
       cwd: process.cwd(),
       env: nextEnvironment(),
