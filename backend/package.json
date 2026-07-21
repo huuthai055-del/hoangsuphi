@@ -33,6 +33,8 @@
     "media:purge": "bun src/modules/media/commands/purge-expired-media.ts",
     "db:studio": "drizzle-kit studio",
     "db:seed": "bun src/lib/database/seed.ts",
+    "db:seed:phase5.2": "bun src/lib/database/seeds/phase-5.2-homepage.seed.ts",
+    "typecheck": "tsc --noEmit",
     "test": "bun test"
   },
   "dependencies": {
