@@ -2,7 +2,6 @@ import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { eq, sql } from 'drizzle-orm';
-import { generateUuidV7 } from '@/common/utils/uuid';
 import { db } from '../client';
 import {
   articleCategories,
@@ -22,7 +21,7 @@ if (process.env.NODE_ENV === 'production') {
   process.exit(1);
 }
 
-// Fixed IDs for reproducible seeding
+// Fixed IDs for reproducible, 100% idempotent seeding
 const SEED_AUTHOR_ID = '018f4a0c-9999-7000-8000-000000000001';
 const HA_GIANG_ID = '018f4a0c-1111-7000-8000-000000000001';
 const HSP_ID = '018f4a0c-1111-7000-8000-000000000002';
@@ -46,9 +45,35 @@ const ARTICLE_IDS: [string, string, string] = [
   '018f4a0c-8234-7000-8000-000000000003',
 ];
 
+const PLACE_MEDIA_IDS: [string, string, string] = [
+  '018f4a0c-4234-7000-8000-000000000101',
+  '018f4a0c-4234-7000-8000-000000000102',
+  '018f4a0c-4234-7000-8000-000000000103',
+];
+
+const BIZ_MEDIA_IDS: [string, string, string] = [
+  '018f4a0c-6234-7000-8000-000000000201',
+  '018f4a0c-6234-7000-8000-000000000202',
+  '018f4a0c-6234-7000-8000-000000000203',
+];
+
+const ARTICLE_MEDIA_IDS: [string, string, string] = [
+  '018f4a0c-8234-7000-8000-000000000301',
+  '018f4a0c-8234-7000-8000-000000000302',
+  '018f4a0c-8234-7000-8000-000000000303',
+];
+
+const HARVEST_MEDIA_ID = '018f4a0c-3234-7000-8000-000000000401';
 const HARVEST_ID = '018f4a0c-3234-7000-8000-000000000001';
 const BIZ_TYPE_ID = '018f4a0c-5234-7000-8000-000000000001';
 const ARTICLE_CAT_ID = '018f4a0c-7234-7000-8000-000000000001';
+
+const TOPIC_SEED_DATA = [
+  { id: '018f4a0c-9234-7000-8000-000000000001', code: 'ruong-bac-thang', name: 'Ruộng bậc thang', mapColor: '#FFD700', isUtility: false },
+  { id: '018f4a0c-9234-7000-8000-000000000002', code: 'cho-phien', name: 'Chợ phiên', mapColor: '#FF6347', isUtility: false },
+  { id: '018f4a0c-9234-7000-8000-000000000003', code: 'van-hoa', name: 'Văn hóa bản địa', mapColor: '#8A2BE2', isUtility: false },
+  { id: '018f4a0c-9234-7000-8000-000000000004', code: 'trekking', name: 'Trekking và thiên nhiên', mapColor: '#228B22', isUtility: false },
+];
 
 /**
  * Generates a 1x1 PNG file and computes its SHA-256 hash.
@@ -116,16 +141,13 @@ async function main() {
       ]).onConflictDoNothing();
 
       // 3. Attraction Categories (Featured Topics)
-      const topics = [
-        { code: 'ruong-bac-thang', name: 'Ruộng bậc thang', mapColor: '#FFD700', isUtility: false },
-        { code: 'cho-phien', name: 'Chợ phiên', mapColor: '#FF6347', isUtility: false },
-        { code: 'van-hoa', name: 'Văn hóa bản địa', mapColor: '#8A2BE2', isUtility: false },
-        { code: 'trekking', name: 'Trekking và thiên nhiên', mapColor: '#228B22', isUtility: false },
-      ];
-      for (const topic of topics) {
+      for (const topic of TOPIC_SEED_DATA) {
         await tx.insert(attractionCategories).values({
-          id: generateUuidV7(),
-          ...topic,
+          id: topic.id,
+          code: topic.code,
+          name: topic.name,
+          mapColor: topic.mapColor,
+          isUtility: topic.isUtility,
         }).onConflictDoNothing({ target: attractionCategories.code });
       }
 
@@ -271,26 +293,32 @@ async function main() {
         publishedAt: new Date('2026-07-21T00:00:00Z'),
       }).onConflictDoNothing();
 
-      // 6. Media Pipeline & Association
+      // 6. Media Pipeline & Association (Deterministic Media IDs)
       const allOwners = [
-        ...PLACE_IDS.map(id => ({ type: 'PLACE', id, table: touristPlaces, field: 'coverUrl' })),
-        ...BIZ_IDS.map(id => ({ type: 'BUSINESS', id, table: businesses, field: 'coverUrl' })),
-        ...ARTICLE_IDS.map(id => ({ type: 'ARTICLE', id, table: articles, field: 'thumbnailId' })),
-        { type: 'HARVEST_UPDATE', id: HARVEST_ID, table: null, field: null } // No back-ref for harvest
+        { mediaId: PLACE_MEDIA_IDS[0], type: 'PLACE', id: PLACE_IDS[0], table: touristPlaces, field: 'coverUrl' },
+        { mediaId: PLACE_MEDIA_IDS[1], type: 'PLACE', id: PLACE_IDS[1], table: touristPlaces, field: 'coverUrl' },
+        { mediaId: PLACE_MEDIA_IDS[2], type: 'PLACE', id: PLACE_IDS[2], table: touristPlaces, field: 'coverUrl' },
+        { mediaId: BIZ_MEDIA_IDS[0], type: 'BUSINESS', id: BIZ_IDS[0], table: businesses, field: 'coverUrl' },
+        { mediaId: BIZ_MEDIA_IDS[1], type: 'BUSINESS', id: BIZ_IDS[1], table: businesses, field: 'coverUrl' },
+        { mediaId: BIZ_MEDIA_IDS[2], type: 'BUSINESS', id: BIZ_IDS[2], table: businesses, field: 'coverUrl' },
+        { mediaId: ARTICLE_MEDIA_IDS[0], type: 'ARTICLE', id: ARTICLE_IDS[0], table: articles, field: 'thumbnailId' },
+        { mediaId: ARTICLE_MEDIA_IDS[1], type: 'ARTICLE', id: ARTICLE_IDS[1], table: articles, field: 'thumbnailId' },
+        { mediaId: ARTICLE_MEDIA_IDS[2], type: 'ARTICLE', id: ARTICLE_IDS[2], table: articles, field: 'thumbnailId' },
+        { mediaId: HARVEST_MEDIA_ID, type: 'HARVEST_UPDATE', id: HARVEST_ID, table: null, field: null } // No back-ref for harvest
       ];
 
       for (let i = 0; i < allOwners.length; i++) {
         const owner = allOwners[i];
         if (!owner) continue;
 
-        const mediaId = generateUuidV7();
+        const mediaId = owner.mediaId;
         const fileName = `${owner.type.toLowerCase()}-${owner.id}.png`;
         const storageKey = `seed/${fileName}`;
         
         // Ensure physical file exists and get hash
         const { hash, size } = await generatePlaceholderImage(fileName);
 
-        // Insert Media record
+        // Insert Media record with fixed ID
         await tx.insert(media).values({
           id: mediaId,
           fileName,
@@ -304,7 +332,7 @@ async function main() {
           ownerType: owner.type,
           ownerId: owner.id,
           uploadedBy: SEED_AUTHOR_ID,
-          createdAt: new Date(),
+          createdAt: new Date('2026-07-21T00:00:00Z'),
         }).onConflictDoNothing();
 
         // Update Entity to point to Media (if applicable)
@@ -321,7 +349,7 @@ async function main() {
       }
     });
 
-    console.info('✅ Phase 5.2 Seeding completed successfully.');
+    console.info('✅ Phase 5.2 Seeding completed successfully with 100% idempotency.');
   } catch (error) {
     console.error('❌ Error during database seeding:', error);
     process.exit(1);

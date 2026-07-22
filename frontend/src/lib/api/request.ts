@@ -8,6 +8,11 @@ export interface ApiRequestOptions<T> extends Omit<RequestInit, "body"> {
   query?: QueryParams;
   body?: unknown;
   timeoutMs?: number;
+  /** Next.js data-cache controls used only by Server Component callers. */
+  next?: {
+    revalidate?: number | false;
+    tags?: string[];
+  };
 }
 
 type JsonReadResult = Readonly<{

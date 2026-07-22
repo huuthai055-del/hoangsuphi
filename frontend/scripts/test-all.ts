@@ -33,10 +33,13 @@ async function collectTests(directory: string): Promise<string[]> {
 
 async function runBunTests(files: string[], label: string): Promise<void> {
   console.log(`\n▶ ${label}`);
-  const child = Bun.spawn([process.execPath, "test", ...files, "--timeout", "120000"], {
+  const child = Bun.spawn(
+    [process.execPath, "test", "--preload", "./scripts/test-preload.ts", ...files, "--timeout", "120000"],
+    {
     cwd: projectRoot,
     env: {
       ...process.env,
+      NEXT_PHASE: "phase-production-build",
       PUBLIC_SITE_URL: process.env.PUBLIC_SITE_URL ?? "http://127.0.0.1:3001",
       INTERNAL_BACKEND_URL: process.env.INTERNAL_BACKEND_URL ?? "http://127.0.0.1:3000",
     },

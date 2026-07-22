@@ -15,7 +15,7 @@
 
 # 📋 PROJECT CONTEXT — CỔNG THÔNG TIN DU LỊCH HOÀNG SU PHÌ
  
-> **Cập nhật lần cuối:** 2026-07-20 | **Phiên:** #045 | **Trạng thái:** 🔒 Phase 4 MVP code baseline LOCKED; Phase 4.5 production Resend activation pending domain/DNS.
+> **Cập nhật lần cuối:** 2026-07-20 | **Phiên:** #051 | **Trạng thái:** 🔒 Step 5.0 LOCKED — controlled unlock GAP-01–03 accepted; DG-5.0-01–04 approved. Step 5.1 là công việc kế tiếp. Phase 4 MVP code baseline ngoài scope vẫn LOCKED; Phase 4.5 production Resend activation pending domain/DNS.
  
 ---
  
@@ -30,7 +30,7 @@
 | **Ngôn ngữ chính** | Tiếng Việt (Ưu tiên) — Hỗ trợ: EN, ZH, KO, JA (Phase sau) |
 | **Thị trường mục tiêu** | Du khách nội địa Việt Nam + khách nước ngoài (backpacker) |
 | **Tạo dự án** | 2026-07-06 |
-| **Trạng thái hiện tại** | 🔒 Phase 4.1–4.8 MVP code baseline LOCKED; Step 4.5.6 chỉ kích hoạt Resend production sau khi có domain và xác minh DNS/sender. Phase 5 chưa bắt đầu. |
+| **Trạng thái hiện tại** | 🔒 Phase 5 Step 5.0 đã LOCK: GAP-01 public catalog, GAP-03 reference, GAP-02 contact projection đã accepted; DG-5.0-01–04 approved. UI chưa bắt đầu; Step kế tiếp là 5.1 Design System & Frontend Foundation. 🔒 Phase 4.1–4.8 MVP code baseline ngoài scope unlock vẫn LOCKED; Step 4.5.6 chỉ kích hoạt Resend production sau khi có domain và xác minh DNS/sender. |
 
 ### Mục tiêu chiến lược
 
@@ -40,7 +40,7 @@
 **Lợi thế cạnh tranh cốt lõi:**
 - Nội dung bản địa độc quyền (theo mùa lúa, theo xã, theo dân tộc)
 - SEO cấu trúc bài bản với Schema.org đầy đủ
-- Bản đồ tiện ích hành trình thực tế (ATM, xăng, WC, sóng điện thoại)
+- Vị trí, Nearby và chỉ đường cho tiện ích hành trình thực tế (ATM, xăng, WC, sóng điện thoại); không dùng interactive map trong Phase 5
 - Không chạy OTA → Chủ homestay được lợi nhiều hơn
 
 ### Phạm vi (Scope)
@@ -62,7 +62,7 @@ Phase 3 (2028+):    Tây Bắc → Toàn quốc Việt Nam
 | Language | TypeScript (strict mode) | |
 | Styling | Tailwind CSS | |
 | UI Components | shadcn/ui | Accessible, customizable |
-| Map | Mapbox GL JS hoặc Leaflet | TBD — xem Issue I5 |
+| Vị trí/Nearby | Public coordinates + `GET /api/v1/nearby` + Google Maps directions URL | Phase 5 không dùng Mapbox/Leaflet/Google Maps JS/tile hoặc `/ban-do` |
 | Rich Text | Tiptap | CMS nội bộ |
 | State | Zustand | |
 | Data Fetching | TanStack Query | Cache + Server State |
@@ -267,21 +267,24 @@ scope: api | db | frontend | infra | auth | search | media
 | 20 | Phase 4.7 Recommendation — SQL/PostGIS public read model, signed cursor, visibility và no-leak verification | #044 | 🔒 LOCKED |
 | 21 | Phase 4.8 Live Harvest Status — admin lifecycle, public current/timeline, Media-safe projection và PostgreSQL verification | #045 | 🔒 LOCKED |
 | 22 | Phase 4 final re-audit — backend/frontend regression, exception register và umbrella closeout | #045 | 🔒 MVP CODE BASELINE LOCKED |
+| 23 | Phase 5 Frontend roadmap — Steps 5.0–5.7, decision gates, scope exclusions và Definition of Done | #046 | 📋 PLANNED — NOT IMPLEMENTED |
+| 24 | Step 5.0 audit/remediation — xác minh contract frontend/backend, sửa blueprint và register public-read/contact blockers | #047 | 🟡 REMEDIATED DRAFT — BLOCKED PENDING DECISION |
+| 25 | Controlled unlock GAP-01–03 — public catalog, contact projection, taxonomy reference contract | #048 | ✅ AUTHORIZED — IMPLEMENTATION NOT STARTED |
+| 26 | Controlled unlock GAP-01–03 implementation — public catalog routes/read model, contact migration và PostgreSQL verification | #049 | 🔒 ACCEPTED & LOCKED via Step 5.0 |
+| 27 | Step 5.0 official decisions — Nearby/directions không interactive map, BFF security, reduced Profile, brand direction | #050 | 🔒 DG-5.0-01–04 APPROVED & LOCKED |
+| 28 | Step 5.0 final acceptance and lock | #051 | 🔒 LOCKED — Step 5.1 authorized |
 
 ---
 
 ## 8. CURRENT TASK
 
-> **Phiên #045 — 2026-07-20 (PHASE 4 FINAL AUDIT — MVP CODE BASELINE LOCKED)**
+> **Phiên #051 — 2026-07-20 (STEP 5.0 FINAL ACCEPTANCE & LOCK)**
 
-- [x] Step 4.8.1 Harvest Foundation/Admin Lifecycle được người dùng cho phép tiếp tục và đưa vào final audit.
-- [x] Step 4.8.2 public current-status và region timeline đã triển khai bằng read-only set-based PostgreSQL projection, signed keyset cursor và public-safe Media mapping.
-- [x] Harvest PostgreSQL suite 25/25; current query = 1, timeline = 2; concurrent public GET không ghi DB và không gọi Redis.
-- [x] Full backend với PostgreSQL/Redis thật: 1429 pass, 0 fail, 3 conditional Cloudinary network smoke skips; dedicated locked Phase 4.3 real-provider evidence vẫn hợp lệ.
-- [x] Frontend unit 39/39, runtime SSR/cross-crawl/redirect 29/29; backend/frontend typecheck, lint và production build đều pass.
-- [x] 🔒 LOCK Phase 4.8 và Phase 4 MVP code baseline theo phê duyệt rõ ràng của người dùng.
-- [x] Giữ nguyên hai ghi chú trung thực: Search `<100 ms` là ngoại lệ đã duyệt; Resend production activation chờ domain/DNS/sender.
-- [x] Closeout: `backend/docs/04.08.02-harvest-public-read-model-closeout.md` và `backend/docs/04.00-phase-4-final-audit-closeout.md`.
+- [x] User accept public-catalog closeout GAP-01 → GAP-03 → GAP-02.
+- [x] Xác nhận DG-5.0-01–04 đã approved và mọi điều kiện đóng Step 5.0 đã đạt.
+- [x] LOCK Step 5.0, public-catalog controlled unlock và blueprint liên quan.
+- [x] Không thay đổi source code, schema, dependency hoặc module Phase 3–4 đã LOCKED.
+- [ ] Step 5.1 Design System & Frontend Foundation chưa bắt đầu.
 
 ---
 
@@ -291,14 +294,15 @@ scope: api | db | frontend | infra | auth | search | media
 
 | # | Nhiệm vụ | Phụ thuộc |
 | :--- | :--- | :--- |
-| N1 | Lập kế hoạch Phase 5 Frontend | Chỉ bắt đầu khi người dùng yêu cầu; Phase 4 đã LOCKED |
+| N1 | Step 5.1 Design System & Frontend Foundation | Step 5.0 đã LOCK; dùng brand direction approved và không thêm map SDK |
 | N2 | Step 4.5.6 Resend Production Activation | Domain `hoangsuphi.vn` được mua, DNS và sender domain được xác minh |
 
 ### 🟡 Ưu tiên trung bình (sau khi Phase 5 được duyệt)
 
 | # | Nhiệm vụ | Phụ thuộc |
 | :--- | :--- | :--- |
-| N6 | Tích hợp UI Harvest Status | Public API Phase 4.8 đã LOCKED; thuộc phạm vi frontend được duyệt sau |
+| N6 | Step 5.2 Homepage & Global Navigation | Step 5.1 hoàn thành; Public API Phase 4.8 giữ nguyên LOCKED contract |
+| N7 | Tích hợp UI Harvest Status trong Step 5.2 | Step 5.1 hoàn thành; Public API Phase 4.8 giữ nguyên LOCKED contract |
 
 ### 🟢 Ưu tiên thấp (Phase 2)
 
@@ -322,8 +326,11 @@ scope: api | db | frontend | infra | auth | search | media
 | I2 | Domain `hoangsuphi.vn` đã đăng ký chưa? | 🔴 Cao | ⬜ Chờ xác nhận |
 | I3 | Media Storage: Cloudinary (có phí) hay S3 self-managed? | 🟢 | ✅ Chọn Cloudinary cho production Phase 4.3; LOCAL chỉ legacy/development/test |
 | I4 | Analytics: GA4 + ClickHouse hay chỉ GA4? | 🟡 TB | ⬜ Chờ quyết định |
-| I5 | Map: Mapbox (có phí) hay OpenStreetMap/Leaflet (miễn phí)? | 🟡 TB | ⬜ Chờ quyết định |
+| I5 | Vị trí/Nearby/Chỉ đường | 🟡 TB | ✅ DG-5.0-01: không interactive map; Nearby list + Google Maps deep link |
 | I6 | CMS: Tự xây Admin hay dùng Payload CMS / Directus? | 🟡 TB | ⬜ Chờ quyết định |
+| I7 | Profile frontend cần `/auth/me`/profile update; `displayName` đăng ký hiện chưa được persist | 🔴 Cao | ✅ DG-5.0-03: reduced scope, không controlled unlock Profile trong Phase 5 |
+| I8 | Legacy public Business/Place/Attraction/Article list/detail không bảo đảm published/active và dùng offset pagination | 🔴 Nghiêm trọng | ✅ GAP-01 additive public-catalog implemented/verified; legacy route giữ nguyên |
+| I9 | DTO public hiện không có phone/Zalo contact contract và reference taxonomy cho filter theo nhãn | 🔴 Cao | ✅ GAP-02/03 contact/reference projection implemented/verified |
 
 ---
 
@@ -357,6 +364,12 @@ scope: api | db | frontend | infra | auth | search | media
 | D22 | 2026-07-16 | Nearby operational performance target | Warm DB p95 < 150 ms cho bán kính đến 25 km, limit 20, tối thiểu 30 mẫu trên dataset MVP đại diện; đây không phải public network-latency promise. Closeout đạt 89,47 ms. |
 | D23 | 2026-07-17 | Media dùng owner pair trên bảng `media`; không tạo `media_links` | Phase 4.3 giữ `media.owner_type` + `media.owner_id` là nguồn dữ liệu chính; upload mới bắt đầu unbound và dedup theo uploader/hash. |
 | D24 | 2026-07-17 | LOCK Phase 4.3 với Cloudinary production adapter | Expanded smoke bằng dedicated `CLOUDINARY_TEST_*` đạt upload/verify/download/decode/delete cho master + 3 variants, 25 assertions và 0 asset còn lại; mọi final gate đạt. |
+| D25 | 2026-07-20 | GAP-01 → GAP-03 → GAP-02 public catalog controlled unlock implement/verify | Route additive/read-only, HMAC cursor, public eligibility, reference/contact projection; user accepted closeout and Step 5.0 LOCKED. |
+| D26 | 2026-07-20 | Không dùng interactive map trong Phase 5 | Không Mapbox/Leaflet/Google Maps JS/tile hoặc `/ban-do`; dùng coordinates, Nearby distance list, fallback điểm gốc và Google Maps directions deep link. |
+| D27 | 2026-07-20 | Auth qua Next.js BFF/Route Handler | Refresh cookie HttpOnly, production Secure + SameSite phù hợp, không localStorage/browser bearer; public pages không yêu cầu login. |
+| D28 | 2026-07-20 | Profile Phase 5 reduced scope | Không `/auth/me` giả lập hay profile nâng cao; chỉ account feature được backend/API/permission hiện hữu hỗ trợ. |
+| D29 | 2026-07-20 | Brand direction Phase 5 | Xanh núi, vàng lúa, nâu đất, nền kem; authentic/mobile-first/ít animation; asset chính thức hoàn thiện trước Phase 10/11. |
+| D30 | 2026-07-20 | LOCK Step 5.0 Frontend Contract & UX Blueprint | User acceptance xác nhận public-catalog closeout và bốn gate; Step 5.1 được phép bắt đầu mà không thay đổi các contract đã khóa. |
 
 ---
 
@@ -873,4 +886,75 @@ scope: api | db | frontend | infra | auth | search | media
 
 ---
 
-*Cập nhật lần cuối: 2026-07-20 — Phiên #045*
+### 📅 Phiên #046 — 2026-07-20 (Phase 5 Frontend Roadmap Planning)
+
+**Việc đã làm:**
+- Đọc lại đầy đủ nguồn thông tin dự án và đối chiếu roadmap với frontend/backend contract hiện hữu.
+- Xác nhận frontend đã có minimal SEO/SSR/redirect shell từ Phase 4 nhưng chưa có product UI hoàn chỉnh.
+- Bổ sung roadmap Phase 5 gồm Steps 5.0–5.7, baseline kế thừa, nguyên tắc triển khai, decision gates, feature coverage, phạm vi loại trừ và Definition of Done.
+- Ghi nhận Profile API gap là Issue I7; mọi xử lý backend phải qua controlled-unlock riêng.
+- Đồng bộ `project-roadmap.md` và `project-context.md`; không sửa source code, dependencies, database hoặc migration.
+
+**Kết luận:** `📋 PHASE 5 FRONTEND — ROADMAP APPROVED, IMPLEMENTATION NOT STARTED`. Next step là Step 5.0 Frontend Contract & UX Blueprint khi người dùng yêu cầu bắt đầu.
+
+---
+
+### 📅 Phiên #047 — 2026-07-20 (Step 5.0 Audit/Remediation)
+
+**Việc đã làm:**
+- Đọc audit report và đối chiếu toàn bộ Step 5.0 blueprint với source frontend/backend hiện hữu, giữ nguyên các module Phase 3–4 LOCKED.
+- Sửa tài liệu về endpoint Harvest/auth/review, canonical routes, no-store cache contract, cursor/offset pagination, direct-contact CTA, Map ADR, BFF ADR và phạm vi Profile.
+- Ghi nhận GAP-01 public read projection, GAP-02 contact projection và GAP-03 taxonomy/reference là blocker hệ thống cho giao diện khách truy cập; frontend không được che/lọc sau khi fetch để thay thế backend contract.
+- Đồng bộ `project-roadmap.md` và `project-context.md`; không sửa source code, dependency, database hoặc migration.
+
+**Kết luận:** `🟡 STEP 5.0 — REMEDIATED DRAFT, BLOCKED PENDING CONTROLLED UNLOCK OR SCOPE EXCEPTION`. UI implementation Phase 5 chưa bắt đầu.
+
+---
+
+### 📅 Phiên #048 — 2026-07-20 (Controlled Unlock GAP-01–03 Approval)
+
+**Việc đã làm:**
+- Người dùng phê duyệt hướng controlled unlock additive cho public read projection, contact projection và taxonomy/reference.
+- Tạo contract implementation cho module public catalog, route additive, public eligibility fail-closed, cursor, contact data governance, migration boundary và verification gate.
+- Không sửa source code, schema, migration, dependency hay hành vi legacy trong phiên approval/contract này.
+
+**Kết luận:** `🟡 CONTROLLED UNLOCK GAP-01–03 — AUTHORIZED; IMPLEMENTATION NOT STARTED`. Các gate Map, BFF/Auth, Profile và Brand không bị phê duyệt ngầm.
+
+---
+
+### 📅 Phiên #049 — 2026-07-20 (Controlled Unlock GAP-01–03 Implementation)
+
+**Việc đã làm:**
+- Triển khai module additive `public-catalog` với archive/detail cho Business, Place, Attraction, Article, Region; strict query/slug validation, generic 404, HMAC keyset cursor và `no-store`.
+- Triển khai public reference projection và fail-closed eligibility; taxonomy thiếu lifecycle flag chỉ public khi được entity eligible sử dụng.
+- Thêm migration `0021_modern_thena.sql` cho `business_public_contacts`, consent/verification/status/URL constraints và partial index; không alter/drop/backfill bảng Phase 3–4.
+- Xác minh PostgreSQL/PostGIS thật 7/7 (gồm 60-row performance fixture), unit/HTTP 7/7, full backend 1.353 pass/123 conditional skip/0 fail; typecheck, lint, build và diff check sạch.
+
+**Kết luận:** `✅ GAP-01 → GAP-03 → GAP-02 — IMPLEMENTED & VERIFIED; AWAITING USER ACCEPTANCE`. Step 5.0/UI chưa LOCK hoặc bắt đầu; Map, BFF/Auth, Profile và Brand vẫn là gate độc lập.
+
+---
+
+### 📅 Phiên #050 — 2026-07-20 (Step 5.0 Official Decisions)
+
+**Việc đã làm:**
+- Ghi nhận DG-5.0-01: Phase 5 không dùng interactive map, map SDK/tile hay `/ban-do`; giữ dữ liệu tọa độ chính thức, Nearby distance list, fallback cơ sở/khu vực và deep link Google Maps directions.
+- Ghi nhận DG-5.0-02: Browser chỉ đi qua Next.js BFF/Route Handler; refresh cookie `HttpOnly`, production `Secure`/`SameSite` phù hợp và không localStorage/browser bearer token.
+- Ghi nhận DG-5.0-03 reduced Profile scope và DG-5.0-04 brand direction; không mở controlled unlock backend Profile.
+- Đồng bộ `project-roadmap.md` cùng toàn bộ blueprint Step 5.0; không sửa source code, schema, dependency hoặc module Phase 3–4 đã LOCKED.
+
+**Kết luận:** `✅ DG-5.0-01–04 — APPROVED`. `🟡 STEP 5.0 — AWAITING PUBLIC-CATALOG CLOSEOUT ACCEPTANCE`; UI/BFF chưa bắt đầu triển khai.
+
+---
+
+### 📅 Phiên #051 — 2026-07-20 (Step 5.0 Final Acceptance & Lock)
+
+**Việc đã làm:**
+- Người dùng chấp nhận closeout controlled unlock GAP-01 → GAP-03 → GAP-02 với evidence PostgreSQL/unit/regression đã ghi tại `docs/phase-5/step-5.0/22-public-catalog-implementation-closeout.md`.
+- Xác nhận bốn gate DG-5.0-01–04 đã được phê duyệt và blueprint đã đồng bộ theo scope không interactive map.
+- Khóa Step 5.0 cùng public-catalog contract/closeout; không sửa source code, schema, dependency hay module Phase 3–4 đã LOCKED.
+
+**Kết luận:** `🔒 STEP 5.0 — LOCKED`. `⬜ STEP 5.1 DESIGN SYSTEM & FRONTEND FOUNDATION — AUTHORIZED, NOT STARTED`.
+
+---
+
+*Cập nhật lần cuối: 2026-07-20 — Phiên #051*
